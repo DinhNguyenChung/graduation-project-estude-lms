@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.estudebackendspring.dto.AiPredictPayload;
 import org.example.estudebackendspring.dto.AiPredictResponse;
@@ -79,12 +80,9 @@ public class AIAnalysisService  {
         AIAnalysisRequest req = new AIAnalysisRequest();
         req.setRequestDate(LocalDateTime.now());
         req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE); // chọn enum phù hợp
-        try {
-            String payloadJson = objectMapper.writeValueAsString(payload);
-            req.setDataPayload(payloadJson);
-        } catch (JsonProcessingException e) {
-            req.setDataPayload("{}");
-        }
+        JsonNode payloadJson = objectMapper.valueToTree(payload);
+        req.setDataPayload(payloadJson != null ? payloadJson : objectMapper.createObjectNode());
+
         req.setStudent(student);
         AIAnalysisRequest savedReq = requestRepository.save(req);
 
@@ -142,21 +140,21 @@ public class AIAnalysisService  {
             result.setPredictedPerformance(aiResp.du_doan_hoc_luc);
             result.setActualPerformance(aiResp.thuc_te_xep_loai);
             result.setComment(aiResp.goi_y_hanh_dong);
-            try {
+//            try {
                 result.setSuggestedActions(aiResp.goi_y_chi_tiet != null ?
-                        objectMapper.writeValueAsString(aiResp.goi_y_chi_tiet) : null);
+                        objectMapper.valueToTree(aiResp.goi_y_chi_tiet) : null);
 
                 result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ?
-                        objectMapper.writeValueAsString(aiResp.phan_tich_chi_tiet) : null);
+                        objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
 
                 result.setStatistics(aiResp.thong_ke != null ?
-                        objectMapper.writeValueAsString(aiResp.thong_ke) : null);
-            } catch (JsonProcessingException e) {
-                System.err.println("Error serializing AI response: " + e.getMessage());
-                if (result.getComment() == null) {
-                    result.setComment("Error processing AI response data");
-                }
-            }
+                        objectMapper.valueToTree(aiResp.thong_ke) : null);
+//            } catch (JsonProcessingException e) {
+//                System.err.println("Error serializing AI response: " + e.getMessage());
+//                if (result.getComment() == null) {
+//                    result.setComment("Error processing AI response data");
+//                }
+//            }
         } else {
             result.setComment("AI returned null body");
         }
@@ -216,5 +214,9 @@ public class AIAnalysisService  {
             System.err.println("Failed to extract " + key + " from analysis object: " + ex.getMessage());
             return null;
         }
+    }
+    //
+    public AIAnalysisResult getLatestResultByStudentId(Long studentId) {
+        return resultRepository.findLatestResultByStudentId(studentId);
     }
 }

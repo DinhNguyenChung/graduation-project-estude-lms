@@ -1,0 +1,17 @@
+package org.example.estudebackendspring.repository;
+
+import org.example.estudebackendspring.entity.SubjectGrade;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long> {
+
+    @Query("SELECT DISTINCT sg FROM SubjectGrade sg " +
+            "JOIN FETCH sg.classSubject cs " +
+            "JOIN FETCH cs.subject subj " +
+            "WHERE sg.student.userId = :studentId")
+    List<SubjectGrade> findByStudentIdWithSubject(@Param("studentId") Long studentId);
+}

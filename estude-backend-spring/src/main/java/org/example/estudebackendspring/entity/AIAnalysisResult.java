@@ -1,7 +1,9 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.estudebackendspring.Converter.JsonNodeConverter;
 
 import java.time.LocalDateTime;
 
@@ -21,12 +23,15 @@ public class AIAnalysisResult {
     private String comment;
     
     @Column(columnDefinition = "TEXT")
-    private String suggestedActions; // JSON string
+    @Convert(converter = JsonNodeConverter.class)
+    private JsonNode suggestedActions; // JSON string
     
     @Column(columnDefinition = "TEXT")
-    private String detailedAnalysis; // JSON string
-      @Column(columnDefinition = "TEXT")
-    private String statistics; // JSON string
+    @Convert(converter = JsonNodeConverter.class)
+    private JsonNode detailedAnalysis; // JSON string
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonNodeConverter.class)
+    private JsonNode statistics; // JSON string
     
     private LocalDateTime generatedAt;
     
