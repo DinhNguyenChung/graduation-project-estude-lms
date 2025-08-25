@@ -24,8 +24,10 @@ public class Question {
     
     @Enumerated(EnumType.STRING)
     private QuestionType questionType;
-    
-    private Integer order;
+
+    @Column(name = "question_order")
+    private Integer questionOrder;
+
     private String attachmentUrl;
     
     @ManyToOne(fetch = FetchType.LAZY)

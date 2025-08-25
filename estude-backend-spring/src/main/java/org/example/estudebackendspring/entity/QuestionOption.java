@@ -18,8 +18,10 @@ public class QuestionOption {
     
     private String optionText;
     private Boolean isCorrect;
-    private Integer order;
-    
+    @Column(name = "option_order")
+    private Integer optionOrder;
+
+
     @Column(columnDefinition = "TEXT")
     private String explanation;
     

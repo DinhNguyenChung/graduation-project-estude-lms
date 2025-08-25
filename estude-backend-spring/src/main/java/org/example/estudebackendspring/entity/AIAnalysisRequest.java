@@ -32,5 +32,6 @@ public class AIAnalysisRequest {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private Student student;
 }

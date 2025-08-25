@@ -141,14 +141,14 @@ public class AIAnalysisService  {
             result.setActualPerformance(aiResp.thuc_te_xep_loai);
             result.setComment(aiResp.goi_y_hanh_dong);
 //            try {
-                result.setSuggestedActions(aiResp.goi_y_chi_tiet != null ?
-                        objectMapper.valueToTree(aiResp.goi_y_chi_tiet) : null);
+            result.setSuggestedActions(aiResp.goi_y_chi_tiet != null ?
+                    objectMapper.valueToTree(aiResp.goi_y_chi_tiet) : null);
 
-                result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ?
-                        objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
+            result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ?
+                    objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
 
-                result.setStatistics(aiResp.thong_ke != null ?
-                        objectMapper.valueToTree(aiResp.thong_ke) : null);
+            result.setStatistics(aiResp.thong_ke != null ?
+                    objectMapper.valueToTree(aiResp.thong_ke) : null);
 //            } catch (JsonProcessingException e) {
 //                System.err.println("Error serializing AI response: " + e.getMessage());
 //                if (result.getComment() == null) {
@@ -194,19 +194,19 @@ public class AIAnalysisService  {
     @SuppressWarnings("unchecked")
     private Object extractDoubleFromAnalysis(Object analysisObj, String key) {
         if (analysisObj == null) return null;
-        
+
         try {
             // Nếu đã là Map, truy cập trực tiếp
             if (analysisObj instanceof Map) {
                 return ((Map<String, Object>)analysisObj).get(key);
             }
-            
+
             // Nếu là String (JSON), chuyển đổi thành Map
             if (analysisObj instanceof String) {
                 Map<String, Object> map = objectMapper.readValue((String)analysisObj, Map.class);
                 return map.get(key);
             }
-            
+
             // Trường hợp khác, thử chuyển đổi thành Map
             Map<String, Object> map = objectMapper.convertValue(analysisObj, Map.class);
             return map.get(key);
@@ -216,7 +216,7 @@ public class AIAnalysisService  {
         }
     }
     //
-    public AIAnalysisResult getLatestResultByStudentId(Long studentId) {
-        return resultRepository.findLatestResultByStudentId(studentId);
+    public AIAnalysisResult getLatestResultByStudentId(Long studentId,AnalysisType analysisType) {
+        return resultRepository.findLatestResultByStudentId(studentId, analysisType.name());
     }
 }

@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,8 +19,11 @@ public class AIAnalysisResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long resultId;
     private Float predictedAverage;
+    @JoinColumn(columnDefinition = "TEXT")
     private String predictedPerformance;
+    @JoinColumn(columnDefinition = "TEXT")
     private String actualPerformance;
+    @JoinColumn(columnDefinition = "TEXT")
     private String comment;
     
     @Column(columnDefinition = "TEXT")
@@ -42,5 +46,6 @@ public class AIAnalysisResult {
     // This maintains the association but tells JPA not to use it for database operations
     @OneToOne
     @JoinColumn(name = "request_id", insertable = false, updatable = false)
+    @JsonIgnore
     private AIAnalysisRequest request;
 }
