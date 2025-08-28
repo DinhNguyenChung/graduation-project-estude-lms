@@ -42,6 +42,7 @@ public abstract class User {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
+    @JsonIgnore
     private School school;
     
     @Enumerated(EnumType.STRING)

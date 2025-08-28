@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
-    java.util.Optional<Student> findByStudentCode(String studentCode);
+    Optional<Student> findByStudentCode(String studentCode);
     // Lấy điểm theo studentId
     @Query(value = """
         SELECT 
@@ -34,4 +35,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
         WHERE s.user_id = :studentId
         """, nativeQuery = true)
     List<Object[]> findGradesByStudentId(@Param("studentId") Long studentId);
+
+    Optional<Student> findByEmail(String email);
 }

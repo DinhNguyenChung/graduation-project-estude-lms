@@ -11,7 +11,8 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "admins")
-public class Admin extends User {    @Column(unique = true, nullable = false)
+public class Admin extends User {
+    @Column(unique = true, nullable = false)
     private String adminCode;
     
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

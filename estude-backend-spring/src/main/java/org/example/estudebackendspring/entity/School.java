@@ -23,7 +23,8 @@ public class School {
     private String schoolName;
     
     private String address;
-    private String contactEmail;    private String contactPhone;
+    private String contactEmail;
+    private String contactPhone;
     
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User> users;

@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.estudebackendspring.dto.AiPredictPayload;
@@ -125,7 +126,8 @@ public class AIAnalysisService  {
                         predictedAvgDouble = parseNumberSafe(avgValue);
                     } else {
                         // Thử convert động (nếu là Object khác)
-                        Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, Map.class);
+//                        Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, Map.class);
+                        Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, new TypeReference<Map<String, Object>>() {});
                         Object avgValue = map.get("diem_trung_binh");
                         predictedAvgDouble = parseNumberSafe(avgValue);
                     }
