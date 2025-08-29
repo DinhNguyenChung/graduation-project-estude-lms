@@ -81,15 +81,22 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
         }
 
-        Optional<Student> opt = studentRepository.findByEmail(email.trim());
-        if (opt.isEmpty()) {
-            // Nếu bạn muốn tránh leak user existence, đổi thành return (200 OK) ở đây.
+        email = email.trim();
+
+        // tìm user theo email (Student, Teacher, Admin)
+        Student student = studentRepository.findByEmail(email).orElse(null);
+        Teacher teacher = (student == null) ? teacherRepository.findByEmail(email).orElse(null) : null;
+        Admin admin = (student == null && teacher == null) ? adminRepository.findByEmail(email).orElse(null) : null;
+
+        if (student == null && teacher == null && admin == null) {
+            // Nếu bạn muốn tránh leak user existence, có thể return 200 OK tại đây thay vì throw error
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found");
         }
-        Student student = opt.get();
+
+        Object user = (student != null) ? student : (teacher != null ? teacher : admin);
 
         // Rate-limit: kiểm tra token mới nhất của user
-        Optional<PasswordResetToken> last = tokenRepository.findTopByUserOrderByCreatedAtDesc(student);
+        Optional<PasswordResetToken> last = tokenRepository.findLatestActiveByEmailOrPhone(email);
         if (last.isPresent() && !last.get().isUsed() &&
                 last.get().getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(MIN_SECONDS_BETWEEN_REQUESTS))) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Please wait before requesting another OTP");
@@ -100,21 +107,21 @@ public class AuthService {
 
         PasswordResetToken token = new PasswordResetToken();
         token.setToken(otp);
-        token.setEmailOrPhone(student.getEmail());
+        token.setEmailOrPhone(email);
         token.setExpiryDate(LocalDateTime.now().plusMinutes(OTP_EXPIRE_MINUTES));
         token.setUsed(false);
         token.setCreatedAt(LocalDateTime.now());
-        token.setUser(student);
 
         tokenRepository.save(token);
 
         try {
-            emailUtil.sendOtpEmail(student.getEmail(), otp);
+            emailUtil.sendOtpEmail(email, otp);
         } catch (MessagingException e) {
             tokenRepository.delete(token); // rollback nhẹ nếu gửi mail fail
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to send OTP email");
         }
     }
+
 
     /**
      * Kiểm tra OTP hợp lệ (chưa dùng, chưa expired)
@@ -167,11 +174,25 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid OTP");
         }
 
-        Student user = token.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword));
-        studentRepository.save(user);
+        // tìm user theo email (Student, Teacher, Admin)
+        Student student = studentRepository.findByEmail(email).orElse(null);
+        Teacher teacher = (student == null) ? teacherRepository.findByEmail(email).orElse(null) : null;
+        Admin admin = (student == null && teacher == null) ? adminRepository.findByEmail(email).orElse(null) : null;
 
-        // mark token as used (1 lần)
+        if (student != null) {
+            student.setPassword(passwordEncoder.encode(newPassword));
+            studentRepository.save(student);
+        } else if (teacher != null) {
+            teacher.setPassword(passwordEncoder.encode(newPassword));
+            teacherRepository.save(teacher);
+        } else if (admin != null) {
+            admin.setPassword(passwordEncoder.encode(newPassword));
+            adminRepository.save(admin);
+        } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found for this email");
+        }
+
+        // mark token as used (chỉ được dùng 1 lần)
         token.setUsed(true);
         tokenRepository.save(token);
     }

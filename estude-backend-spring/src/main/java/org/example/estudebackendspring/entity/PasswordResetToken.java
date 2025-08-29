@@ -25,10 +25,6 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Lưu OTP hoặc token. Với OTP 6 chữ số thì vẫn đủ dạng String.
-     * Nếu bạn muốn token dài hơn (UUID/JWT fingerprint) thì cũng để String.
-     */
     @Column(nullable = false, unique = true, length = 128, name = "token")
     private String token;
 
@@ -44,22 +40,11 @@ public class PasswordResetToken {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * Quan hệ với bảng Student. Nếu Student bảng khác tên, chỉnh lại import / mapping.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", nullable = false)
-    @JsonIgnore
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Student user;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (expiryDate == null) {
-            // Mặc định token hợp lệ 15 phút — thay đổi tuỳ nhu cầu
-            expiryDate = LocalDateTime.now().plusMinutes(15);
+            expiryDate = LocalDateTime.now().plusMinutes(15); // mặc định 15 phút
         }
     }
 
@@ -68,3 +53,4 @@ public class PasswordResetToken {
         return LocalDateTime.now().isAfter(expiryDate);
     }
 }
+
