@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.SubmissionStatus;
@@ -33,15 +34,19 @@ public class Submission {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private Student student;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id")
+    @JsonIgnore
     private Assignment assignment;
     
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Grade grade;
     
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Answer> answers;
 }

@@ -14,4 +14,12 @@ public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long
             "JOIN FETCH cs.subject subj " +
             "WHERE sg.student.userId = :studentId")
     List<SubjectGrade> findByStudentIdWithSubject(@Param("studentId") Long studentId);
+//    List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
+@Query("SELECT sg FROM SubjectGrade sg " +
+        "JOIN FETCH sg.student s " +
+        "JOIN FETCH sg.classSubject cs " +
+        "JOIN FETCH cs.subject subj " +
+        "WHERE cs.classSubjectId = :classSubjectId")
+List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long classSubjectId);
+
 }

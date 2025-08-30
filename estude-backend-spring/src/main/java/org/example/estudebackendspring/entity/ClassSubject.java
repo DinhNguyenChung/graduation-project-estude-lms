@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,24 +24,31 @@ public class ClassSubject {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id")
+
     private Clazz clazz;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id")
+    @JsonIgnore
     private Subject subject;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id")
+    @JsonIgnore
     private Teacher teacher;
-      @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Assignment> assignments;
     
     @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Schedule> schedules;
     
     @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<SubjectGrade> subjectGrades;
     
     @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<AttendanceRecord> attendanceRecords;
 }

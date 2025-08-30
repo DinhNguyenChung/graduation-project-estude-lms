@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.AssignmentType;
@@ -43,15 +44,18 @@ public class Assignment {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id")
+    @JsonIgnore
     private Teacher teacher;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_subject_id")
+    @JsonIgnore
     private ClassSubject classSubject;
     
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Question> questions;
     
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Submission> submissions;
 }

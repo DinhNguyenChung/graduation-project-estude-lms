@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,15 +19,17 @@ public class Clazz {
     
     @Column(nullable = false)
     private String name;
-      private String term;
+    private String term;
     private Integer classSize;
     
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Enrollment> enrollments;
     
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ClassSubject> classSubjects;
     
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Schedule> schedules;
 }

@@ -2,22 +2,31 @@ package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.entity.School;
 import org.example.estudebackendspring.repository.SchoolRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.example.estudebackendspring.service.SchoolService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/schools")
 public class SchoolController {
     private final SchoolRepository schoolRepository;
+    private final SchoolService schoolService;
 
-    public SchoolController(SchoolRepository schoolRepository) {
+    public SchoolController(SchoolRepository schoolRepository, SchoolService schoolService) {
         this.schoolRepository = schoolRepository;
+        this.schoolService = schoolService;
     }
 
     @PostMapping
     public School createSchool(@RequestBody School school) {
         return schoolRepository.save(school);
     }
+    @GetMapping("/{schoolId}")
+    public ResponseEntity<?> getSchoolById(@PathVariable Long schoolId) {
+        return schoolService.getSchoolById(schoolId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
 }

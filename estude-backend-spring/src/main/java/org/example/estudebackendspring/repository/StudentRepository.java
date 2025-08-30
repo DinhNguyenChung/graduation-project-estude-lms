@@ -37,4 +37,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Object[]> findGradesByStudentId(@Param("studentId") Long studentId);
 
     Optional<Student> findByEmail(String email);
+    // lấy student theo id
+    Student findByUserId(Long studentId);
+
+    // lấy ds student theo classId (nếu cần)
+    List<Student> findBySchool_SchoolId(Long schoolId);
 }

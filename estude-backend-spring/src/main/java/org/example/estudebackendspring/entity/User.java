@@ -37,6 +37,8 @@ public abstract class User {
     @Column(nullable = false)
     private String fullName;
 
+    private String avatarPath;
+
     @Temporal(TemporalType.DATE)
     private Date dob;
     

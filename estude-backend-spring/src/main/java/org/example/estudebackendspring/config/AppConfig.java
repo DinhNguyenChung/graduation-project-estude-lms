@@ -12,7 +12,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.web.filter.HiddenHttpMethodFilter;
 import java.util.Arrays;
 
 @Configuration
@@ -55,6 +56,14 @@ public class AppConfig {
                         .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/ai/predict-semeter").permitAll()
                         .requestMatchers("/api/ai/analyze/").permitAll()
+                        .requestMatchers("api/teachers/**").permitAll()
+                        .requestMatchers("/api/students/**").permitAll()
+                        .requestMatchers("/api/assignments/**").permitAll()
+                        .requestMatchers("/api/questions/**").permitAll()
+                        .requestMatchers("/api/class-subjects/**").permitAll()
+                        .requestMatchers("/api/submissions/**").permitAll()
+                        .requestMatchers("/api/grades/**").permitAll()
+                        .requestMatchers("/api/subject-grades/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -76,4 +85,5 @@ public class AppConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
 }

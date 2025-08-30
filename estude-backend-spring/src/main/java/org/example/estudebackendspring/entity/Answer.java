@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.AnswerType;
@@ -29,13 +30,16 @@ public class Answer {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id")
+    @JsonIgnore
     private Submission submission;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
+    @JsonIgnore
     private Question question;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "option_id")
+    @JsonIgnore
     private QuestionOption chosenOption;
 }
