@@ -6,6 +6,8 @@ import org.example.estudebackendspring.service.SchoolService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/schools")
 public class SchoolController {
@@ -26,6 +28,10 @@ public class SchoolController {
         return schoolService.getSchoolById(schoolId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+    @GetMapping
+    public List<School> getAllSchools() {
+        return schoolRepository.findAll();
     }
 
 
