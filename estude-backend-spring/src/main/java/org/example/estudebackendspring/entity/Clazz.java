@@ -27,6 +27,7 @@ public class Clazz {
     private List<Enrollment> enrollments;
     
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ClassSubject> classSubjects;
     
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

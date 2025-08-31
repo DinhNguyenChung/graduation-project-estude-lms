@@ -9,8 +9,10 @@ import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.Admin;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.exception.InvalidPasswordException;
 import org.example.estudebackendspring.exception.InvalidStudentCodeException;
+import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.AuthService;
 import org.example.estudebackendspring.service.JwtBlacklistService;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -27,6 +31,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtBlacklistService jwtBlacklistService;
+
 
     @PostMapping("/login-student")
     public ResponseEntity<?> loginStudent(@RequestBody LoginRequest loginRequest) {

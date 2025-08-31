@@ -1,0 +1,55 @@
+package org.example.estudebackendspring.service;
+
+import jakarta.transaction.Transactional;
+import org.example.estudebackendspring.dto.CreateEnrollmentRequest;
+import org.example.estudebackendspring.entity.Clazz;
+import org.example.estudebackendspring.entity.Enrollment;
+import org.example.estudebackendspring.entity.Student;
+import org.example.estudebackendspring.exception.DuplicateResourceException;
+import org.example.estudebackendspring.exception.ResourceNotFoundException;
+import org.example.estudebackendspring.repository.ClazzRepository;
+import org.example.estudebackendspring.repository.EnrollmentRepository;
+import org.example.estudebackendspring.repository.StudentRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+
+@Service
+public class EnrollmentService {
+    private final EnrollmentRepository enrollmentRepository;
+    private final ClazzRepository clazzRepository;
+    private final StudentRepository studentRepository;
+    public EnrollmentService(EnrollmentRepository enrollmentRepository, ClazzRepository clazzRepository,
+                             StudentRepository studentRepository) {
+        this.enrollmentRepository = enrollmentRepository;
+        this.clazzRepository = clazzRepository;
+        this.studentRepository = studentRepository;
+    }
+
+
+    @Transactional
+    public Enrollment enrollStudent(CreateEnrollmentRequest req) {
+        Clazz clazz = clazzRepository.findById(req.getClassId())
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + req.getClassId()));
+
+        Student student = studentRepository.findById(req.getStudentId())
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + req.getStudentId()));
+
+        if (enrollmentRepository.existsByClazzAndStudent(clazz, student)) {
+            throw new DuplicateResourceException("Student is already enrolled in this class");
+        }
+
+        Enrollment e = new Enrollment();
+        e.setClazz(clazz);
+        e.setStudent(student);
+        e.setDateJoined(new Date());
+
+        return enrollmentRepository.save(e);
+    }
+
+    public void removeEnrollment(Long enrollmentId) {
+        Enrollment e = enrollmentRepository.findById(enrollmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found with id: " + enrollmentId));
+        enrollmentRepository.delete(e);
+    }
+}
