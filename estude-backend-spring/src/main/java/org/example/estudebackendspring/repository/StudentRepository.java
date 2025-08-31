@@ -42,4 +42,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     // lấy ds student theo classId (nếu cần)
     List<Student> findBySchool_SchoolId(Long schoolId);
+    boolean existsByStudentCode(String studentCode);
+    boolean existsByEmail(String email);
+    boolean existsByNumberPhone(String numberPhone);
+
 }
