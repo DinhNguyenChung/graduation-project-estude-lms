@@ -29,6 +29,18 @@ public class ClassSubjectController {
     public List<ClassSubject> getAllClassSubjects() {
         return repository.findAll();
     }
+//    @GetMapping
+//    public List<ClassSubjectDTO> getAllClassSubjects() {
+//        return repository.findAll().stream()
+//                .map(cs -> new ClassSubjectDTO(
+//                        cs.getClassSubjectId(),
+//                        cs.getClazz().getName(),
+//                        cs.getSubject().getName(),
+//                        cs.getTeacher().getFullName()
+//                ))
+//                .toList();
+//    }
+
 
     @PostMapping
     public ResponseEntity<ClassSubject> assignSubject(@Valid @RequestBody CreateClassSubjectRequest req) {

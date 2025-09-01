@@ -21,7 +21,9 @@ public class Clazz {
     private String name;
     private String term;
     private Integer classSize;
-    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "homeroom_teacher_id", unique = true)
+    private Teacher homeroomTeacher; // Mối quan hệ 1-1 với giáo viên chủ nhiệm
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Enrollment> enrollments;

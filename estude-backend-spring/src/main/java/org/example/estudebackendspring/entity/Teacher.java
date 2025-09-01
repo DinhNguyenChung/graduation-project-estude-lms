@@ -25,7 +25,10 @@ public class Teacher extends User {
 
     private boolean isAdmin;
     private boolean isHomeroomTeacher;
-    
+
+    @OneToOne(mappedBy = "homeroomTeacher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Clazz homeroomClass; // Thêm mối quan hệ ngược lại
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<ClassSubject> classSubjects;
