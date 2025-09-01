@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,9 +22,11 @@ public class Enrollment {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id")
+    @JsonIgnore
     private Clazz clazz;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private Student student;
 }

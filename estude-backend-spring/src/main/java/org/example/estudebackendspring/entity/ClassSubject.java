@@ -24,7 +24,7 @@ public class ClassSubject {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id")
-
+    @JsonIgnore
     private Clazz clazz;
     
     @ManyToOne(fetch = FetchType.LAZY)

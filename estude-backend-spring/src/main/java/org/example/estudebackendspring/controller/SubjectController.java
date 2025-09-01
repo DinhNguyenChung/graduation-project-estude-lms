@@ -5,11 +5,14 @@ import jakarta.validation.Valid;
 import org.example.estudebackendspring.dto.CreateSubjectRequest;
 import org.example.estudebackendspring.dto.UpdateSubjectRequest;
 import org.example.estudebackendspring.entity.Subject;
+import org.example.estudebackendspring.repository.SubjectRepository;
 import org.example.estudebackendspring.service.SubjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -18,15 +21,21 @@ import org.springframework.web.bind.annotation.*;
 public class SubjectController {
 
     private final SubjectService service;
+    private final SubjectRepository repository;
 
-    public SubjectController(SubjectService service) {
+    public SubjectController(SubjectService service, SubjectRepository repository) {
         this.service = service;
+        this.repository = repository;
     }
 
     @PostMapping
     public ResponseEntity<Subject> createSubject(@Valid @RequestBody CreateSubjectRequest req) {
         Subject created = service.createSubject(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+    @GetMapping
+    public List<Subject> getAllSubjects() {
+        return repository.findAll();
     }
 
     @GetMapping("/{subjectId}")

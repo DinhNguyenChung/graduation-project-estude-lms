@@ -2,6 +2,8 @@ package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
+import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
 import org.example.estudebackendspring.service.TeacherService;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +20,17 @@ public class TeacherController {
 
     private final TeacherService teacherService;
     private final ClassSubjectService classSubjectService;
+    private final TeacherRepository teacherRepository;
 
-    public TeacherController(TeacherService teacherService, ClassSubjectService classSubjectService) {
+    public TeacherController(TeacherService teacherService, ClassSubjectService classSubjectService, TeacherRepository teacherRepository) {
         this.teacherService = teacherService;
         this.classSubjectService = classSubjectService;
+        this.teacherRepository = teacherRepository;
     }
-
+    @GetMapping
+    public List<Teacher> getAllTeachers() {
+        return teacherRepository.findAll();
+    }
     @GetMapping("/{teacherId}")
     public ResponseEntity<?> getTeacherById(@PathVariable Long teacherId) {
         return teacherService.getTeacherById(teacherId)

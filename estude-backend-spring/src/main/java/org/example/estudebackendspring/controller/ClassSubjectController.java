@@ -3,12 +3,14 @@ package org.example.estudebackendspring.controller;
 import jakarta.validation.Valid;
 import org.example.estudebackendspring.dto.CreateClassSubjectRequest;
 import org.example.estudebackendspring.entity.ClassSubject;
+import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 
 @RestController
@@ -17,9 +19,15 @@ import org.springframework.web.bind.annotation.*;
 public class ClassSubjectController {
 
     private final ClassSubjectService service;
+    private final ClassSubjectRepository repository;
 
-    public ClassSubjectController(ClassSubjectService service) {
+    public ClassSubjectController(ClassSubjectService service, ClassSubjectRepository repository) {
         this.service = service;
+        this.repository = repository;
+    }
+    @GetMapping
+    public List<ClassSubject> getAllClassSubjects() {
+        return repository.findAll();
     }
 
     @PostMapping

@@ -4,20 +4,28 @@ package org.example.estudebackendspring.controller;
 import org.example.estudebackendspring.dto.ApiResponse;
 import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.entity.Assignment;
+import org.example.estudebackendspring.repository.AssignmentRepository;
 import org.example.estudebackendspring.service.AssignmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/assignments")
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
+    private final AssignmentRepository assignmentRepository;
 
-    public AssignmentController(AssignmentService assignmentService) {
+    public AssignmentController(AssignmentService assignmentService , AssignmentRepository assignmentRepository) {
         this.assignmentService = assignmentService;
+        this.assignmentRepository = assignmentRepository;
     }
-
+    @GetMapping
+    public List<Assignment> getAllAssignments() {
+        return assignmentRepository.findAll();
+    }
     @PostMapping
     public ResponseEntity<?> createAssignment(@RequestBody Assignment assignment) {
         Assignment created = assignmentService.createAssignment(assignment);

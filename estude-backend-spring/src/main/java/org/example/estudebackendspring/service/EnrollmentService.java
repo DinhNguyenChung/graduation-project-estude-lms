@@ -13,6 +13,7 @@ import org.example.estudebackendspring.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class EnrollmentService {
@@ -52,4 +53,8 @@ public class EnrollmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found with id: " + enrollmentId));
         enrollmentRepository.delete(e);
     }
+    public List<Enrollment> getEnrollmentsByStudent(Long studentId) {
+        return enrollmentRepository.findByStudent_UserId(studentId);
+    }
+
 }
