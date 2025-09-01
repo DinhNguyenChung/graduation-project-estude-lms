@@ -42,4 +42,16 @@ public class StudentController {
         List<Enrollment> enrollments = enrollmentService.getEnrollmentsByStudent(studentId);
         return ResponseEntity.ok(enrollments);
     }
+
+    @GetMapping("/by-class/{classId}")
+    public ResponseEntity<List<Student>> getStudentsByClass(@PathVariable Long classId) {
+        return ResponseEntity.ok(studentService.getStudentsByClass(classId));
+    }
+
+
+    @GetMapping("/by-school/{schoolId}")
+    public ResponseEntity<List<Student>> getStudentsBySchool(@PathVariable Long schoolId) {
+        return ResponseEntity.ok(studentService.getStudentsBySchool(schoolId));
+    }
+
 }

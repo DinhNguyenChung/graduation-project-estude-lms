@@ -45,5 +45,12 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     boolean existsByStudentCode(String studentCode);
     boolean existsByEmail(String email);
     boolean existsByNumberPhone(String numberPhone);
+    // Lấy danh sách sinh viên theo classId (dựa vào bảng Enrollment)
+    @Query("SELECT e.student FROM Enrollment e WHERE e.clazz.classId = :classId")
+    List<Student> findStudentsByClassId(@Param("classId") Long classId);
+
+    // Lấy danh sách sinh viên theo schoolId
+    @Query("SELECT s FROM Student s WHERE s.school.schoolId = :schoolId")
+    List<Student> findStudentsBySchoolId(@Param("schoolId") Long schoolId);
 
 }
