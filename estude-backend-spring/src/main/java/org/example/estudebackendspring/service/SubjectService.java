@@ -9,6 +9,8 @@ import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.SubjectRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SubjectService {
     private final SubjectRepository subjectRepository;
@@ -49,5 +51,8 @@ public class SubjectService {
             throw new ResourceNotFoundException("Subject not found with id: " + subjectId);
         }
         subjectRepository.deleteById(subjectId);
+    }
+    public List<Subject> getSubjectsByClassId(Long classId) {
+        return subjectRepository.findSubjectsByClassId(classId);
     }
 }

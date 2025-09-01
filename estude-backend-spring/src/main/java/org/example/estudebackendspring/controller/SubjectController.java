@@ -22,10 +22,12 @@ public class SubjectController {
 
     private final SubjectService service;
     private final SubjectRepository repository;
+    private final SubjectService subjectService;
 
-    public SubjectController(SubjectService service, SubjectRepository repository) {
+    public SubjectController(SubjectService service, SubjectRepository repository, SubjectService subjectService) {
         this.service = service;
         this.repository = repository;
+        this.subjectService = subjectService;
     }
 
     @PostMapping
@@ -55,5 +57,13 @@ public class SubjectController {
     public ResponseEntity<Void> deleteSubject(@PathVariable Long subjectId) {
         service.deleteSubject(subjectId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/by-class/{classId}")
+    public ResponseEntity<List<Subject>> getSubjectsByClass(@PathVariable Long classId) {
+        List<Subject> subjects = subjectService.getSubjectsByClassId(classId);
+        if (subjects.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204
+        }
+        return ResponseEntity.ok(subjects); // 200
     }
 }
