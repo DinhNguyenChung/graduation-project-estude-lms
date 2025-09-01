@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.UserRole;
@@ -44,7 +45,8 @@ public abstract class User {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
-    @JsonIgnore
+//    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private School school;
     
     @Enumerated(EnumType.STRING)
