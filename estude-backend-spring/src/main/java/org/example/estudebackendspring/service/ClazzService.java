@@ -9,6 +9,8 @@ import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.ClazzRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ClazzService {
     private final ClazzRepository clazzRepository;
@@ -62,5 +64,8 @@ public class ClazzService {
             throw new ResourceNotFoundException("Class not found with id: " + classId);
         }
         clazzRepository.deleteById(classId);
+    }
+    public List<Clazz> getClassesBySchool(Long schoolId) {
+        return clazzRepository.findBySchool_SchoolId(schoolId);
     }
 }
