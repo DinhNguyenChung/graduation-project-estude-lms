@@ -44,8 +44,30 @@ public class EnrollmentService {
         e.setClazz(clazz);
         e.setStudent(student);
         e.setDateJoined(new Date());
+        // Lưu enrollment mới
+        Enrollment saved = enrollmentRepository.saveAndFlush(e);
+        // Đếm lại số học sinh trong lớp
+        int count = enrollmentRepository.countByClazz(clazz);
+        System.out.println("SL hoc sinh trong lop" +count);
+        clazz.setClassSize(count);
+        clazzRepository.save(clazz);
 
-        return enrollmentRepository.save(e);
+//       return enrollmentRepository.save(e);
+        return saved;
+//        Enrollment e = new Enrollment();
+//        e.setClazz(clazz);
+//        e.setStudent(student);
+//        e.setDateJoined(new Date());
+//
+//        // Thêm enrollment vào class (để Hibernate quản lý 2 chiều)
+//        clazz.getEnrollments().add(e);
+//
+//        // Cập nhật classSize trực tiếp từ danh sách enrollments
+//        clazz.setClassSize(clazz.getEnrollments().size());
+//
+//        // Lưu class, enrollment sẽ được cascade save
+//        clazzRepository.save(clazz);
+//        return e;
     }
 
     public void removeEnrollment(Long enrollmentId) {

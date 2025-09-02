@@ -4,6 +4,8 @@ import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,4 +15,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     boolean existsByClazzAndStudent(Clazz clazz, Student student);
 
     List<Enrollment> findByStudent_UserId(Long studentUserId);
+    @Query("SELECT e.clazz.classId FROM Enrollment e WHERE e.student.userId = :studentId")
+    List<Long> findClassIdsByStudentId(@Param("studentId") Long studentId);
+
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Enrollment e WHERE e.student.userId = :studentId AND e.clazz.classId = :classId")
+    boolean existsByStudentIdAndClassId(@Param("studentId") Long studentId, @Param("classId") Long classId);
+    int countByClazz(Clazz clazz);
 }

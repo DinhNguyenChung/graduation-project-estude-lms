@@ -1,8 +1,10 @@
 package org.example.estudebackendspring.controller;
 
+import org.example.estudebackendspring.dto.AssignmentSummaryDTO;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.repository.StudentRepository;
+import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.example.estudebackendspring.service.EnrollmentService;
 import org.example.estudebackendspring.service.StudentService;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +22,14 @@ public class StudentController {
     private final StudentService studentService;
     private final EnrollmentService enrollmentService;
     private final StudentRepository repository;
+    private final AssignmentSubmissionService service;
 
-    public StudentController(StudentService studentService, EnrollmentService enrollmentService, StudentRepository repository) {
+    public StudentController(StudentService studentService, EnrollmentService enrollmentService,
+                             StudentRepository repository, AssignmentSubmissionService service) {
         this.studentService = studentService;
         this.enrollmentService = enrollmentService;
         this.repository = repository;
+        this.service = service;
     }
     @GetMapping
     public List<Student> getAllStudents() {
@@ -52,6 +57,13 @@ public class StudentController {
     @GetMapping("/by-school/{schoolId}")
     public ResponseEntity<List<Student>> getStudentsBySchool(@PathVariable Long schoolId) {
         return ResponseEntity.ok(studentService.getStudentsBySchool(schoolId));
+    }
+    @GetMapping("/{studentId}/assignments")
+    public ResponseEntity<List<AssignmentSummaryDTO>> listAssignmentsForStudent(@PathVariable Long studentId) {
+        List<AssignmentSummaryDTO> list = service.listAssignmentsForStudent(studentId);
+        if (list.isEmpty())
+            return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(list);
     }
 
 }

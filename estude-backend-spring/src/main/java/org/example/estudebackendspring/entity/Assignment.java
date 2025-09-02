@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.AssignmentType;
@@ -44,12 +45,12 @@ public class Assignment {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id")
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Teacher teacher;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_subject_id")
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ClassSubject classSubject;
     
     @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
