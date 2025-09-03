@@ -117,9 +117,13 @@ public class AssignmentController {
             );
         }
     }
-//    @GetMapping("/{assignmentId}")
-//    public ResponseEntity<AssignmentDetailDTO> getAssignmentDetail(@PathVariable Long assignmentId) {
-//        AssignmentDetailDTO dto = assignmentSubmissionService.getAssignmentDetail(assignmentId);
-//        return ResponseEntity.ok(dto);
-//    }
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<?> getAssignmentsByClass(@PathVariable Long classId) {
+        List<Assignment> assignments = assignmentService.getAssignmentsByClass(classId);
+        if (assignments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No assignments found for classId: " + classId);
+        }
+        return ResponseEntity.ok(assignments);
+    }
 }

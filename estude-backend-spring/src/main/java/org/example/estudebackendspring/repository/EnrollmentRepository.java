@@ -21,4 +21,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Enrollment e WHERE e.student.userId = :studentId AND e.clazz.classId = :classId")
     boolean existsByStudentIdAndClassId(@Param("studentId") Long studentId, @Param("classId") Long classId);
     int countByClazz(Clazz clazz);
+
 }

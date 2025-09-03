@@ -12,4 +12,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 //    List<Assignment> findAssignmentsByCl(Long studentId);
         @Query("SELECT a FROM Assignment a WHERE a.classSubject.clazz.classId IN :classIds AND (a.isPublished IS NULL OR a.isPublished = true)")
         List<Assignment> findPublishedByClassIds(@Param("classIds") List<Long> classIds);
+        // Lấy assignment theo classId
+        @Query("SELECT a FROM Assignment a WHERE a.classSubject.clazz.classId = :classId")
+        List<Assignment> findByClassId(@Param("classId") Long classId);
 }

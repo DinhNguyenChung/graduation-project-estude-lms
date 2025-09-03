@@ -11,4 +11,5 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long> {
     boolean existsByNameAndTerm(String name, String term);
     List<Clazz> findBySchool_SchoolId(Long schoolId);
 
+
 }

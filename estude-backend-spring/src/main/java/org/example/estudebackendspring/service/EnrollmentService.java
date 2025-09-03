@@ -12,6 +12,7 @@ import org.example.estudebackendspring.repository.EnrollmentRepository;
 import org.example.estudebackendspring.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -29,52 +30,43 @@ public class EnrollmentService {
 
 
     @Transactional
-    public Enrollment enrollStudent(CreateEnrollmentRequest req) {
-        Clazz clazz = clazzRepository.findById(req.getClassId())
-                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + req.getClassId()));
+    public List<Enrollment> enrollStudents(Long classId, List<Long> studentIds) {
+        Clazz clazz = clazzRepository.findById(classId).orElseThrow();
 
-        Student student = studentRepository.findById(req.getStudentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + req.getStudentId()));
+        List<Enrollment> saved = new ArrayList<>();
+        for (Long sid : studentIds) {
+            Student student = studentRepository.findById(sid).orElseThrow();
 
-        if (enrollmentRepository.existsByClazzAndStudent(clazz, student)) {
-            throw new DuplicateResourceException("Student is already enrolled in this class");
+            if (!enrollmentRepository.existsByClazzAndStudent(clazz, student)) {
+                Enrollment e = new Enrollment();
+                e.setClazz(clazz);
+                e.setStudent(student);
+                e.setDateJoined(new Date());
+                saved.add(enrollmentRepository.save(e));
+            }
         }
 
-        Enrollment e = new Enrollment();
-        e.setClazz(clazz);
-        e.setStudent(student);
-        e.setDateJoined(new Date());
-        // Lưu enrollment mới
-        Enrollment saved = enrollmentRepository.saveAndFlush(e);
-        // Đếm lại số học sinh trong lớp
-        int count = enrollmentRepository.countByClazz(clazz);
-        System.out.println("SL hoc sinh trong lop" +count);
-        clazz.setClassSize(count);
+        clazz.setClassSize(enrollmentRepository.countByClazz(clazz));
         clazzRepository.save(clazz);
 
-//       return enrollmentRepository.save(e);
         return saved;
-//        Enrollment e = new Enrollment();
-//        e.setClazz(clazz);
-//        e.setStudent(student);
-//        e.setDateJoined(new Date());
-//
-//        // Thêm enrollment vào class (để Hibernate quản lý 2 chiều)
-//        clazz.getEnrollments().add(e);
-//
-//        // Cập nhật classSize trực tiếp từ danh sách enrollments
-//        clazz.setClassSize(clazz.getEnrollments().size());
-//
-//        // Lưu class, enrollment sẽ được cascade save
-//        clazzRepository.save(clazz);
-//        return e;
     }
 
+
+    @Transactional
     public void removeEnrollment(Long enrollmentId) {
         Enrollment e = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found with id: " + enrollmentId));
+
+        Clazz clazz = e.getClazz();
         enrollmentRepository.delete(e);
+
+        // Sau khi xoá -> cập nhật lại classSize
+        int count = enrollmentRepository.countByClazz(clazz);
+        clazz.setClassSize(count);
+        clazzRepository.save(clazz);
     }
+
     public List<Enrollment> getEnrollmentsByStudent(Long studentId) {
         return enrollmentRepository.findByStudent_UserId(studentId);
     }

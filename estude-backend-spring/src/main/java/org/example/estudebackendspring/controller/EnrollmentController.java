@@ -30,9 +30,19 @@ public class EnrollmentController {
     public List<Enrollment> getAllEnrollments() {
         return enrollmentRepository.findAll();
     }
+
+//    @PostMapping
+//    public ResponseEntity<Enrollment> enrollStudent(@Valid @RequestBody CreateEnrollmentRequest req) {
+//        Enrollment created = service.enrollStudent(req);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    }
+
     @PostMapping
-    public ResponseEntity<Enrollment> enrollStudent(@Valid @RequestBody CreateEnrollmentRequest req) {
-        Enrollment created = service.enrollStudent(req);
+    public ResponseEntity<List<Enrollment>> enrollStudentsBatch(
+            @RequestParam Long classId,
+            @RequestBody List<Long> studentIds) {
+
+        List<Enrollment> created = service.enrollStudents(classId, studentIds);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -41,4 +51,8 @@ public class EnrollmentController {
         service.removeEnrollment(enrollmentId);
         return ResponseEntity.noContent().build();
     }
+//    @GetMapping("/student/{studentID}")
+//    public ResponseEntity<List<Enrollment>> getStudentEnrollments(@PathVariable Long studentID) {
+////        return service.getEnrollmentsByStudent(studentID).
+//    }
 }

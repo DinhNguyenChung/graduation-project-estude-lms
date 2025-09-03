@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -55,5 +56,8 @@ public class AssignmentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete assignment with submissions");
         }
         assignmentRepository.delete(existing);
+    }
+    public List<Assignment> getAssignmentsByClass(Long classId) {
+        return assignmentRepository.findByClassId(classId);
     }
 }

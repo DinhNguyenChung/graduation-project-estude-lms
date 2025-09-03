@@ -17,7 +17,7 @@ public class Clazz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long classId;
-    
+
     @Column(nullable = false)
     private String name;
     private String term;
@@ -29,11 +29,11 @@ public class Clazz {
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Enrollment> enrollments;
-    
+
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<ClassSubject> classSubjects;
-    
+
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Schedule> schedules;

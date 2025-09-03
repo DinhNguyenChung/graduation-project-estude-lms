@@ -1,6 +1,10 @@
 package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.dto.AssignmentSummaryDTO;
+import org.example.estudebackendspring.dto.ClassDTO;
+import org.example.estudebackendspring.dto.ClassSubjectDTO;
+import org.example.estudebackendspring.entity.ClassSubject;
+import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.repository.StudentRepository;
@@ -65,5 +69,36 @@ public class StudentController {
             return ResponseEntity.noContent().build();
         return ResponseEntity.ok(list);
     }
+    @GetMapping("/students/{studentId}/classes")
+    public ResponseEntity<?> getClassesByStudent(@PathVariable Long studentId ) {
+        List<Clazz> classes = studentService.getClassesByStudent(studentId );
+        List<ClassDTO> result = classes.stream().map(clazz ->
+                new ClassDTO(
+                        clazz.getClassId(),
+                        clazz.getName(),
+                        clazz.getTerm(),
+                        clazz.getEnrollments().size(),
+                        clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null
+                )
+        ).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{studentId}/subjects")
+    public ResponseEntity<?> getSubjects(@PathVariable Long studentId) {
+        List<ClassSubject> subjects = studentService.getSubjectsByStudent(studentId);
+
+        List<ClassSubjectDTO> dtoList = subjects.stream()
+                .map(cs -> new ClassSubjectDTO(
+                        cs.getClassSubjectId(),
+                        cs.getSubject() != null ? cs.getSubject().getName() : null,
+                        cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
+                        cs.getClazz() != null ? cs.getClazz().getName() : null
+                ))
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
+    }
+
 
 }

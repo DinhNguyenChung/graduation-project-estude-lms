@@ -15,7 +15,7 @@ public class QuestionController {
         this.questionService = questionService;
     }
     // POST /api/assignments/{assignmentId}/questions
-    @PostMapping("/assignments/{assignmentId}/questions")
+    @PostMapping("/questions/assignments/{assignmentId}")
     public ResponseEntity<?> addQuestion(@PathVariable Long assignmentId, @RequestBody Question question) {
         try {
             Question saved = questionService.addQuestion(assignmentId, question);
