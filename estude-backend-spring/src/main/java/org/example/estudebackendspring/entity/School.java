@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -33,5 +35,13 @@ public class School {
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Clazz> classes;
+    @ManyToMany
+    @JoinTable(
+            name = "school_subjects",
+            joinColumns = @JoinColumn(name = "school_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id")
+    )
+    @JsonIgnore
+    private Set<Subject> subjects = new HashSet<>();
 
 }

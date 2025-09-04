@@ -19,11 +19,11 @@ public class AIAnalysisResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long resultId;
     private Float predictedAverage;
-    @JoinColumn(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String predictedPerformance;
-    @JoinColumn(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String actualPerformance;
-    @JoinColumn(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String comment;
     
     @Column(columnDefinition = "TEXT")

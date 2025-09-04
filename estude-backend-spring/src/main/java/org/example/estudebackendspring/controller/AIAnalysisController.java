@@ -43,7 +43,7 @@ public class AIAnalysisController {
         return ResponseEntity.ok(result);
     }
     // Lấy kết quả dự đoán học kỳ mới nhất
-    @GetMapping("/semester-latest/{studentId}")
+    @GetMapping("/semester-latest/student/{studentId}")
     public ResponseEntity<AIAnalysisResult> getLatestResult(@PathVariable Long studentId) {
         AIAnalysisResult result = aiAnalysisService.getLatestResultByStudentId(
                 studentId,
@@ -69,8 +69,8 @@ public class AIAnalysisController {
             return ResponseEntity.status(500).body("Error analyzing subjects: " + ex.getMessage());
         }
     }
-    // Lấy kết quả dự đoán điểm môn học
-    @GetMapping("/subject-latest/{studentId}")
+    // Lấy kết quả dự đoán điểm môn học mới nhất cả học sinh
+    @GetMapping("/subject-latest/student/{studentId}")
     public ResponseEntity<AIAnalysisResult> getLatestResultSubjects(@PathVariable Long studentId) {
         AIAnalysisResult result = aiAnalysisService.getLatestResultByStudentId(
                 studentId,

@@ -27,7 +27,11 @@ public class ClazzService {
         if (clazzRepository.existsByNameAndTerm(req.getName(), req.getTerm())) {
             throw new DuplicateResourceException("Class with same name and term already exists");
         }
-
+        // validate ngày
+        if (req.getBeginDate() != null && req.getEndDate() != null
+                && req.getBeginDate().after(req.getEndDate())) {
+            throw new IllegalArgumentException("Begin date must be before end date");
+        }
         // tìm school
         School school = schoolRepository.findById(req.getSchoolId())
                 .orElseThrow(() -> new ResourceNotFoundException("School not found with id: " + req.getSchoolId()));
@@ -35,6 +39,8 @@ public class ClazzService {
         Clazz c = new Clazz();
         c.setName(req.getName());
         c.setTerm(req.getTerm());
+        c.setBeginDate(req.getBeginDate());
+        c.setEndDate(req.getEndDate());
         c.setClassSize(req.getClassSize());
         c.setSchool(school); // gán school
         return clazzRepository.save(c);

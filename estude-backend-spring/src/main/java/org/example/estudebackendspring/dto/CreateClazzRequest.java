@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 public class CreateClazzRequest {
@@ -17,5 +19,7 @@ public class CreateClazzRequest {
     private Integer classSize;
     @NotNull
     private Long schoolId; // thêm trường này
+    private Date beginDate;
+    private Date endDate;
 
 }

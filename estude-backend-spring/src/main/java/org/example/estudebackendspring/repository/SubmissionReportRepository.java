@@ -50,7 +50,13 @@ public interface SubmissionReportRepository extends JpaRepository<Submission, Lo
         JOIN questions q ON q.assignment_id = a.assignment_id
         WHERE a.assignment_id = :assignmentId
           AND s.student_id = :studentId
-        GROUP BY a.assignment_id, u.full_name, sub.name, s.submission_id
+          AND s.submission_id = (
+              SELECT MAX(s2.submission_id)
+              FROM submissions s2
+              WHERE s2.assignment_id = :assignmentId
+                AND s2.student_id = :studentId
+          )
+        GROUP BY a.assignment_id, u.full_name, sub.name
         """, nativeQuery = true)
     Optional<String> getStudentSubmissionJson(@Param("assignmentId") Long assignmentId,
                                               @Param("studentId") Long studentId);

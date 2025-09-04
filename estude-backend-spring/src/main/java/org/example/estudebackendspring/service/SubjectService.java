@@ -3,9 +3,11 @@ package org.example.estudebackendspring.service;
 import jakarta.transaction.Transactional;
 import org.example.estudebackendspring.dto.CreateSubjectRequest;
 import org.example.estudebackendspring.dto.UpdateSubjectRequest;
+import org.example.estudebackendspring.entity.School;
 import org.example.estudebackendspring.entity.Subject;
 import org.example.estudebackendspring.exception.DuplicateResourceException;
 import org.example.estudebackendspring.exception.ResourceNotFoundException;
+import org.example.estudebackendspring.repository.SchoolRepository;
 import org.example.estudebackendspring.repository.SubjectRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +16,27 @@ import java.util.List;
 @Service
 public class SubjectService {
     private final SubjectRepository subjectRepository;
-    public SubjectService(SubjectRepository subjectRepository) {
+    private final SchoolRepository schoolRepository;
+    public SubjectService(SubjectRepository subjectRepository, SchoolRepository schoolRepository) {
         this.subjectRepository = subjectRepository;
+        this.schoolRepository = schoolRepository;
     }
     public Subject createSubject(CreateSubjectRequest req) {
-        if (subjectRepository.existsByName(req.getName())) {
-            throw new DuplicateResourceException("Subject name already exists: " + req.getName());
+        if(subjectRepository.existsByNameAndSchoolsSchoolId(req.getName(), req.getSchoolId())) {
+            throw new DuplicateResourceException("Subject name already exists in school: " + req.getName());
         }
-        Subject s = new Subject();
-        s.setName(req.getName());
-        s.setDescription(req.getDescription());
-        return subjectRepository.save(s);
+        // Tìm trường
+        School school = schoolRepository.findBySchoolId(req.getSchoolId());
+        if(school == null) {
+            throw new ResourceNotFoundException("School not found: " + req.getSchoolId());
+        }
+        // Tạo môn học mới
+        Subject subject = new Subject();
+        subject.setName(req.getName());
+        subject.setDescription(req.getDescription());
+        subject.getSchools().add(school); // Thêm trường vào tập schools
+
+        return subjectRepository.save(subject);
     }
 
     public Subject getSubject(Long subjectId) {

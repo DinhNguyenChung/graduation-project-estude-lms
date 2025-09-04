@@ -10,6 +10,7 @@ public interface SchoolRepository extends JpaRepository<School, Long> {
     Optional<School> findBySchoolCode(String schoolCode);
     List<School> getClazzBySchoolCode(String schoolCode);
     List<School> getClazzBySchoolId(Long schoolId);
+    School findBySchoolId(Long schoolId);
 
 
 }

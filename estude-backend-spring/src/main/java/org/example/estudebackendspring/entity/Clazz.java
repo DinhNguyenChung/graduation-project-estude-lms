@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -22,6 +23,12 @@ public class Clazz {
     private String name;
     private String term;
     private Integer classSize;
+    @Column
+    @Temporal(TemporalType.DATE)
+    private Date beginDate;
+    @Column
+    @Temporal(TemporalType.DATE)
+    private Date endDate;
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homeroom_teacher_id", unique = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

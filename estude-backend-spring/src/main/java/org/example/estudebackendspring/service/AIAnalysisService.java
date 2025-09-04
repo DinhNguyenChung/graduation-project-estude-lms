@@ -48,15 +48,14 @@ public class AIAnalysisService  {
      */
     @Transactional
     public AIAnalysisResult analyzePredict(Long studentUserId) {
-        // 1) Lấy student (để có studentCode)
+        // 1) Lấy student
         Student student = studentRepository.findById(studentUserId)
                 .orElseThrow(() -> new NoSuchElementException("Student not found id=" + studentUserId));
 
-        // 2) Lấy điểm thô từ repository (List<Object[]> như query native)
+        // 2) Lấy điểm thô từ repository
         List<Object[]> rows = studentRepository.findGradesByStudentId(studentUserId);
-        // rows columns: 0:user_id,1:student_code,2:full_name,3:subject_name,4:midtermScore,5:finalScore,6:actualAverage,...
 
-        // 3) Map subject -> score (ưu tiên actualAverage -> final -> midterm)
+        // 3) Map subject -> score
         Map<String, Double> gradesMap = new HashMap<>();
         for (Object[] r : rows) {
             String subjectName = r[3] != null ? r[3].toString() : "UNKNOWN";
@@ -67,34 +66,44 @@ public class AIAnalysisService  {
             gradesMap.put(subjectName, score);
         }
 
-        // 4) Build payload - nếu bạn có thêm dữ liệu (ty_le_nop_bai, ty_le_nghi_hoc, the_duc, qp_an) -> lấy từ DB khác, còn thiếu thì đặt mặc định
+        // 4) Build payload - THÊM student_id và kiểm tra null
+        String studentIdStr = student.getStudentCode();  // Giả sử getStudentCode() trả về String
+        if (studentIdStr == null || studentIdStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("Student code cannot be null or empty for AI prediction");
+        }
+
         AiPredictPayload payload = new AiPredictPayload(
-                student.getStudentCode(),
+                studentIdStr,  // <-- Gán student_id từ đây
                 gradesMap,
-                95.0,         // ty_le_nop_bai (mặc định)
-                2.0,          // ty_le_nghi_hoc (mặc định)
+                95.0,         // ty_le_nop_bai
+                2.0,          // ty_le_nghi_hoc
                 "Đạt",        // the_duc
                 "Đạt"         // qp_an
         );
 
-        // 5) Lưu AIAnalysisRequest trước (chứa payload JSON)
+        // 5) Lưu AIAnalysisRequest
         AIAnalysisRequest req = new AIAnalysisRequest();
         req.setRequestDate(LocalDateTime.now());
-        req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE); // chọn enum phù hợp
-        JsonNode payloadJson = objectMapper.valueToTree(payload);
-        req.setDataPayload(payloadJson != null ? payloadJson : objectMapper.createObjectNode());
-
+        req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE);
+        try {
+            JsonNode payloadJson = objectMapper.valueToTree(payload);
+            req.setDataPayload(payloadJson != null ? payloadJson : objectMapper.createObjectNode());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert payload to JsonNode", e);
+        }
         req.setStudent(student);
         AIAnalysisRequest savedReq = requestRepository.save(req);
 
-        // 6) Gọi AI service
+        // 6) Gọi AI service - Serialize và kiểm tra body
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         String body;
         try {
-            body = objectMapper.writeValueAsString(payload);
+            body = objectMapper.writeValueAsString(payload);  // Serialize thành JSON string
+            // Log body để debug (xóa sau khi test)
+            System.out.println("Payload JSON sent to AI: " + body);  // Kiểm tra JSON có "student_id": "value" không
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize payload", e);
+            throw new RuntimeException("Failed to serialize payload to JSON", e);
         }
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
@@ -102,11 +111,11 @@ public class AIAnalysisService  {
         try {
             aiResponseEntity = restTemplate.postForEntity(aiServiceUrl, entity, AiPredictResponse.class);
         } catch (Exception ex) {
-            // Nếu lỗi kết nối AI -> bạn có thể tạo AIAnalysisResult với thông báo lỗi để lưu
+            // Xử lý lỗi (như code hiện tại)
             AIAnalysisResult errorResult = new AIAnalysisResult();
             errorResult.setRequestId(savedReq.getRequestId());
             errorResult.setGeneratedAt(LocalDateTime.now());
-            errorResult.setComment("AI service call failed: " + ex.getMessage());
+            errorResult.setComment("AI service call failed: " + ex.getMessage() + ". Payload sent: " + body);  // Thêm body để debug
             return resultRepository.save(errorResult);
         }
 
