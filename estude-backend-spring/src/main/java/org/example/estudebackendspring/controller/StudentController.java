@@ -69,7 +69,7 @@ public class StudentController {
             return ResponseEntity.noContent().build();
         return ResponseEntity.ok(list);
     }
-    @GetMapping("/students/{studentId}/classes")
+    @GetMapping("/{studentId}/classes")
     public ResponseEntity<?> getClassesByStudent(@PathVariable Long studentId ) {
         List<Clazz> classes = studentService.getClassesByStudent(studentId );
         List<ClassDTO> result = classes.stream().map(clazz ->

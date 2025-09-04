@@ -4,8 +4,11 @@ import jakarta.transaction.Transactional;
 import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.enums.AnswerType;
+import org.example.estudebackendspring.enums.QuestionType;
 import org.example.estudebackendspring.enums.SubmissionStatus;
+import org.example.estudebackendspring.exception.LateSubmissionNotAllowedException;
 import org.example.estudebackendspring.exception.ResourceNotFoundException;
+import org.example.estudebackendspring.exception.SubmissionLimitExceededException;
 import org.example.estudebackendspring.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -98,6 +101,105 @@ public class AssignmentSubmissionService {
     }
 
     /* 3) Submit assignment (multipart/form-data: submission JSON + optional files) */
+//    @Transactional
+//    public SubmissionResultDTO submitAssignment(SubmissionRequest req, List<MultipartFile> files) {
+//        // validate
+//        Student student = studentRepository.findById(req.getStudentId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + req.getStudentId()));
+//        Assignment assignment = assignmentRepository.findById(req.getAssignmentId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + req.getAssignmentId()));
+//
+//        // ensure student is enrolled in assignment's class
+//        Long classId = Optional.ofNullable(assignment.getClassSubject())
+//                .map(cs -> cs.getClazz().getClassId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Assignment has no class assigned"));
+//
+//        boolean enrolled = enrollmentRepository.existsByStudentIdAndClassId(student.getUserId(), classId);
+//        if (!enrolled) throw new ResourceNotFoundException("Student is not enrolled in the class for this assignment");
+//
+//        // create submission
+//        Submission sub = new Submission();
+//        sub.setSubmittedAt(LocalDateTime.now());
+//        sub.setAssignment(assignment);
+//        sub.setStudent(student);
+//        sub.setStatus(SubmissionStatus.SUBMITTED);
+//        sub.setContent(req.getContent());
+//
+//        // handle files (example: store filenames as comma-separated) - replace with real storage
+//        if (files != null && !files.isEmpty()) {
+//            String fileNames = files.stream().map(MultipartFile::getOriginalFilename).collect(Collectors.joining(","));
+//            sub.setFileUrl(fileNames);
+//        }
+//
+//        sub = submissionRepository.save(sub);
+//
+//        // process answers and auto-grade option questions
+//        int totalQ = 0;
+//        int correctCount = 0;
+//        float totalScore = 0f;
+//
+//        List<AnswerRequest> answers = req.getAnswers() == null ? Collections.emptyList() : req.getAnswers();
+//
+//        for (AnswerRequest ar : answers) {
+//            totalQ++;
+//            Question q = questionRepository.findById(ar.getQuestionId())
+//                    .orElseThrow(() -> new ResourceNotFoundException("Question not found: " + ar.getQuestionId()));
+//
+//            Answer ans = new Answer();
+//            ans.setSubmission(sub);
+//            ans.setQuestion(q);
+//            ans.setStudentAnswerText(ar.getTextAnswer());
+//            ans.setAnswerType(q.getQuestionType() != null ? mapQuestionTypeToAnswerType(q.getQuestionType()) : null);
+//            // link chosen option if provided
+//            if (ar.getChosenOptionId() != null) {
+//                questionOptionRepository.findById(ar.getChosenOptionId()).ifPresent(ans::setChosenOption);
+//            }
+//            // auto grade for OPTION type
+//            boolean isCorrect = false;
+//            float qScore = 0f;
+//            if (q.getQuestionType() != null && q.getQuestionType().name().equalsIgnoreCase("OPTION")) {
+//                // find chosen option and check .isCorrect
+//                if (ar.getChosenOptionId() != null) {
+//                    QuestionOption opt = questionOptionRepository.findById(ar.getChosenOptionId()).orElse(null);
+//                    if (opt != null && Boolean.TRUE.equals(opt.getIsCorrect())) {
+//                        isCorrect = true;
+//                        qScore = q.getPoints() != null ? q.getPoints() : 0f;
+//                    }
+//                }
+//            }
+//            // TEXT questions cannot be reliably auto-graded without an answer key -> leave isCorrect null/false
+//            ans.setIsCorrect(isCorrect);
+//            ans.setScore(qScore);
+//            ans.setFeedback(isCorrect ? "Correct" : "Pending manual review");
+//            ans = answerRepository.save(ans);
+//
+//            // accumulate
+//            if (isCorrect) correctCount++;
+//            totalScore += qScore;
+//        }
+//
+//        // create grade (auto-graded summary)
+//        Grade grade = new Grade();
+//        grade.setScore(totalScore);
+//        grade.setGradedAt(LocalDateTime.now());
+//        grade.setIsAutoGraded(true);
+//        grade.setAutoGradedFeedback(generateAiFeedbackPlaceholder(correctCount, totalQ));
+//        grade.setSubmission(sub);
+//        grade = gradeRepository.save(grade);
+//
+//        // link and persist submission's grade
+//        sub.setGrade(grade);
+//        sub = submissionRepository.save(sub);
+//
+//        SubmissionResultDTO result = new SubmissionResultDTO();
+//        result.setSubmissionId(sub.getSubmissionId());
+//        result.setCorrectCount(correctCount);
+//        result.setTotalQuestions(totalQ);
+//        result.setScore(totalScore);
+//        result.setAiFeedback(grade.getAutoGradedFeedback());
+//
+//        return result;
+//    }
     @Transactional
     public SubmissionResultDTO submitAssignment(SubmissionRequest req, List<MultipartFile> files) {
         // validate
@@ -114,12 +216,34 @@ public class AssignmentSubmissionService {
         boolean enrolled = enrollmentRepository.existsByStudentIdAndClassId(student.getUserId(), classId);
         if (!enrolled) throw new ResourceNotFoundException("Student is not enrolled in the class for this assignment");
 
+        // ----- NEW: check submission limit -----
+        Integer submissionLimit = assignment.getSubmissionLimit(); // may be null
+        int existingCount = submissionRepository.countByAssignmentAndStudent(assignment, student);
+        if (submissionLimit != null && existingCount >= submissionLimit) {
+            throw new SubmissionLimitExceededException("Submission limit reached for this assignment (limit=" + submissionLimit + ")");
+        }
+
+        // ----- NEW: check due date / late submission -----
+        LocalDateTime now = LocalDateTime.now();
+        boolean isLate = false;
+        if (assignment.getDueDate() != null && now.isAfter(assignment.getDueDate())) {
+            // it's after due date
+            if (assignment.getAllowLateSubmission() == null || Boolean.FALSE.equals(assignment.getAllowLateSubmission())) {
+                throw new LateSubmissionNotAllowedException("Late submission not allowed for this assignment");
+            } else {
+                isLate = true;
+            }
+        }
+
         // create submission
         Submission sub = new Submission();
-        sub.setSubmittedAt(LocalDateTime.now());
+        sub.setSubmittedAt(now);
         sub.setAssignment(assignment);
         sub.setStudent(student);
-        sub.setStatus(SubmissionStatus.SUBMITTED);
+        // set attempt number = existing + 1
+        sub.setAttemptNumber(existingCount + 1);
+        sub.setIsLate(isLate);
+        sub.setStatus(isLate ? SubmissionStatus.LATE : SubmissionStatus.SUBMITTED);
         sub.setContent(req.getContent());
 
         // handle files (example: store filenames as comma-separated) - replace with real storage
@@ -130,13 +254,14 @@ public class AssignmentSubmissionService {
 
         sub = submissionRepository.save(sub);
 
-        // process answers and auto-grade option questions
+        // process answers and auto-grade option questions (existing logic)
         int totalQ = 0;
         int correctCount = 0;
         float totalScore = 0f;
 
         List<AnswerRequest> answers = req.getAnswers() == null ? Collections.emptyList() : req.getAnswers();
 
+        // --- inside the submitAssignment loop over answers ---
         for (AnswerRequest ar : answers) {
             totalQ++;
             Question q = questionRepository.findById(ar.getQuestionId())
@@ -147,33 +272,76 @@ public class AssignmentSubmissionService {
             ans.setQuestion(q);
             ans.setStudentAnswerText(ar.getTextAnswer());
             ans.setAnswerType(q.getQuestionType() != null ? mapQuestionTypeToAnswerType(q.getQuestionType()) : null);
-            // link chosen option if provided
+
+            QuestionOption chosenOpt = null;
             if (ar.getChosenOptionId() != null) {
-                questionOptionRepository.findById(ar.getChosenOptionId()).ifPresent(ans::setChosenOption);
-            }
-            // auto grade for OPTION type
-            boolean isCorrect = false;
-            float qScore = 0f;
-            if (q.getQuestionType() != null && q.getQuestionType().name().equalsIgnoreCase("OPTION")) {
-                // find chosen option and check .isCorrect
-                if (ar.getChosenOptionId() != null) {
-                    QuestionOption opt = questionOptionRepository.findById(ar.getChosenOptionId()).orElse(null);
-                    if (opt != null && Boolean.TRUE.equals(opt.getIsCorrect())) {
-                        isCorrect = true;
-                        qScore = q.getPoints() != null ? q.getPoints() : 0f;
-                    }
+                chosenOpt = questionOptionRepository.findById(ar.getChosenOptionId()).orElse(null);
+                if (chosenOpt != null) {
+                    ans.setChosenOption(chosenOpt);
+                } else {
+                    // optional: log or set feedback that chosen option not found
                 }
             }
-            // TEXT questions cannot be reliably auto-graded without an answer key -> leave isCorrect null/false
+
+            boolean isCorrect = false;
+            float qScore = 0f;
+
+            // Auto-grading for multiple-choice / true-false
+            QuestionType qt = q.getQuestionType();
+            if (qt == QuestionType.MULTIPLE_CHOICE || qt == QuestionType.TRUE_FALSE) {
+                if (chosenOpt != null) {
+                    // ensure chosen option belongs to the question to avoid mismatched ids
+                    if (chosenOpt.getQuestion() != null && Objects.equals(chosenOpt.getQuestion().getQuestionId(), q.getQuestionId())) {
+                        if (Boolean.TRUE.equals(chosenOpt.getIsCorrect())) {
+                            isCorrect = true;
+                            qScore = q.getPoints() != null ? q.getPoints() : 0f;
+                        }
+                    } else {
+                        // mismatch: chosen option doesn't belong to this question
+                        // you can mark as incorrect and set feedback
+                        ans.setFeedback("Chosen option does not belong to question");
+                    }
+                } else {
+                    // no option chosen
+                    ans.setFeedback("No option chosen");
+                }
+            } else if (qt == QuestionType.SHORT_ANSWER) {
+                // Optional: if you have an answer key in Question (e.g. q.getCorrectAnswerText())
+                // implement simple string comparison (case-insensitive) if you store key
+                // Example:
+                // if (q.getCorrectAnswerText()!=null && ar.getTextAnswer()!=null &&
+                //     q.getCorrectAnswerText().trim().equalsIgnoreCase(ar.getTextAnswer().trim())) { ... }
+            } else {
+                // other types (ESSAY, MATCHING) -> leave for manual grading or AI
+            }
+
+            // set fields on answer
             ans.setIsCorrect(isCorrect);
             ans.setScore(qScore);
-            ans.setFeedback(isCorrect ? "Correct" : "Pending manual review");
+            if (ans.getFeedback() == null) {
+                ans.setFeedback(isCorrect ? "Correct" : "Pending manual review");
+            }
+
+            // persist answer
             ans = answerRepository.save(ans);
 
-            // accumulate
             if (isCorrect) correctCount++;
             totalScore += qScore;
         }
+
+
+
+        // ----- APPLY LATE PENALTY IF NEEDED -----
+//        if (Boolean.TRUE.equals(sub.getIsLate()) && assignment.getLatePenalty() != null) {
+//            Float latePenalty = assignment.getLatePenalty();
+//            // If penalty <= 1 => treat as percentage (0.1 = 10% penalty)
+//            if (latePenalty <= 1.0f) {
+//                totalScore = totalScore * (1.0f - latePenalty);
+//            } else {
+//                // If penalty > 1 treat as absolute deduction points
+//                totalScore = Math.max(0f, totalScore - latePenalty);
+//            }
+//        }
 
         // create grade (auto-graded summary)
         Grade grade = new Grade();
@@ -198,14 +366,20 @@ public class AssignmentSubmissionService {
         return result;
     }
 
-    private AnswerType mapQuestionTypeToAnswerType(Enum questionTypeEnum) {
-        // Convert your QuestionType to AnswerType mapping (simple heuristic).
-        // If QuestionType has values like OPTION, TEXT, FILE, map accordingly.
-        String s = questionTypeEnum.name();
-        if (s.equalsIgnoreCase("OPTION")) return AnswerType.OPTION;
-        if (s.equalsIgnoreCase("TEXT") || s.equalsIgnoreCase("ESSAY")) return AnswerType.TEXT;
-        return AnswerType.TEXT;
+    private AnswerType mapQuestionTypeToAnswerType(QuestionType qt) {
+        if (qt == null) return null;
+        switch (qt) {
+            case MULTIPLE_CHOICE:
+            case TRUE_FALSE:
+                return AnswerType.OPTION;
+            case SHORT_ANSWER:
+            case ESSAY:
+                return AnswerType.TEXT;
+            default:
+                return AnswerType.TEXT;
+        }
     }
+
 
     /* 4) Get submission detail */
     public SubmissionDetailDTO getSubmissionDetail(Long submissionId) {

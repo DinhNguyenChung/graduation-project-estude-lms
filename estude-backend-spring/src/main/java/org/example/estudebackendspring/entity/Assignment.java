@@ -42,6 +42,8 @@ public class Assignment {
     private LocalDateTime updatedAt;
     private String answerKeyFileUrl;
     private Boolean isAutoGraded;
+    private Boolean isExam;
+    private LocalDateTime startDate;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id")
