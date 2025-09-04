@@ -1,5 +1,7 @@
 package org.example.estudebackendspring.controller;
 
+import org.example.estudebackendspring.dto.StudentDTO;
+import org.example.estudebackendspring.dto.SubjectDTO;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Teacher;
@@ -43,16 +45,28 @@ public class TeacherController {
         return ResponseEntity.ok(teacherService.getHomeroomStudents(teacherId));
     }
 
-    @GetMapping("/{teacherId}/subjects/{subjectId}/students")
-    public ResponseEntity<List<Student>> getStudentsBySubject(
-            @PathVariable Long teacherId,
-            @PathVariable Long subjectId) {
-        return ResponseEntity.ok(teacherService.getStudentsBySubject(teacherId, subjectId));
-    }
+//    @GetMapping("/{teacherId}/subjects/{subjectId}/students")
+//    public ResponseEntity<List<Student>> getStudentsBySubject(
+//            @PathVariable Long teacherId,
+//            @PathVariable Long subjectId) {
+//        return ResponseEntity.ok(teacherService.getStudentsBySubject(teacherId, subjectId));
+//    }
     @GetMapping("/{teacherId}/class-subjects")
     public ResponseEntity<List<ClassSubject>> getClassSubjectsByTeacher(@PathVariable Long teacherId) {
         List<ClassSubject> classSubjects = classSubjectService.getClassSubjectsByTeacher(teacherId);
         return ResponseEntity.ok(classSubjects);
+    }
+    @GetMapping("/{teacherId}/subjects")
+    public ResponseEntity<List<SubjectDTO>> getSubjectsByTeacher(@PathVariable Long teacherId) {
+        List<SubjectDTO> subjects = teacherService.getSubjectsByTeacher(teacherId);
+        return ResponseEntity.ok(subjects);
+    }
+    @GetMapping("/{teacherId}/subjects/{subjectId}/students")
+    public ResponseEntity<List<StudentDTO>> getStudentsByTeacherAndSubject(
+            @PathVariable Long teacherId,
+            @PathVariable Long subjectId) {
+        List<StudentDTO> students = teacherService.getStudentsByTeacherAndSubject(teacherId, subjectId);
+        return ResponseEntity.ok(students);
     }
 
 }

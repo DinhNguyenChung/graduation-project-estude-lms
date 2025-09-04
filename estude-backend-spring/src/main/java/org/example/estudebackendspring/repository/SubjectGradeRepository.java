@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long> {
 
@@ -21,5 +22,6 @@ public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long
         "JOIN FETCH cs.subject subj " +
         "WHERE cs.classSubjectId = :classSubjectId")
 List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long classSubjectId);
+    Optional<SubjectGrade> findByStudent_UserIdAndClassSubject_ClassSubjectId(Long studentUserId, Long classSubjectId);
 
 }

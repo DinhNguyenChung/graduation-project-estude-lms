@@ -52,56 +52,96 @@ public class AIAnalysisService  {
         Student student = studentRepository.findById(studentUserId)
                 .orElseThrow(() -> new NoSuchElementException("Student not found id=" + studentUserId));
 
-        // 2) Lấy điểm thô từ repository
+        // 2) Lấy điểm thô từ repository (nativeQuery trả List<Object[]>)
         List<Object[]> rows = studentRepository.findGradesByStudentId(studentUserId);
 
-        // 3) Map subject -> score
+        // 3) Kiểm tra predicted_average presence và build gradesMap chỉ từ predicted_average
         Map<String, Double> gradesMap = new HashMap<>();
-        for (Object[] r : rows) {
-            String subjectName = r[3] != null ? r[3].toString() : "UNKNOWN";
-            Double mid = toDouble(r[4]);
-            Double fin = toDouble(r[5]);
-            Double actual = toDouble(r[6]);
-            Double score = actual != null ? actual : (fin != null ? fin : (mid != null ? mid : 0.0));
-            gradesMap.put(subjectName, score);
+        List<String> missingPredictedSubjects = new ArrayList<>();
+
+        if (rows == null || rows.isEmpty()) {
+            missingPredictedSubjects.add("Không tìm thấy bất kỳ điểm nào cho học sinh này.");
+        } else {
+            for (Object[] r : rows) {
+                String subjectName = r[3] != null ? r[3].toString() : "UNKNOWN";
+
+                // predicted_average tại vị trí 9 theo SELECT của bạn
+                Double predicted = toDouble(r[9]);
+
+                if (predicted == null) {
+                    missingPredictedSubjects.add(subjectName);
+                } else {
+                    gradesMap.put(subjectName, predicted);
+                }
+            }
         }
 
-        // 4) Build payload - THÊM student_id và kiểm tra null
-        String studentIdStr = student.getStudentCode();  // Giả sử getStudentCode() trả về String
+        // 4) Build và lưu AIAnalysisRequest (luôn lưu request để trace)
+        AIAnalysisRequest req = new AIAnalysisRequest();
+        req.setRequestDate(LocalDateTime.now());
+        req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE);
+
+        // payload: include studentId and gradesMap (even nếu thiếu predicted, để trace)
+        String studentIdStr = student.getStudentCode();
         if (studentIdStr == null || studentIdStr.trim().isEmpty()) {
             throw new IllegalArgumentException("Student code cannot be null or empty for AI prediction");
         }
 
         AiPredictPayload payload = new AiPredictPayload(
-                studentIdStr,  // <-- Gán student_id từ đây
+                studentIdStr,
                 gradesMap,
-                95.0,         // ty_le_nop_bai
-                2.0,          // ty_le_nghi_hoc
-                "Đạt",        // the_duc
-                "Đạt"         // qp_an
+                95.0,
+                2.0,
+                "Đạt",
+                "Đạt"
         );
 
-        // 5) Lưu AIAnalysisRequest
-        AIAnalysisRequest req = new AIAnalysisRequest();
-        req.setRequestDate(LocalDateTime.now());
-        req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE);
         try {
             JsonNode payloadJson = objectMapper.valueToTree(payload);
             req.setDataPayload(payloadJson != null ? payloadJson : objectMapper.createObjectNode());
         } catch (Exception e) {
             throw new RuntimeException("Failed to convert payload to JsonNode", e);
         }
+
         req.setStudent(student);
         AIAnalysisRequest savedReq = requestRepository.save(req);
 
-        // 6) Gọi AI service - Serialize và kiểm tra body
+        // 5) Nếu có môn thiếu predicted_average -> không gọi AI, trả về result báo lỗi/thiếu
+        if (!missingPredictedSubjects.isEmpty()) {
+            AIAnalysisResult result = new AIAnalysisResult();
+            result.setRequestId(savedReq.getRequestId());
+            result.setGeneratedAt(LocalDateTime.now());
+
+            // Build message tiếng Việt, liệt kê các môn
+            String comment;
+            if (missingPredictedSubjects.size() == 1 && "Không tìm thấy bất kỳ điểm nào cho học sinh này.".equals(missingPredictedSubjects.get(0))) {
+                comment = "Không tìm thấy điểm nào để dự đoán cho học sinh.";
+            } else {
+                comment = "Thiếu điểm predicted_average cho các môn: " +
+                        String.join(", ", missingPredictedSubjects) +
+                        ". Vui lòng tính predicted_average trước khi yêu cầu dự đoán.";
+            }
+
+            result.setComment(comment);
+            // Bạn có thể set other fields null/empty
+            result.setPredictedAverage(null);
+            result.setPredictedPerformance(null);
+            result.setActualPerformance(null);
+            result.setSuggestedActions(null);
+            result.setDetailedAnalysis(null);
+            result.setStatistics(null);
+
+            AIAnalysisResult savedResult = resultRepository.save(result);
+            return savedResult;
+        }
+
+        // 6) Nếu tất cả môn có predicted_average -> tiếp tục gọi AI như bình thường
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         String body;
         try {
-            body = objectMapper.writeValueAsString(payload);  // Serialize thành JSON string
-            // Log body để debug (xóa sau khi test)
-            System.out.println("Payload JSON sent to AI: " + body);  // Kiểm tra JSON có "student_id": "value" không
+            body = objectMapper.writeValueAsString(payload);
+            System.out.println("Payload JSON sent to AI: " + body);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize payload to JSON", e);
         }
@@ -111,90 +151,71 @@ public class AIAnalysisService  {
         try {
             aiResponseEntity = restTemplate.postForEntity(aiServiceUrl, entity, AiPredictResponse.class);
         } catch (Exception ex) {
-            // Xử lý lỗi (như code hiện tại)
             AIAnalysisResult errorResult = new AIAnalysisResult();
             errorResult.setRequestId(savedReq.getRequestId());
             errorResult.setGeneratedAt(LocalDateTime.now());
-            errorResult.setComment("AI service call failed: " + ex.getMessage() + ". Payload sent: " + body);  // Thêm body để debug
+            errorResult.setComment("AI service call failed: " + ex.getMessage() + ". Payload sent: " + body);
             return resultRepository.save(errorResult);
         }
 
         AiPredictResponse aiResp = aiResponseEntity.getBody();
 
-        // 7) Lưu AIAnalysisResult (dùng request_id để liên kết)
+        // 7) Lưu AIAnalysisResult từ response
         AIAnalysisResult result = new AIAnalysisResult();
         result.setRequestId(savedReq.getRequestId());
         if (aiResp != null) {
-            // Trích xuất predicted average từ response một cách an toàn
             Double predictedAvgDouble = null;
             if (aiResp.phan_tich_chi_tiet != null) {
                 try {
-                    // Nếu phan_tich_chi_tiet là Map => cast an toàn
-                    if (aiResp.phan_tich_chi_tiet instanceof Map) {
-                        Object avgValue = ((Map<?, ?>) aiResp.phan_tich_chi_tiet).get("diem_trung_binh");
-                        predictedAvgDouble = parseNumberSafe(avgValue);
-                    } else {
-                        // Thử convert động (nếu là Object khác)
-//                        Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, Map.class);
-                        Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, new TypeReference<Map<String, Object>>() {});
-                        Object avgValue = map.get("diem_trung_binh");
-                        predictedAvgDouble = parseNumberSafe(avgValue);
-                    }
+                    Map<String, Object> map = objectMapper.convertValue(aiResp.phan_tich_chi_tiet, new TypeReference<Map<String, Object>>() {});
+                    Object avgValue = map.get("diem_trung_binh");
+                    predictedAvgDouble = parseNumberSafe(avgValue);
                 } catch (Exception ex) {
                     System.err.println("Error extracting diem_trung_binh: " + ex.getMessage());
                 }
             }
 
-            // Chuyển Double -> Float trước khi set (AIAnalysisResult.predictedAverage là Float)
             result.setPredictedAverage(predictedAvgDouble != null ? predictedAvgDouble.floatValue() : null);
-
             result.setPredictedPerformance(aiResp.du_doan_hoc_luc);
             result.setActualPerformance(aiResp.thuc_te_xep_loai);
             result.setComment(aiResp.goi_y_hanh_dong);
-//            try {
-            result.setSuggestedActions(aiResp.goi_y_chi_tiet != null ?
-                    objectMapper.valueToTree(aiResp.goi_y_chi_tiet) : null);
-
-            result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ?
-                    objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
-
-            result.setStatistics(aiResp.thong_ke != null ?
-                    objectMapper.valueToTree(aiResp.thong_ke) : null);
-//            } catch (JsonProcessingException e) {
-//                System.err.println("Error serializing AI response: " + e.getMessage());
-//                if (result.getComment() == null) {
-//                    result.setComment("Error processing AI response data");
-//                }
-//            }
+            result.setSuggestedActions(aiResp.goi_y_chi_tiet != null ? objectMapper.valueToTree(aiResp.goi_y_chi_tiet) : null);
+            result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ? objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
+            result.setStatistics(aiResp.thong_ke != null ? objectMapper.valueToTree(aiResp.thong_ke) : null);
         } else {
             result.setComment("AI returned null body");
         }
         result.setGeneratedAt(LocalDateTime.now());
         AIAnalysisResult savedResult = resultRepository.save(result);
 
-
-        // 8) (Không cần set request -> mapping đã lưu request_id trên result)
         return savedResult;
     }
 
+    // helper chuyển Object -> Double an toàn (giữ lại hoặc đặt vào class)
     private Double toDouble(Object o) {
         if (o == null) return null;
         if (o instanceof Number) return ((Number) o).doubleValue();
         try {
-            return Double.parseDouble(o.toString());
-        } catch (Exception ex) { return null; }
-    }
-
-    private Double parseNumberSafe(Object o) {
-        if (o == null) return null;
-        if (o instanceof Number) return ((Number) o).doubleValue();
-        try {
-            return Double.parseDouble(o.toString());
+            String s = o.toString().trim();
+            if (s.isEmpty()) return null;
+            return Double.parseDouble(s);
         } catch (Exception ex) {
             return null;
         }
     }
 
+    // helper parse number safe for AI response
+    private Double parseNumberSafe(Object o) {
+        if (o == null) return null;
+        if (o instanceof Number) return ((Number) o).doubleValue();
+        try {
+            String s = o.toString().trim();
+            if (s.isEmpty()) return null;
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     /**
      * Trích xuất giá trị từ một đối tượng phân tích chi tiết từ AI và chuyển đổi thành Map
