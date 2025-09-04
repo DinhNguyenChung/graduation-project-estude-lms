@@ -13,4 +13,6 @@ public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long
     boolean existsByClazzAndSubject(Clazz clazz, Subject subject);
     // Lấy classSubject theo classId
     List<ClassSubject> findByClazz_ClassId(Long classId);
+
+
 }

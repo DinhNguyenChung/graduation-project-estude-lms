@@ -66,4 +66,13 @@ public class SubjectController {
         }
         return ResponseEntity.ok(subjects); // 200
     }
+    @GetMapping("/by-school/{schoolId}")
+    public ResponseEntity<List<Subject>> getSubjectsBySchool(@PathVariable Long schoolId) {
+        List<Subject> subjects = subjectService.getAllSubjectsBySchoolId(schoolId);
+        if (subjects.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204
+        }
+        return ResponseEntity.ok(subjects); // 200
+    }
+
 }

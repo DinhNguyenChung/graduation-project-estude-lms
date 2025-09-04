@@ -1,10 +1,8 @@
 package org.example.estudebackendspring.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.estudebackendspring.dto.AuthResponse;
-import org.example.estudebackendspring.dto.SubmissionDetailDTO;
-import org.example.estudebackendspring.dto.SubmissionRequest;
-import org.example.estudebackendspring.dto.SubmissionResultDTO;
+import org.example.estudebackendspring.dto.*;
+import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.Submission;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.example.estudebackendspring.service.SubmissionService;
@@ -61,5 +59,10 @@ public class SubmissionController {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }
     }
+    @GetMapping("/submissions/{submissionId}/assignment")
+    public ResponseEntity<AssignmentDTO> getAssignmentBySubmission(@PathVariable Long submissionId) {
+        return ResponseEntity.ok(submissionService.getAssignmentBySubmission(submissionId));
+    }
+
 
 }
