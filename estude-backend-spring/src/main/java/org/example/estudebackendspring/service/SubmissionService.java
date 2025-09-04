@@ -23,4 +23,7 @@ public class SubmissionService {
         return submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
     }
+    public List<Submission> getAllSubmissions() {
+        return submissionRepository.findAll();
+    }
 }

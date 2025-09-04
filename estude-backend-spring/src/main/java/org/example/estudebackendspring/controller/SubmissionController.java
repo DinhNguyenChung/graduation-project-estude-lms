@@ -27,6 +27,10 @@ public class SubmissionController {
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.objectMapper = new ObjectMapper();
     }
+    @GetMapping("/submissions")
+    public List<Submission> getSubmissions() {
+        return submissionService.getAllSubmissions();
+    }
     @PostMapping(value = "/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SubmissionResultDTO> submitAssignment(
             @RequestPart("submission") String submissionJson,
@@ -57,4 +61,5 @@ public class SubmissionController {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }
     }
+
 }
