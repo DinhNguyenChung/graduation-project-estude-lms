@@ -23,5 +23,5 @@ public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long
         "WHERE cs.classSubjectId = :classSubjectId")
 List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long classSubjectId);
     Optional<SubjectGrade> findByStudent_UserIdAndClassSubject_ClassSubjectId(Long studentUserId, Long classSubjectId);
-
+    List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
 }

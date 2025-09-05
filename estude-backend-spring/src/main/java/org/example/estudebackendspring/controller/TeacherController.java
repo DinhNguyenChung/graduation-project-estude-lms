@@ -1,12 +1,14 @@
 package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.dto.StudentDTO;
+import org.example.estudebackendspring.dto.StudentGradeResponse;
 import org.example.estudebackendspring.dto.SubjectDTO;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
+import org.example.estudebackendspring.service.TeacherGradeService;
 import org.example.estudebackendspring.service.TeacherService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +25,16 @@ public class TeacherController {
     private final TeacherService teacherService;
     private final ClassSubjectService classSubjectService;
     private final TeacherRepository teacherRepository;
+    private final TeacherGradeService teacherGradeService;
 
-    public TeacherController(TeacherService teacherService, ClassSubjectService classSubjectService, TeacherRepository teacherRepository) {
+    public TeacherController(TeacherService teacherService,
+                             ClassSubjectService classSubjectService,
+                             TeacherRepository teacherRepository
+    , TeacherGradeService teacherGradeService) {
         this.teacherService = teacherService;
         this.classSubjectService = classSubjectService;
         this.teacherRepository = teacherRepository;
+        this.teacherGradeService = teacherGradeService;
     }
     @GetMapping
     public List<Teacher> getAllTeachers() {
@@ -68,5 +75,12 @@ public class TeacherController {
         List<StudentDTO> students = teacherService.getStudentsByTeacherAndSubject(teacherId, subjectId);
         return ResponseEntity.ok(students);
     }
-
+    // GET /api/teacher/grades/{classSubjectId}
+    @GetMapping("/grades/class-subject/{classSubjectId}")
+    public ResponseEntity<List<StudentGradeResponse>> getGrades(
+            @PathVariable Long classSubjectId
+    ) {
+        List<StudentGradeResponse> response = teacherGradeService.getGradesByClassSubject(classSubjectId);
+        return ResponseEntity.ok(response);
+    }
 }
