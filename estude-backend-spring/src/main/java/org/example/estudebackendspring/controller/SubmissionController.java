@@ -68,6 +68,19 @@ public class SubmissionController {
     public ResponseEntity<AssignmentDTO> getAssignmentBySubmission(@PathVariable Long submissionId) {
         return ResponseEntity.ok(submissionService.getAssignmentBySubmission(submissionId));
     }
+    @GetMapping("/submissions/student/{studentId}")
+    public ResponseEntity<?> getSubmissionsByStudent(@PathVariable Long studentId) {
+        List<Submission> submissions = submissionService.getSubmissionsByStudent(studentId);
+        return ResponseEntity.ok(submissions);
+    }
+    // Lấy tất cả submission theo student + assignment
+    @GetMapping("/submissions/student/{studentId}/assignment/{assignmentId}")
+    public ResponseEntity<?> getSubmissionsByStudentAndAssignment(
+            @PathVariable Long studentId,
+            @PathVariable Long assignmentId) {
+        List<Submission> submissions = submissionService.getSubmissionsByStudentAndAssignment(studentId, assignmentId);
+        return ResponseEntity.ok(submissions);
+    }
 
 
 }

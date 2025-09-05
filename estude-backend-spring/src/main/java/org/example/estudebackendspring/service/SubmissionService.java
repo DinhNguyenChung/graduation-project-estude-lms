@@ -87,5 +87,12 @@ public List<SubmissionResponseDTO> getSubmissionsByClassSubject(Long classSubjec
                 a.getDueDate()
         );
     }
+    public List<Submission> getSubmissionsByStudent(Long studentId) {
+        return submissionRepository.findByStudent_userId(studentId);
+    }
+
+    public List<Submission> getSubmissionsByStudentAndAssignment(Long studentId, Long assignmentId) {
+        return submissionRepository.findByStudent_userIdAndAssignment_AssignmentId(studentId, assignmentId);
+    }
 
 }

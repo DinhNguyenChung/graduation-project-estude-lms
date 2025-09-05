@@ -16,6 +16,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     // Nếu cần lấy list để check chi tiết:
     List<Submission> findByAssignmentAndStudentOrderBySubmittedAtDesc(Assignment assignment, Student student);
     Optional<Submission> findBySubmissionId(Long submissionId);
+    // Lấy tất cả submission theo student
+    List<Submission> findByStudent_userId(Long studentId);
 
+    // Lấy tất cả submission theo student và assignment
+    List<Submission> findByStudent_userIdAndAssignment_AssignmentId(Long studentId, Long assignmentId);
 
 }
