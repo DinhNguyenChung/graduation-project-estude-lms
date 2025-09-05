@@ -44,9 +44,14 @@ public class SubmissionController {
 //        return ResponseEntity.ok(dto);
 //    }
 
+//    @GetMapping("/class-subjects/{classSubjectId}/submissions")
+//    public ResponseEntity<?> getSubmissionsByClassSubject(@PathVariable Long classSubjectId) {
+//        List<Submission> submissions = submissionService.getSubmissionsByClassSubject(classSubjectId);
+//        return ResponseEntity.ok(new AuthResponse(true, "Submissions retrieved", submissions));
+//    }
     @GetMapping("/class-subjects/{classSubjectId}/submissions")
     public ResponseEntity<?> getSubmissionsByClassSubject(@PathVariable Long classSubjectId) {
-        List<Submission> submissions = submissionService.getSubmissionsByClassSubject(classSubjectId);
+        List<SubmissionResponseDTO> submissions = submissionService.getSubmissionsByClassSubject(classSubjectId);
         return ResponseEntity.ok(new AuthResponse(true, "Submissions retrieved", submissions));
     }
 
