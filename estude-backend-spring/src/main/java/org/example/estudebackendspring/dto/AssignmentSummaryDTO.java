@@ -15,4 +15,5 @@ public class AssignmentSummaryDTO {
     private LocalDateTime dueDate;
     private Long classId;
     private String className;
+    private Boolean isExam;
 }

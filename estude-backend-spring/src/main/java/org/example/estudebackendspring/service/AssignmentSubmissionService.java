@@ -58,6 +58,7 @@ public class AssignmentSubmissionService {
             dto.setAssignmentId(a.getAssignmentId());
             dto.setTitle(a.getTitle());
             dto.setDueDate(a.getDueDate());
+            dto.setIsExam(a.getIsExam());
             if (a.getClassSubject() != null && a.getClassSubject().getClazz() != null) {
                 dto.setClassId(a.getClassSubject().getClazz().getClassId());
                 dto.setClassName(a.getClassSubject().getClazz().getName());
