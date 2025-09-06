@@ -65,6 +65,7 @@ public class AppConfig {
                         .requestMatchers("/api/classes/**").permitAll()
                         .requestMatchers("/api/enrollments/**").permitAll()
                         .requestMatchers("/api/users/**").permitAll()
+                        .requestMatchers("/api/attendance/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )

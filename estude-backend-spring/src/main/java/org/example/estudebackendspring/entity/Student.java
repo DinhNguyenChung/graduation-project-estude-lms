@@ -44,4 +44,8 @@ public class Student extends User {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<AIAnalysisRequest> analysisRequests;
+
+    public Student(Long userId) {
+        super(userId);
+    }
 }

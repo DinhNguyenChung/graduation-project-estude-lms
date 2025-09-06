@@ -64,4 +64,8 @@ public abstract class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<LogEntry> logEntries;
+
+    public User(Long userId) {
+        this.userId = userId;
+    }
 }

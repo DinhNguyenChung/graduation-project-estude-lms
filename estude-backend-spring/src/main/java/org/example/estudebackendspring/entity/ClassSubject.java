@@ -54,5 +54,5 @@ public class ClassSubject {
     
     @OneToMany(mappedBy = "classSubject", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<AttendanceRecord> attendanceRecords;
+    private List<AttendanceSession> attendanceSessions;
 }

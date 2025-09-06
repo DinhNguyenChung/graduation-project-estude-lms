@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long> {
     // Lấy tất cả môn học mà teacher dạy
@@ -24,6 +25,9 @@ public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long
             "WHERE cs.teacher.userId = :teacherId AND cs.subject.subjectId = :subjectId")
     List<Student> findStudentsByTeacherAndSubject(@Param("teacherId") Long teacherId,
                                                   @Param("subjectId") Long subjectId);
+    // lấy môn lớp học theo mã và teacher
+    Optional<ClassSubject> findByClassSubjectIdAndTeacher_UserId(Long classId, Long teacherId);
+    Optional<ClassSubject> findByClassSubjectId(Long id);
 
 
 }
