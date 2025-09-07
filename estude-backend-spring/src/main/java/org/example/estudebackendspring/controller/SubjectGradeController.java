@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -51,10 +52,8 @@ public class SubjectGradeController {
         if (opt.isPresent()) {
             return ResponseEntity.ok(opt.get());
         } else {
-            Map<String, Object> body = new HashMap<>();
-            body.put("status", HttpStatus.NOT_FOUND.value());
-            body.put("message", "Grade not found for student " + studentId + " and classSubject " + classSubjectId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+            // Trả về mảng rỗng thay vì message + status
+            return ResponseEntity.ok(Collections.emptyList());
         }
     }
 

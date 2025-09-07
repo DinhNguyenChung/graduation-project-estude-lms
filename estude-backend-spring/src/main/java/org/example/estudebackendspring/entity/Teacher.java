@@ -41,7 +41,7 @@ public class Teacher extends User {
     @JsonIgnore
     private List<Assignment> assignments;
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonIgnore
     private List<AttendanceSession> attendanceSessions;
 
     public Teacher(Long userId) {
