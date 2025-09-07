@@ -97,16 +97,22 @@ public class AttendanceService {
 
         // Kiểm tra xem đã có bản ghi điểm danh chưa
         Optional<AttendanceRecord> existingRecord = attendanceRecordRepository.findBySessionSessionIdAndStudent_UserId(sessionId, studentId);
+        AttendanceRecord record;
         if (existingRecord.isPresent()) {
-            throw new IllegalArgumentException("Attendance record already exists for this student in this session");
+            // Cập nhật bản ghi hiện có
+            record = existingRecord.get();
+            record.setStatus(status);
+            record.setTimestamp(LocalDateTime.now());
+//            record.setMethod(AttendanceMethod.BUTTON_PRESS);
+        } else {
+            // Tạo bản ghi mới
+            record = new AttendanceRecord();
+            record.setSession(session);
+            record.setStudent(new Student(studentId));
+            record.setStatus(status);
+            record.setTimestamp(LocalDateTime.now());
+            record.setMethod(AttendanceMethod.BUTTON_PRESS);
         }
-
-        AttendanceRecord record = new AttendanceRecord();
-        record.setSession(session);
-        record.setStudent(new Student(studentId));
-        record.setStatus(status);
-        record.setTimestamp(LocalDateTime.now());
-        record.setMethod(AttendanceMethod.BUTTON_PRESS);
 
         AttendanceRecord savedRecord = attendanceRecordRepository.save(record);
         return toAttendanceRecordDTO(savedRecord);
