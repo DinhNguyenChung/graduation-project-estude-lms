@@ -110,5 +110,14 @@ public class AIAnalysisController {
         JsonNode result = submissionReportService.getStudentSubmission(assignmentId, studentId);
         return ResponseEntity.ok(result);
     }
+    @GetMapping("/student/{studentId}/assignment/{assignmentId}")
+    public ResponseEntity<?> getLatestResult(
+            @PathVariable Long studentId,
+            @PathVariable String assignmentId
+    ) {
+        return aiAnalysisService.getLatestResult(studentId, assignmentId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 
 }

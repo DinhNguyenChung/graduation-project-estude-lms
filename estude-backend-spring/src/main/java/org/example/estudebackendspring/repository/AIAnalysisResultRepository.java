@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResult, Long> {
     @Query(value = """
     SELECT r.result_id, r.predicted_average, r.predicted_performance,
@@ -20,6 +22,19 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
     AIAnalysisResult findLatestResultByStudentId(
             @Param("studentId") Long studentId,
             @Param("analysisType") String analysisType
+    );
+    @Query(value = """
+        SELECT r.* 
+        FROM ai_analysis_results r
+        JOIN ai_analysis_requests req ON r.request_id = req.request_id
+        WHERE req.student_id = :studentId
+          AND (req.data_payload::jsonb ->> 'assignment_id') = :assignmentId
+        ORDER BY req.request_date DESC
+        LIMIT 1
+        """, nativeQuery = true)
+    Optional<AIAnalysisResult> findLatestByStudentAndAssignment(
+            @Param("studentId") Long studentId,
+            @Param("assignmentId") String assignmentId
     );
 
 

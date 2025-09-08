@@ -13,7 +13,7 @@ public interface SubmissionReportRepository extends JpaRepository<Submission, Lo
 
     @Query(value = """
         SELECT CAST(jsonb_build_object(
-            'test_id', a.assignment_id,
+            'assignment_id', a.assignment_id,
             'student_name', u.full_name,
             'subject', sub.name,
             'questions', jsonb_agg(

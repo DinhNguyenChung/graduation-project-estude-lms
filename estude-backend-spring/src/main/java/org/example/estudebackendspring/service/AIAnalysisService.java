@@ -251,4 +251,7 @@ public class AIAnalysisService  {
     public AIAnalysisResult getLatestResultByStudentId(Long studentId,AnalysisType analysisType) {
         return resultRepository.findLatestResultByStudentId(studentId, analysisType.name());
     }
+    public Optional<AIAnalysisResult> getLatestResult(Long studentId, String assignmentId) {
+        return resultRepository.findLatestByStudentAndAssignment(studentId, assignmentId);
+    }
 }

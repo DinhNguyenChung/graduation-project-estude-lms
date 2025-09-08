@@ -78,14 +78,14 @@ public class TestAnalysisService {
         req.setStudent(student);
         req.setDataPayload(payloadNode);
         req = requestRepository.save(req); // lưu để có requestId
-        // Chuẩn hoá payload: đảm bảo test_id là string
+        // Chuẩn hoá payload: đảm bảo assignment_id là string
         if (!payloadNode.isObject()) {
             throw new RuntimeException("Payload is not a JSON object");
         }
         ObjectNode payloadObj = (ObjectNode) payloadNode;
-        if (payloadObj.has("test_id") && payloadObj.get("test_id").isNumber()) {
+        if (payloadObj.has("assignment_id") && payloadObj.get("assignment_id").isNumber()) {
             // convert number -> string (ví dụ 3 -> "3")
-            payloadObj.put("test_id", payloadObj.get("test_id").asText());
+            payloadObj.put("assignment_id", payloadObj.get("assignment_id").asText());
         }
         // 4. gọi AI service (POST JSON)
         JsonNode aiResponse;
