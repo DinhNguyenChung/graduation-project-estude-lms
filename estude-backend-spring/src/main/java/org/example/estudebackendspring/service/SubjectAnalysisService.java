@@ -41,8 +41,11 @@ public class SubjectAnalysisService {
 
         List<SubjectGrade> grades = subjectGradeRepository.findByStudentIdWithSubject(studentId);
 
+        // Tạo payload với cấu trúc {"subjects": {...}}
         ObjectNode payload = objectMapper.createObjectNode();
-        // map subject grades -> payload
+        ObjectNode subjectsNode = objectMapper.createObjectNode();
+
+        // Map subject grades -> payload
         for (SubjectGrade sg : grades) {
             ClassSubject cs = sg.getClassSubject();
             String subjectName = cs != null && cs.getSubject() != null ? cs.getSubject().getName() : "UNKNOWN";
@@ -52,15 +55,23 @@ public class SubjectAnalysisService {
             int idx = 1;
             if (sg.getRegularScores() != null) {
                 for (Float score : sg.getRegularScores()) {
-                    if (score != null) subjectNode.put("diem_" + idx, score);
+                    if (score != null) {
+                        // Sử dụng "tx" thay vì "diem_" để khớp với input AI
+                        subjectNode.put("tx" + idx, score);
+                    }
                     idx++;
                 }
             }
-            if (sg.getMidtermScore() != null) subjectNode.put("diem_gk", sg.getMidtermScore());
-            if (sg.getFinalScore() != null) subjectNode.put("diem_ck", sg.getFinalScore());
+            if (sg.getMidtermScore() != null) {
+                subjectNode.put("gk", sg.getMidtermScore()); // Sử dụng "gk" thay vì "diem_gk"
+            }
+            if (sg.getFinalScore() != null) {
+                subjectNode.put("diem_ck", sg.getFinalScore());
+            }
 
-            payload.set(subjectName, subjectNode);
+            subjectsNode.set(subjectName, subjectNode);
         }
+        payload.set("subjects", subjectsNode);
 
         // Lưu request
         AIAnalysisRequest req = new AIAnalysisRequest();
@@ -69,37 +80,54 @@ public class SubjectAnalysisService {
         req.setStudent(student);
         req.setDataPayload(payload);
         req = requestRepository.save(req);
-        System.out.println("payload: " + payload);
+        log.info("Payload sent to AI: {}", payload);
+
         // Gọi AI
         JsonNode aiResponse;
         try {
             aiResponse = restTemplate.postForObject(AI_URL, payload, JsonNode.class);
-            System.out.println("payload: " + payload);
+            log.info("AI response: {}", aiResponse);
         } catch (RestClientException ex) {
             req.setDataPayload(payload);
             requestRepository.save(req);
             throw new RuntimeException("Call to AI service failed: " + ex.getMessage(), ex);
         }
 
-        // Lưu result (tạm thời)
+        // Xử lý lỗi từ AI
+        if (aiResponse != null && aiResponse.has("success") && !aiResponse.get("success").asBoolean()) {
+            String errorMsg = aiResponse.has("error") ? aiResponse.get("error").asText() : "Unknown AI service error";
+            log.error("AI service returned error: {}. Payload: {}", errorMsg, payload.toString());
+            throw new RuntimeException("AI service error: " + errorMsg);
+        }
+
+        // Lưu result
         AIAnalysisResult result = new AIAnalysisResult();
         result.setDetailedAnalysis(aiResponse);
-        if (aiResponse != null && aiResponse.has("suggested_actions"))
-            result.setSuggestedActions(aiResponse.get("suggested_actions"));
-        if (aiResponse != null && aiResponse.has("statistics"))
-            result.setStatistics(aiResponse.get("statistics"));
+        if (aiResponse != null && aiResponse.has("data")) {
+            JsonNode dataNode = aiResponse.get("data");
+            if (dataNode.has("suggested_actions")) {
+                result.setSuggestedActions(dataNode.get("suggested_actions"));
+            }
+            if (dataNode.has("statistics")) {
+                result.setStatistics(dataNode.get("statistics"));
+            }
+        }
         result.setGeneratedAt(LocalDateTime.now());
         result.setRequestId(req.getRequestId());
         result = resultRepository.save(result);
 
-        // --- MỚI: nếu AI trả dự đoán cho từng môn thì cập nhật SubjectGrade tương ứng ---
-        if (aiResponse != null && aiResponse.isObject()) {
-            // Duyệt các môn trong aiResponse
-            aiResponse.fieldNames().forEachRemaining(subjectKey -> {
-                JsonNode subjNode = aiResponse.get(subjectKey);
-                if (subjNode == null || !subjNode.isObject()) return;
+        // Cập nhật SubjectGrade từ AI response
+        if (aiResponse != null && aiResponse.has("data") && aiResponse.get("data").has("predictions")) {
+            JsonNode predictions = aiResponse.get("data").get("predictions");
 
-                // tìm SubjectGrade tương ứng trong grades list theo tên môn
+            predictions.fieldNames().forEachRemaining(subjectKey -> {
+                JsonNode subjNode = predictions.get(subjectKey);
+                if (subjNode == null || !subjNode.isObject()) {
+                    log.warn("Invalid data for subject: {}. Skipping.", subjectKey);
+                    return;
+                }
+
+                // Tìm SubjectGrade tương ứng
                 SubjectGrade matched = grades.stream()
                         .filter(sg -> {
                             ClassSubject cs = sg.getClassSubject();
@@ -110,25 +138,25 @@ public class SubjectAnalysisService {
                         .orElse(null);
 
                 if (matched == null) {
-                    log.warn("Subject not found: {}", subjectKey);
+                    log.warn("Subject not found in database: {}. Payload: {}", subjectKey, payload.toString());
                     return;
                 }
 
                 try {
                     Float predictedGk = findFirstFloat(subjNode,
-                            "diem_gk_du_doan", "diem_gk_thuc_te", "diem_gk", "diem_gk_du_doan");
+                            "diem_gk_du_doan", "diem_gk_thuc_te", "diem_gk");
                     if (predictedGk != null) {
                         matched.setPredictedMidTerm(predictedGk);
                     }
 
                     Float predictedCk = findFirstFloat(subjNode,
-                            "diem_ck_du_doan", "diem_ck", "diem_cuoi_ki_du_doan");
+                            "diem_ck_du_doan", "diem_ck");
                     if (predictedCk != null) {
                         matched.setPredictedFinal(predictedCk);
                     }
 
                     Float predictedAvg = findFirstFloat(subjNode,
-                            "diem_tb_du_doan", "diem_tb_du_doan", "diem_tb_du_doan");
+                            "diem_tb_du_doan");
                     if (predictedAvg != null) {
                         matched.setPredictedAverage(predictedAvg);
                     }
@@ -142,21 +170,36 @@ public class SubjectAnalysisService {
                 }
             });
 
-            // Lưu tất cả SubjectGrade thay đổi (explicit save để chắc chắn)
+            // Lưu tất cả SubjectGrade thay đổi
             subjectGradeRepository.saveAll(grades);
         }
 
-        // cập nhật request->result liên kết
+        // Cập nhật liên kết request->result
         req.setResult(result);
         requestRepository.save(req);
 
-        // Nếu AI trả một trường global predictedAverage hoặc tương tự, ghi vào AIAnalysisResult.predictedAverage
+        // Xử lý overall predicted average
         Float overallPredicted = null;
-        if (aiResponse != null) {
-            overallPredicted = findFirstFloat(aiResponse, "predicted_average", "overall_predicted_average", "diem_tb_du_doan");
+        if (aiResponse != null && aiResponse.has("data")) {
+            JsonNode dataNode = aiResponse.get("data");
+            overallPredicted = findFirstFloat(dataNode, "predicted_average", "overall_predicted_average", "diem_tb_du_doan");
         }
         if (overallPredicted != null) {
             result.setPredictedAverage(overallPredicted);
+            resultRepository.save(result);
+        }
+
+        // Lưu processed_subjects và total_subjects vào additionalInfo nếu có
+        if (aiResponse != null && aiResponse.has("data")) {
+            JsonNode dataNode = aiResponse.get("data");
+            ObjectNode additionalInfo = objectMapper.createObjectNode();
+            if (dataNode.has("processed_subjects")) {
+                additionalInfo.set("processed_subjects", dataNode.get("processed_subjects"));
+            }
+            if (dataNode.has("total_subjects")) {
+                additionalInfo.put("total_subjects", dataNode.get("total_subjects").asInt());
+            }
+//            result.setAdditionalInfo(additionalInfo);
             resultRepository.save(result);
         }
 
