@@ -13,9 +13,13 @@ import java.time.LocalDateTime;
 public class AttendanceSessionDTO {
     private Long sessionId;
     private Long teacherId;
-    private String teacherCode;
+    private String teacherName;
     private Long classSubjectId;
+    private Long subjectId;
+    private String subjectName;
     private String sessionName;
+    private Long classId;
+    private String className;
     private LocalDateTime createAt;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

@@ -101,6 +101,13 @@ public class AttendanceController {
         List<AttendanceSessionDTO> sessions = attendanceService.getAttendanceSessionsByClassSubjectForTeacher(classSubjectId, teacherId);
         return ResponseEntity.ok(sessions);
     }
+    // lấy all điểm danh của học sinh
+    @GetMapping("/records/student/{studentId}")
+    public ResponseEntity<List<AttendanceRecordDTO>> getAttendanceRecordsByStudent(
+            @PathVariable Long studentId) {
+        List<AttendanceRecordDTO> records = attendanceService.getAttendanceRecordsByStudent(studentId);
+        return ResponseEntity.ok(records);
+    }
 
 }
 

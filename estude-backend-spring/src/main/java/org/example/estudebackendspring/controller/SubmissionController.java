@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -25,10 +26,10 @@ public class SubmissionController {
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.objectMapper = new ObjectMapper();
     }
-    @GetMapping("/submissions")
-    public List<Submission> getSubmissions() {
-        return submissionService.getAllSubmissions();
-    }
+//    @GetMapping("/submissions")
+//    public List<Submission> getSubmissions() {
+//        return submissionService.getAllSubmissions();
+//    }
     @PostMapping(value = "/submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<SubmissionResultDTO> submitAssignment(
             @RequestPart("submission") String submissionJson,
@@ -56,29 +57,41 @@ public class SubmissionController {
     }
 
     @GetMapping("/submissions/{submissionId}")
-    public ResponseEntity<?> getSubmission(@PathVariable Long submissionId) {
+    public ResponseEntity<AuthResponse> getSubmission(@PathVariable Long submissionId) {
         try {
-            Submission submission = submissionService.getSubmission(submissionId);
-            return ResponseEntity.ok(new AuthResponse(true, "Submission retrieved", submission));
+            Optional<SubmissionDTO> submission = submissionService.getSubmission(submissionId);
+            if (submission.isPresent()) {
+                return ResponseEntity.ok(new AuthResponse(true, "Submission retrieved", submission.get()));
+            } else {
+                return ResponseEntity.ok(new AuthResponse(false, "Submission not found", null));
+            }
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }
     }
-    @GetMapping("/submissions/{submissionId}/assignment")
-    public ResponseEntity<AssignmentDTO> getAssignmentBySubmission(@PathVariable Long submissionId) {
-        return ResponseEntity.ok(submissionService.getAssignmentBySubmission(submissionId));
-    }
+
+
+    //    @GetMapping("/submissions/{submissionId}/assignment")
+//    public ResponseEntity<AssignmentDTO> getAssignmentBySubmission(@PathVariable Long submissionId) {
+//        return ResponseEntity.ok(submissionService.getAssignmentBySubmission(submissionId));
+//    }
     @GetMapping("/submissions/student/{studentId}")
-    public ResponseEntity<?> getSubmissionsByStudent(@PathVariable Long studentId) {
-        List<Submission> submissions = submissionService.getSubmissionsByStudent(studentId);
+    public ResponseEntity<List<SubmissionDTO>> getSubmissionsByStudent(@PathVariable Long studentId) {
+        List<SubmissionDTO> submissions = submissionService.getSubmissionsByStudent(studentId);
         return ResponseEntity.ok(submissions);
     }
     // Lấy tất cả submission theo student + assignment
     @GetMapping("/submissions/student/{studentId}/assignment/{assignmentId}")
-    public ResponseEntity<?> getSubmissionsByStudentAndAssignment(
+    public ResponseEntity<List<SubmissionDTO>> getSubmissionsByStudentAndAssignment(
             @PathVariable Long studentId,
             @PathVariable Long assignmentId) {
-        List<Submission> submissions = submissionService.getSubmissionsByStudentAndAssignment(studentId, assignmentId);
+        if (studentId == null || studentId <= 0 || assignmentId == null || assignmentId <= 0) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        List<SubmissionDTO> submissions = submissionService.getSubmissionsByStudentAndAssignment(studentId, assignmentId);
+        if (submissions.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(submissions);
     }
 

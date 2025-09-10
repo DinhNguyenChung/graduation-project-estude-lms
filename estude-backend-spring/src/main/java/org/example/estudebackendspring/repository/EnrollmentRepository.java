@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.repository;
 
+import org.example.estudebackendspring.entity.AttendanceRecord;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.Student;
@@ -26,6 +27,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     boolean existsByClazz_ClassIdAndStudent_UserId(Long classId, Long studentId);
     List<Enrollment> findByClazzClassId(Long classId);
+
+
 
 
 }

@@ -4,6 +4,7 @@ import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Submission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,5 +22,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     // Lấy tất cả submission theo student và assignment
     List<Submission> findByStudent_userIdAndAssignment_AssignmentId(Long studentId, Long assignmentId);
+
 
 }

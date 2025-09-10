@@ -138,14 +138,14 @@ public class AttendanceService {
 
     // Học sinh thực hiện điểm danh
     @Transactional
-    public AttendanceRecordDTO markAttendanceByStudent(Long sessionId, Long studentId,AttendanceMethod method, Double gpsLatitude, Double gpsLongitude) {
+    public AttendanceRecordDTO markAttendanceByStudent(Long sessionId, Long studentId, AttendanceMethod method, Double gpsLatitude, Double gpsLongitude) {
         AttendanceSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh này"));
 
         // Kiểm tra thời gian điểm danh
         LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(session.getStartTime()) || now.isAfter(session.getEndTime())) {
-            throw new IllegalArgumentException("Không được phép điểm danh ngoài thời gian cho phép");
+        if (now.isBefore(session.getStartTime())) {
+            throw new IllegalArgumentException("Không được phép điểm danh trước thời gian bắt đầu");
         }
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
@@ -172,13 +172,11 @@ public class AttendanceService {
             }
         }
 
-
         AttendanceRecord record = new AttendanceRecord();
         record.setSession(session);
         record.setStudent(new Student(studentId));
-//        record.setStatus(AttendanceStatus.PRESENT);
-        long minutesLate = Duration.between(session.getStartTime(), now).toMinutes();
-        if (minutesLate > 15) { // Muộn quá 15 phút
+        // Gán trạng thái dựa trên thời gian
+        if (now.isAfter(session.getEndTime())) {
             record.setStatus(AttendanceStatus.LATE);
         } else {
             record.setStatus(AttendanceStatus.PRESENT);
@@ -240,12 +238,30 @@ public class AttendanceService {
                 .map(session -> toAttendanceSessionDTO(session, null))
                 .collect(Collectors.toList());
     }
+    public List<AttendanceRecordDTO> getAttendanceRecordsByStudent(Long studentId) {
+        // Kiểm tra học sinh có tồn tại và thuộc ít nhất một lớp
+        boolean isEnrolled = attendanceRecordRepository.findByStudent_UserId(studentId).stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
+        if (!isEnrolled) {
+            throw new IllegalArgumentException("Học sinh không tồn tại hoặc không thuộc lớp nào");
+        }
+
+        // Lấy danh sách bản ghi điểm danh của học sinh
+        return attendanceRecordRepository.findByStudent_UserId(studentId)
+                .stream()
+                .map(this::toAttendanceRecordDTO)
+                .collect(Collectors.toList());
+    }
     // Chuyển đổi AttendanceSession thành DTO
     private AttendanceSessionDTO toAttendanceSessionDTO(AttendanceSession session, Long studentId) {
         AttendanceSessionDTO dto = new AttendanceSessionDTO();
         dto.setSessionId(session.getSessionId());
         dto.setTeacherId(session.getTeacher().getUserId());
-        dto.setTeacherCode(session.getTeacher().getTeacherCode());
+        dto.setTeacherId(session.getTeacher().getUserId());
+        dto.setTeacherName(session.getTeacher().getFullName());
+        dto.setSubjectId(session.getClassSubject().getSubject().getSubjectId());
+        dto.setSubjectName(session.getClassSubject().getSubject().getName());
+        dto.setClassId(session.getClassSubject().getClazz().getClassId());
+        dto.setClassName(session.getClassSubject().getClazz().getName());
         dto.setClassSubjectId(session.getClassSubject().getClassSubjectId());
         dto.setSessionName(session.getSessionName());
         dto.setCreateAt(session.getCreateAt());
@@ -267,8 +283,15 @@ public class AttendanceService {
         AttendanceRecordDTO dto = new AttendanceRecordDTO();
         dto.setAttendanceId(record.getAttendanceId());
         dto.setSessionId(record.getSession().getSessionId());
+        dto.setSessionName(record.getSession().getSessionName());
         dto.setStudentId(record.getStudent().getUserId());
-        dto.setStudentCode(record.getStudent().getStudentCode());
+        dto.setTeacherId(record.getSession().getTeacher().getUserId());
+        dto.setTeacherName(record.getSession().getTeacher().getFullName());
+        dto.setClassId(record.getSession().getClassSubject().getClassSubjectId());
+        dto.setClassSubjectId(record.getSession().getClassSubject().getClassSubjectId());
+        dto.setSubjectId(record.getSession().getClassSubject().getSubject().getSubjectId());
+        dto.setClassName(record.getSession().getClassSubject().getClazz().getName());
+        dto.setSubjectName(record.getSession().getClassSubject().getSubject().getName());
         dto.setMethod(record.getMethod());
         dto.setGpsLatitude(record.getGpsLatitude());
         dto.setGpsLongitude(record.getGpsLongitude());

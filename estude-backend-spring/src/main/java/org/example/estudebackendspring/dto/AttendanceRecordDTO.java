@@ -14,13 +14,20 @@ import java.time.LocalDateTime;
 public class AttendanceRecordDTO {
     private Long attendanceId;
     private Long sessionId;
+    private String sessionName; // Tên buổi điểm danh
     private Long studentId;
-    private String studentCode;
+//    private String studentCode;
+    private Long teacherId; // Mã giáo viên
+    private String teacherName;
+    private Long classId;
+    private String className; // Tên lớp
+    private Long classSubjectId;
+    private Long subjectId;
+    private String subjectName; // Tên môn học
     private AttendanceMethod method;
     private Double gpsLatitude;
     private Double gpsLongitude;
     private AttendanceStatus status;
     private LocalDateTime timestamp;
-
 }
 
