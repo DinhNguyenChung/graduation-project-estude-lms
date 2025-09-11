@@ -49,17 +49,17 @@ public class AdminService {
 public Student createStudent(Long schoolId, String studentCode, String fullName,
                              String email, String phone, String password, Date dob) {
     School school = schoolRepository.findById(schoolId)
-            .orElseThrow(() -> new RuntimeException("School not found"));
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy trường học"));
 
     // Kiểm tra trùng dữ liệu
     if (studentRepository.existsByStudentCode(studentCode)) {
-        throw new DuplicateResourceException("Student code already exists: " + studentCode);
+        throw new DuplicateResourceException("Mã sinh viên đã tồn tại: " + studentCode);
     }
     if (studentRepository.existsByEmail(email)) {
-        throw new DuplicateResourceException("Email already exists: " + email);
+        throw new DuplicateResourceException("Email đã tồn tại: " + email);
     }
     if (studentRepository.existsByNumberPhone(phone)) {
-        throw new DuplicateResourceException("Phone number already exists: " + phone);
+        throw new DuplicateResourceException("Số điện thoại đã tồn tại: " + phone);
     }
 
     Student student = new Student();
@@ -98,16 +98,16 @@ public Teacher createTeacher(Long schoolId, String teacherCode, String fullName,
                              String email, String phone, String password, Date dob,
                              boolean isAdmin, boolean isHomeroomTeacher) {
     School school = schoolRepository.findById(schoolId)
-            .orElseThrow(() -> new RuntimeException("School not found"));
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy trường học"));
 
     if (teacherRepository.existsByTeacherCode(teacherCode)) {
-        throw new DuplicateResourceException("Teacher code already exists: " + teacherCode);
+        throw new DuplicateResourceException("Mã giáo viên đã tồn tại: " + teacherCode);
     }
     if (teacherRepository.existsByEmail(email)) {
-        throw new DuplicateResourceException("Email already exists: " + email);
+        throw new DuplicateResourceException("Email đã tồn tại: " + email);
     }
     if (teacherRepository.existsByNumberPhone(phone)) {
-        throw new DuplicateResourceException("Phone number already exists: " + phone);
+        throw new DuplicateResourceException("Số điện thoại đã tồn tại: " + phone);
     }
 
     Teacher teacher = new Teacher();

@@ -32,14 +32,14 @@ public class AIAnalysisController {
         response.put("timestamp", java.time.LocalDateTime.now());
         return ResponseEntity.ok(response);
     }
-    public static record PredictReq(Long studentId) {}
+//    public static record PredictReq(Long studentId) {}
     // Dự đoán học kỳ
-    @PostMapping("/predict-semeter")
-    public ResponseEntity<?> analyzePredict(@RequestBody PredictReq body) {
-        if (body == null || body.studentId() == null) {
-            return ResponseEntity.badRequest().body("studentId is required");
-        }
-        var result = aiAnalysisService.analyzePredict(body.studentId());
+    @GetMapping("/student/{studentId}/predict-semeter")
+    public ResponseEntity<?> analyzePredict(@PathVariable Long studentId) {
+//        if (body == null || body.studentId() == null) {
+//            return ResponseEntity.badRequest().body("studentId is required");
+//        }
+        var result = aiAnalysisService.analyzePredict(studentId);
         return ResponseEntity.ok(result);
     }
     // Lấy kết quả dự đoán học kỳ mới nhất

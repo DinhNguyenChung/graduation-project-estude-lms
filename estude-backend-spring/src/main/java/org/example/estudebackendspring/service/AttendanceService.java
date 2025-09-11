@@ -40,11 +40,11 @@ public class AttendanceService {
     @Transactional
     public AttendanceSessionDTO createAttendanceSession(Long teacherId, Long classSubjectId, String sessionName, LocalDateTime startTime, LocalDateTime endTime, Double gpsLatitude, Double gpsLongitude) {
         ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
-                .orElseThrow(() -> new IllegalArgumentException("ClassSubject not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ClassSubject"));
 
         // Kiểm tra giáo viên có quyền tạo điểm danh cho môn học này
         if (!classSubject.getTeacher().getUserId().equals(teacherId)) {
-            throw new IllegalArgumentException("Teacher is not authorized for this ClassSubject");
+            throw new IllegalArgumentException("Giáo viên không có quyền cho môn học này");
         }
 
         AttendanceSession session = new AttendanceSession();
@@ -64,11 +64,11 @@ public class AttendanceService {
     // Giáo viên xem danh sách học sinh đã điểm danh
     public List<AttendanceRecordDTO> getAttendanceRecordsBySession(Long sessionId, Long teacherId) {
         AttendanceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("AttendanceSession not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh này"));
 
         // Kiểm tra quyền của giáo viên
         if (!session.getTeacher().getUserId().equals(teacherId)) {
-            throw new IllegalArgumentException("Teacher is not authorized for this session");
+            throw new IllegalArgumentException("Giáo viên không được phép xem buổi điểm danh này");
         }
 
         return attendanceRecordRepository.findBySessionSessionId(sessionId)
@@ -81,18 +81,18 @@ public class AttendanceService {
     @Transactional
     public AttendanceRecordDTO markAttendanceByTeacher(Long sessionId, Long studentId, Long teacherId, AttendanceStatus status) {
         AttendanceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("AttendanceSession not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh"));
 
         // Kiểm tra quyền của giáo viên
         if (!session.getTeacher().getUserId().equals(teacherId)) {
-            throw new IllegalArgumentException("Teacher is not authorized for this session");
+            throw new IllegalArgumentException("Giáo viên không được phép tham gia buổi điểm danh này");
         }
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
         boolean isEnrolled = enrollmentRepository.findByClazzClassId(session.getClassSubject().getClazz().getClassId())
                 .stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
         if (!isEnrolled) {
-            throw new IllegalArgumentException("Student is not enrolled in this Class");
+            throw new IllegalArgumentException("Học sinh không được ghi danh vào Lớp này");
         }
 
         // Kiểm tra xem đã có bản ghi điểm danh chưa
@@ -192,11 +192,11 @@ public class AttendanceService {
     // Giáo viên xem danh sách học sinh và trạng thái điểm danh trong một buổi điểm danh
     public List<StudentAttendanceDTO> getStudentAttendanceList(Long sessionId, Long teacherId) {
         AttendanceSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("AttendanceSession not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh"));
 
         // Kiểm tra quyền của giáo viên
         if (!session.getTeacher().getUserId().equals(teacherId)) {
-            throw new IllegalArgumentException("Teacher is not authorized for this session");
+            throw new IllegalArgumentException("Giáo viên không được phép tham gia buổi học này");
         }
 
         // Lấy danh sách học sinh từ Enrollment của Clazz
@@ -226,11 +226,11 @@ public class AttendanceService {
     // Giáo viên xem danh sách buổi điểm danh theo ClassSubject
     public List<AttendanceSessionDTO> getAttendanceSessionsByClassSubjectForTeacher(Long classSubjectId, Long teacherId) {
         ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
-                .orElseThrow(() -> new IllegalArgumentException("ClassSubject not found"));
+                .orElseThrow(() -> new IllegalArgumentException("ClassSubject không tìm thấy"));
 
         // Kiểm tra quyền của giáo viên
         if (!classSubject.getTeacher().getUserId().equals(teacherId)) {
-            throw new IllegalArgumentException("Teacher is not authorized for this ClassSubject");
+            throw new IllegalArgumentException("Giáo viên không được phép cho Lớp học này");
         }
 
         return sessionRepository.findByClassSubjectClassSubjectId(classSubjectId)

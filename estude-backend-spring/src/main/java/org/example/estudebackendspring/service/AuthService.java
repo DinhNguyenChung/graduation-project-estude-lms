@@ -78,7 +78,7 @@ public class AuthService {
     @Transactional
     public void initiateForgotPassword(String email) {
         if (email == null || email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email là bắt buộc");
         }
 
         email = email.trim();
@@ -90,7 +90,7 @@ public class AuthService {
 
         if (student == null && teacher == null && admin == null) {
             // Nếu bạn muốn tránh leak user existence, có thể return 200 OK tại đây thay vì throw error
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không tìm thấy người dùng");
         }
 
         Object user = (student != null) ? student : (teacher != null ? teacher : admin);
@@ -99,7 +99,7 @@ public class AuthService {
         Optional<PasswordResetToken> last = tokenRepository.findLatestActiveByEmailOrPhone(email);
         if (last.isPresent() && !last.get().isUsed() &&
                 last.get().getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(MIN_SECONDS_BETWEEN_REQUESTS))) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Please wait before requesting another OTP");
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Vui lòng đợi trước khi yêu cầu OTP khác");
         }
 
         // tạo OTP 6 chữ số

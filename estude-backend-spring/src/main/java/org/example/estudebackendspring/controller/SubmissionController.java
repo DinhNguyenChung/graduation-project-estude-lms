@@ -90,8 +90,9 @@ public class SubmissionController {
         }
         List<SubmissionDTO> submissions = submissionService.getSubmissionsByStudentAndAssignment(studentId, assignmentId);
         if (submissions.isEmpty()) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(Collections.emptyList());
         }
+
         return ResponseEntity.ok(submissions);
     }
 

@@ -70,7 +70,7 @@ public class AssignmentSubmissionService {
     /* 2) Assignment detail */
     public AssignmentDetailDTO getAssignmentDetail(Long assignmentId) {
         Assignment a = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + assignmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài tập: " + assignmentId));
 
         AssignmentDetailDTO dto = new AssignmentDetailDTO();
         dto.setAssignmentId(a.getAssignmentId());
@@ -102,126 +102,27 @@ public class AssignmentSubmissionService {
     }
 
     /* 3) Submit assignment (multipart/form-data: submission JSON + optional files) */
-//    @Transactional
-//    public SubmissionResultDTO submitAssignment(SubmissionRequest req, List<MultipartFile> files) {
-//        // validate
-//        Student student = studentRepository.findById(req.getStudentId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + req.getStudentId()));
-//        Assignment assignment = assignmentRepository.findById(req.getAssignmentId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + req.getAssignmentId()));
-//
-//        // ensure student is enrolled in assignment's class
-//        Long classId = Optional.ofNullable(assignment.getClassSubject())
-//                .map(cs -> cs.getClazz().getClassId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Assignment has no class assigned"));
-//
-//        boolean enrolled = enrollmentRepository.existsByStudentIdAndClassId(student.getUserId(), classId);
-//        if (!enrolled) throw new ResourceNotFoundException("Student is not enrolled in the class for this assignment");
-//
-//        // create submission
-//        Submission sub = new Submission();
-//        sub.setSubmittedAt(LocalDateTime.now());
-//        sub.setAssignment(assignment);
-//        sub.setStudent(student);
-//        sub.setStatus(SubmissionStatus.SUBMITTED);
-//        sub.setContent(req.getContent());
-//
-//        // handle files (example: store filenames as comma-separated) - replace with real storage
-//        if (files != null && !files.isEmpty()) {
-//            String fileNames = files.stream().map(MultipartFile::getOriginalFilename).collect(Collectors.joining(","));
-//            sub.setFileUrl(fileNames);
-//        }
-//
-//        sub = submissionRepository.save(sub);
-//
-//        // process answers and auto-grade option questions
-//        int totalQ = 0;
-//        int correctCount = 0;
-//        float totalScore = 0f;
-//
-//        List<AnswerRequest> answers = req.getAnswers() == null ? Collections.emptyList() : req.getAnswers();
-//
-//        for (AnswerRequest ar : answers) {
-//            totalQ++;
-//            Question q = questionRepository.findById(ar.getQuestionId())
-//                    .orElseThrow(() -> new ResourceNotFoundException("Question not found: " + ar.getQuestionId()));
-//
-//            Answer ans = new Answer();
-//            ans.setSubmission(sub);
-//            ans.setQuestion(q);
-//            ans.setStudentAnswerText(ar.getTextAnswer());
-//            ans.setAnswerType(q.getQuestionType() != null ? mapQuestionTypeToAnswerType(q.getQuestionType()) : null);
-//            // link chosen option if provided
-//            if (ar.getChosenOptionId() != null) {
-//                questionOptionRepository.findById(ar.getChosenOptionId()).ifPresent(ans::setChosenOption);
-//            }
-//            // auto grade for OPTION type
-//            boolean isCorrect = false;
-//            float qScore = 0f;
-//            if (q.getQuestionType() != null && q.getQuestionType().name().equalsIgnoreCase("OPTION")) {
-//                // find chosen option and check .isCorrect
-//                if (ar.getChosenOptionId() != null) {
-//                    QuestionOption opt = questionOptionRepository.findById(ar.getChosenOptionId()).orElse(null);
-//                    if (opt != null && Boolean.TRUE.equals(opt.getIsCorrect())) {
-//                        isCorrect = true;
-//                        qScore = q.getPoints() != null ? q.getPoints() : 0f;
-//                    }
-//                }
-//            }
-//            // TEXT questions cannot be reliably auto-graded without an answer key -> leave isCorrect null/false
-//            ans.setIsCorrect(isCorrect);
-//            ans.setScore(qScore);
-//            ans.setFeedback(isCorrect ? "Correct" : "Pending manual review");
-//            ans = answerRepository.save(ans);
-//
-//            // accumulate
-//            if (isCorrect) correctCount++;
-//            totalScore += qScore;
-//        }
-//
-//        // create grade (auto-graded summary)
-//        Grade grade = new Grade();
-//        grade.setScore(totalScore);
-//        grade.setGradedAt(LocalDateTime.now());
-//        grade.setIsAutoGraded(true);
-//        grade.setAutoGradedFeedback(generateAiFeedbackPlaceholder(correctCount, totalQ));
-//        grade.setSubmission(sub);
-//        grade = gradeRepository.save(grade);
-//
-//        // link and persist submission's grade
-//        sub.setGrade(grade);
-//        sub = submissionRepository.save(sub);
-//
-//        SubmissionResultDTO result = new SubmissionResultDTO();
-//        result.setSubmissionId(sub.getSubmissionId());
-//        result.setCorrectCount(correctCount);
-//        result.setTotalQuestions(totalQ);
-//        result.setScore(totalScore);
-//        result.setAiFeedback(grade.getAutoGradedFeedback());
-//
-//        return result;
-//    }
     @Transactional
     public SubmissionResultDTO submitAssignment(SubmissionRequest req, List<MultipartFile> files) {
         // validate
         Student student = studentRepository.findById(req.getStudentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + req.getStudentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy học sinh: " + req.getStudentId()));
         Assignment assignment = assignmentRepository.findById(req.getAssignmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + req.getAssignmentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài tập: " + req.getAssignmentId()));
 
         // ensure student is enrolled in assignment's class
         Long classId = Optional.ofNullable(assignment.getClassSubject())
                 .map(cs -> cs.getClazz().getClassId())
-                .orElseThrow(() -> new ResourceNotFoundException("Assignment has no class assigned"));
+                .orElseThrow(() -> new ResourceNotFoundException("Bài tập không có lớp nào được chỉ định"));
 
         boolean enrolled = enrollmentRepository.existsByStudentIdAndClassId(student.getUserId(), classId);
-        if (!enrolled) throw new ResourceNotFoundException("Student is not enrolled in the class for this assignment");
+        if (!enrolled) throw new ResourceNotFoundException("Học sinh không được đăng ký vào lớp cho bài tập này");
 
         // ----- NEW: check submission limit -----
         Integer submissionLimit = assignment.getSubmissionLimit(); // may be null
         int existingCount = submissionRepository.countByAssignmentAndStudent(assignment, student);
         if (submissionLimit != null && existingCount >= submissionLimit) {
-            throw new SubmissionLimitExceededException("Submission limit reached for this assignment (limit=" + submissionLimit + ")");
+            throw new SubmissionLimitExceededException("Đã đạt đến giới hạn nộp bài tập này (giới hạn=" + submissionLimit + ")");
         }
 
         // ----- NEW: check due date / late submission -----
@@ -230,7 +131,7 @@ public class AssignmentSubmissionService {
         if (assignment.getDueDate() != null && now.isAfter(assignment.getDueDate())) {
             // it's after due date
             if (assignment.getAllowLateSubmission() == null || Boolean.FALSE.equals(assignment.getAllowLateSubmission())) {
-                throw new LateSubmissionNotAllowedException("Late submission not allowed for this assignment");
+                throw new LateSubmissionNotAllowedException("Không được nộp bài tập này muộn");
             } else {
                 isLate = true;
             }
@@ -266,7 +167,7 @@ public class AssignmentSubmissionService {
         for (AnswerRequest ar : answers) {
             totalQ++;
             Question q = questionRepository.findById(ar.getQuestionId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Question not found: " + ar.getQuestionId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy câu hỏi: " + ar.getQuestionId()));
 
             Answer ans = new Answer();
             ans.setSubmission(sub);
@@ -300,11 +201,11 @@ public class AssignmentSubmissionService {
                     } else {
                         // mismatch: chosen option doesn't belong to this question
                         // you can mark as incorrect and set feedback
-                        ans.setFeedback("Chosen option does not belong to question");
+                        ans.setFeedback("Đáp án đã chọn không thuộc về câu hỏi");
                     }
                 } else {
                     // no option chosen
-                    ans.setFeedback("No option chosen");
+                    ans.setFeedback("Không có đáp án nào được chọn");
                 }
             } else if (qt == QuestionType.SHORT_ANSWER) {
                 // Optional: if you have an answer key in Question (e.g. q.getCorrectAnswerText())
@@ -385,7 +286,7 @@ public class AssignmentSubmissionService {
     /* 4) Get submission detail */
     public SubmissionDetailDTO getSubmissionDetail(Long submissionId) {
         Submission sub = submissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Submission not found: " + submissionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bài nộp: " + submissionId));
 
         SubmissionDetailDTO dto = new SubmissionDetailDTO();
         dto.setSubmissionId(sub.getSubmissionId());
@@ -410,7 +311,7 @@ public class AssignmentSubmissionService {
     }
 
     private String generateAiFeedbackPlaceholder(int correctCount, int total) {
-        if (total == 0) return "No questions to grade.";
+        if (total == 0) return "Không có câu hỏi nào để chấm điểm.";
         float pct = 100f * correctCount / total;
         return String.format("Bạn trả lời đúng %d/%d (%.1f%%). Xem phần giải thích để cải thiện.", correctCount, total, pct);
     }

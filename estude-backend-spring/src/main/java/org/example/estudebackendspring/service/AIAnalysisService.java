@@ -2,10 +2,13 @@ package org.example.estudebackendspring.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import org.example.estudebackendspring.dto.AiPredictPayload;
 import org.example.estudebackendspring.dto.AiPredictResponse;
+import org.example.estudebackendspring.dto.AiPredictResponseWrapper;
 import org.example.estudebackendspring.entity.AIAnalysisRequest;
 import org.example.estudebackendspring.entity.AIAnalysisResult;
 import org.example.estudebackendspring.entity.Student;
@@ -50,13 +53,13 @@ public class AIAnalysisService  {
     public AIAnalysisResult analyzePredict(Long studentUserId) {
         // 1) Lấy student
         Student student = studentRepository.findById(studentUserId)
-                .orElseThrow(() -> new NoSuchElementException("Student not found id=" + studentUserId));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy ID sinh viên: " + studentUserId));
 
         // 2) Lấy điểm thô từ repository (nativeQuery trả List<Object[]>)
         List<Object[]> rows = studentRepository.findGradesByStudentId(studentUserId);
 
         // 3) Kiểm tra predicted_average presence và build gradesMap chỉ từ predicted_average
-        Map<String, Double> gradesMap = new HashMap<>();
+        Map<String, Float> gradesMap = new HashMap<>();
         List<String> missingPredictedSubjects = new ArrayList<>();
 
         if (rows == null || rows.isEmpty()) {
@@ -66,8 +69,9 @@ public class AIAnalysisService  {
                 String subjectName = r[3] != null ? r[3].toString() : "UNKNOWN";
 
                 // predicted_average tại vị trí 9 theo SELECT của bạn
-                Double predicted = toDouble(r[9]);
-
+//                Double predicted = toDouble(r[9]);
+                Float predicted = Float.parseFloat(r[9]!=null ? r[9].toString() : null);
+//                System.out.println("Raw predicted_average for " + subjectName + ": " + r[9] + ", type: " + (r[9] != null ? r[9].getClass().getName() : "null") + ", converted: " + predicted);
                 if (predicted == null) {
                     missingPredictedSubjects.add(subjectName);
                 } else {
@@ -82,9 +86,9 @@ public class AIAnalysisService  {
         req.setAnalysisType(AnalysisType.PREDICT_SEMESTER_PERFORMANCE);
 
         // payload: include studentId and gradesMap (even nếu thiếu predicted, để trace)
-        String studentIdStr = student.getStudentCode();
-        if (studentIdStr == null || studentIdStr.trim().isEmpty()) {
-            throw new IllegalArgumentException("Student code cannot be null or empty for AI prediction");
+        String studentIdStr = student.getUserId().toString();
+        if (studentIdStr == null || studentIdStr.trim().isEmpty() ) {
+            throw new IllegalArgumentException("Id sinh viên không thể để trống hoặc null để dự đoán AI");
         }
 
         AiPredictPayload payload = new AiPredictPayload(
@@ -100,7 +104,7 @@ public class AIAnalysisService  {
             JsonNode payloadJson = objectMapper.valueToTree(payload);
             req.setDataPayload(payloadJson != null ? payloadJson : objectMapper.createObjectNode());
         } catch (Exception e) {
-            throw new RuntimeException("Failed to convert payload to JsonNode", e);
+            throw new RuntimeException("Không thể chuyển đổi payload thành JsonNode", e);
         }
 
         req.setStudent(student);
@@ -141,24 +145,55 @@ public class AIAnalysisService  {
         String body;
         try {
             body = objectMapper.writeValueAsString(payload);
-            System.out.println("Payload JSON sent to AI: " + body);
+            System.out.println("Tải trọng JSON được gửi đến AI: " + body);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize payload to JSON", e);
+            throw new RuntimeException("Không thể tuần tự hóa tải trọng thành JSON", e);
         }
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
 
-        ResponseEntity<AiPredictResponse> aiResponseEntity;
+        // Gửi resp cho AI
+        ResponseEntity<String> resp;
+        String rawBody;
         try {
-            aiResponseEntity = restTemplate.postForEntity(aiServiceUrl, entity, AiPredictResponse.class);
+            resp = restTemplate.postForEntity(aiServiceUrl, entity, String.class);
+            rawBody = resp.getBody();
+            System.out.println("RAW AI response: " + rawBody);
         } catch (Exception ex) {
             AIAnalysisResult errorResult = new AIAnalysisResult();
             errorResult.setRequestId(savedReq.getRequestId());
             errorResult.setGeneratedAt(LocalDateTime.now());
-            errorResult.setComment("AI service call failed: " + ex.getMessage() + ". Payload sent: " + body);
+            errorResult.setComment("Gọi Service AI không thành công: " + ex.getMessage() + ". Payload đã gửi: " + body);
             return resultRepository.save(errorResult);
         }
 
-        AiPredictResponse aiResp = aiResponseEntity.getBody();
+        if (rawBody == null || rawBody.isBlank()) {
+            AIAnalysisResult errorResult = new AIAnalysisResult();
+            errorResult.setRequestId(savedReq.getRequestId());
+            errorResult.setGeneratedAt(LocalDateTime.now());
+            errorResult.setComment("AI trả về Body rỗng");
+            return resultRepository.save(errorResult);
+        }
+
+// Configure objectMapper if needed:
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
+        AiPredictResponse aiResp = null;
+        try {
+            JsonNode root = objectMapper.readTree(rawBody);
+            JsonNode dataNode = root.path("data"); // .path không ném NPE
+            if (dataNode.isMissingNode() || dataNode.isNull()) {
+                System.out.println("Không thấy node 'data' trong response.");
+            } else {
+                aiResp = objectMapper.treeToValue(dataNode, AiPredictResponse.class);
+            }
+        } catch (Exception ex) {
+            System.err.println("Lỗi parse JSON từ AI: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        System.out.println("Mapped aiResp = " + aiResp);
+
 
         // 7) Lưu AIAnalysisResult từ response
         AIAnalysisResult result = new AIAnalysisResult();
@@ -171,7 +206,7 @@ public class AIAnalysisService  {
                     Object avgValue = map.get("diem_trung_binh");
                     predictedAvgDouble = parseNumberSafe(avgValue);
                 } catch (Exception ex) {
-                    System.err.println("Error extracting diem_trung_binh: " + ex.getMessage());
+                    System.err.println("Lỗi trích xuất diem_trung_binh: " + ex.getMessage());
                 }
             }
 
@@ -183,7 +218,7 @@ public class AIAnalysisService  {
             result.setDetailedAnalysis(aiResp.phan_tich_chi_tiet != null ? objectMapper.valueToTree(aiResp.phan_tich_chi_tiet) : null);
             result.setStatistics(aiResp.thong_ke != null ? objectMapper.valueToTree(aiResp.thong_ke) : null);
         } else {
-            result.setComment("AI returned null body");
+            result.setComment("AI trả về Body rỗng");
         }
         result.setGeneratedAt(LocalDateTime.now());
         AIAnalysisResult savedResult = resultRepository.save(result);
