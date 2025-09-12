@@ -36,7 +36,12 @@ public class EnrollmentService {
         List<Enrollment> saved = new ArrayList<>();
         for (Long sid : studentIds) {
             Student student = studentRepository.findById(sid).orElseThrow();
-
+            // Kiểm tra xem học sinh đã ở lớp khác trong thời gian này chưa
+            boolean conflict = enrollmentRepository.existsEnrollmentConflict(student, clazz.getBeginDate(), clazz.getEndDate());
+            if (conflict) {
+                throw new IllegalArgumentException("Học sinh " + student.getFullName() + " đã tham gia một lớp khác trong khoảng thời gian này!");
+            }
+            // Kiểm tra trùng chính lớp này
             if (!enrollmentRepository.existsByClazzAndStudent(clazz, student)) {
                 Enrollment e = new Enrollment();
                 e.setClazz(clazz);

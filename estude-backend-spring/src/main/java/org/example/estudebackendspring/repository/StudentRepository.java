@@ -32,7 +32,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
         JOIN class_subjects cs ON sg.class_subject_id = cs.class_subject_id
         JOIN subjects subj ON cs.subject_id = subj.subject_id
         JOIN classes c ON cs.class_id = c.class_id
-        WHERE s.user_id = :studentId
+        WHERE s.user_id = :studentId AND CURRENT_DATE BETWEEN c.begin_date AND c.end_date
         """, nativeQuery = true)
     List<Object[]> findGradesByStudentId(@Param("studentId") Long studentId);
 

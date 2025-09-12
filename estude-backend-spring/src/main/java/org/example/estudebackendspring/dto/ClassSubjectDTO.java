@@ -10,4 +10,5 @@ public class ClassSubjectDTO {
     private String subjectName;
     private String teacherName;
     private String className;
+
 }

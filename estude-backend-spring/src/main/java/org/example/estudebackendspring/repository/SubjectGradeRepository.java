@@ -10,12 +10,17 @@ import java.util.Optional;
 
 public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long> {
 
-    @Query("SELECT DISTINCT sg FROM SubjectGrade sg " +
-            "JOIN FETCH sg.classSubject cs " +
-            "JOIN FETCH cs.subject subj " +
-            "WHERE sg.student.userId = :studentId")
+    @Query(value = "SELECT DISTINCT sg.* " +
+            "FROM subject_grades sg " +
+            "JOIN class_subjects cs ON sg.class_subject_id = cs.class_subject_id " +
+            "JOIN subjects subj ON cs.subject_id = subj.subject_id " +
+            "JOIN classes c ON cs.class_id = c.class_id " +
+            "WHERE sg.student_id = :studentId " +
+            "AND CURRENT_DATE BETWEEN c.begin_date AND c.end_date",
+            nativeQuery = true)
     List<SubjectGrade> findByStudentIdWithSubject(@Param("studentId") Long studentId);
-//    List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
+
+    //    List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
 @Query("SELECT sg FROM SubjectGrade sg " +
         "JOIN FETCH sg.student s " +
         "JOIN FETCH sg.classSubject cs " +
