@@ -59,9 +59,9 @@ public class AssignmentSubmissionService {
             dto.setTitle(a.getTitle());
             dto.setDueDate(a.getDueDate());
             dto.setIsExam(a.getIsExam());
-            if (a.getClassSubject() != null && a.getClassSubject().getClazz() != null) {
-                dto.setClassId(a.getClassSubject().getClazz().getClassId());
-                dto.setClassName(a.getClassSubject().getClazz().getName());
+            if (a.getClassSubject() != null && a.getClassSubject().getTerm().getClazz() != null) {
+                dto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
+                dto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
             }
             return dto;
         }).collect(Collectors.toList());
@@ -112,7 +112,7 @@ public class AssignmentSubmissionService {
 
         // ensure student is enrolled in assignment's class
         Long classId = Optional.ofNullable(assignment.getClassSubject())
-                .map(cs -> cs.getClazz().getClassId())
+                .map(cs -> cs.getTerm().getClazz().getClassId())
                 .orElseThrow(() -> new ResourceNotFoundException("Bài tập không có lớp nào được chỉ định"));
 
         boolean enrolled = enrollmentRepository.existsByStudentIdAndClassId(student.getUserId(), classId);

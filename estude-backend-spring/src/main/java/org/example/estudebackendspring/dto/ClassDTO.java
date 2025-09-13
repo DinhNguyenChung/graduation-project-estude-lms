@@ -3,12 +3,24 @@ package org.example.estudebackendspring.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.Date;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 public class ClassDTO {
     private Long classId;
     private String name;
-    private String term;
+    private List<TermInfo> terms;
     private Integer classSize;
     private String homeroomTeacherName;
+
+    @Data
+    @AllArgsConstructor
+    public static class TermInfo {
+        private Long termId;
+        private String name;
+        private Date beginDate;
+        private Date endDate;
+    }
 }

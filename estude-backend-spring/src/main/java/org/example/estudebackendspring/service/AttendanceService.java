@@ -89,7 +89,7 @@ public class AttendanceService {
         }
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
-        boolean isEnrolled = enrollmentRepository.findByClazzClassId(session.getClassSubject().getClazz().getClassId())
+        boolean isEnrolled = enrollmentRepository.findByClazzClassId(session.getClassSubject().getTerm().getClazz().getClassId())
                 .stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
         if (!isEnrolled) {
             throw new IllegalArgumentException("Học sinh không được ghi danh vào Lớp này");
@@ -124,7 +124,7 @@ public class AttendanceService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp môn học này"));
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
-        boolean isEnrolled = enrollmentRepository.findByClazzClassId(classSubject.getClazz().getClassId())
+        boolean isEnrolled = enrollmentRepository.findByClazzClassId(classSubject.getTerm().getClazz().getClassId())
                 .stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
         if (!isEnrolled) {
             throw new IllegalArgumentException("Học sinh không nằm trong lớp học này");
@@ -149,7 +149,7 @@ public class AttendanceService {
         }
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
-        boolean isEnrolled = enrollmentRepository.findByClazzClassId(session.getClassSubject().getClazz().getClassId())
+        boolean isEnrolled = enrollmentRepository.findByClazzClassId(session.getClassSubject().getTerm().getClazz().getClassId())
                 .stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
         if (!isEnrolled) {
             throw new IllegalArgumentException("Học sinh không nằm trong lớp học này");
@@ -200,7 +200,7 @@ public class AttendanceService {
         }
 
         // Lấy danh sách học sinh từ Enrollment của Clazz
-        Long classId = session.getClassSubject().getClazz().getClassId();
+        Long classId = session.getClassSubject().getTerm().getClazz().getClassId();
         List<Enrollment> enrollments = enrollmentRepository.findByClazzClassId(classId);
 
         // Lấy danh sách bản ghi điểm danh trong session
@@ -260,8 +260,8 @@ public class AttendanceService {
         dto.setTeacherName(session.getTeacher().getFullName());
         dto.setSubjectId(session.getClassSubject().getSubject().getSubjectId());
         dto.setSubjectName(session.getClassSubject().getSubject().getName());
-        dto.setClassId(session.getClassSubject().getClazz().getClassId());
-        dto.setClassName(session.getClassSubject().getClazz().getName());
+        dto.setClassId(session.getClassSubject().getTerm().getClazz().getClassId());
+        dto.setClassName(session.getClassSubject().getTerm().getClazz().getName());
         dto.setClassSubjectId(session.getClassSubject().getClassSubjectId());
         dto.setSessionName(session.getSessionName());
         dto.setCreateAt(session.getCreateAt());
@@ -290,7 +290,7 @@ public class AttendanceService {
         dto.setClassId(record.getSession().getClassSubject().getClassSubjectId());
         dto.setClassSubjectId(record.getSession().getClassSubject().getClassSubjectId());
         dto.setSubjectId(record.getSession().getClassSubject().getSubject().getSubjectId());
-        dto.setClassName(record.getSession().getClassSubject().getClazz().getName());
+        dto.setClassName(record.getSession().getClassSubject().getTerm().getClazz().getName());
         dto.setSubjectName(record.getSession().getClassSubject().getSubject().getName());
         dto.setMethod(record.getMethod());
         dto.setGpsLatitude(record.getGpsLatitude());

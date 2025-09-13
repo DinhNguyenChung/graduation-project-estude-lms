@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     // Method to find schedules by the student's class
-    List<Schedule> findByClazz_Enrollments_Student_StudentCode(String studentCode);
+//    List<Schedule> findByClazz_Enrollments_Student_StudentCode(String studentCode);
     
     // Alternative method that might be more efficient through class subject
     List<Schedule> findByClassSubject_ClassSubjectId(Long classSubjectId);

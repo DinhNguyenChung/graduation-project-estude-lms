@@ -32,28 +32,12 @@ public class Schedule {
     private ScheduleStatus status;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id")
-    private Clazz clazz;
+    @JoinColumn(name = "term_id")
+    private Term term;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_subject_id")
     private ClassSubject classSubject;
     
-    /**
-     * Helper method to check if this schedule belongs to a student with the given code
-     * @param studentCode The student code to check
-     * @return true if this schedule belongs to a student with the given code, false otherwise
-     */
-    @Transient
-    public boolean isForStudent(String studentCode) {
-        if (clazz == null || clazz.getEnrollments() == null) {
-            return false;
-        }
-        
-        return clazz.getEnrollments().stream()
-                .anyMatch(enrollment -> 
-                    enrollment.getStudent() != null && 
-                    studentCode.equals(enrollment.getStudent().getStudentCode())
-                );
-    }
+
 }

@@ -124,7 +124,7 @@ public List<SubmissionResponseDTO> getSubmissionsByClassSubject(Long classSubjec
         dto.setAutoGradedAt(submission.getAutoGradedAt());
         dto.setClassSubjectId(submission.getAssignment().getClassSubject().getClassSubjectId());
         dto.setSubjectName(submission.getAssignment().getClassSubject().getSubject().getName());
-        dto.setClassName(submission.getAssignment().getClassSubject().getClazz().getName());
+        dto.setClassName(submission.getAssignment().getClassSubject().getTerm().getClazz().getName());
         dto.setGradeId(submission.getGrade().getGradeId());
         dto.setScore(submission.getGrade().getScore());
         dto.setAutoGradeFeedback(submission.getGrade().getAutoGradedFeedback());

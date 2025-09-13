@@ -24,10 +24,10 @@ public class ClassSubject {
     private Long classSubjectId;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id")
+    @JoinColumn(name = "term_id")
 //    @JsonIgnore
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Clazz clazz;
+    private Term term;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id")

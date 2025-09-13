@@ -50,7 +50,7 @@ public class StudentService {
     public List<ClassSubject> getSubjectsByStudent(Long studentId) {
         List<Clazz> classes = getClassesByStudent(studentId);
         return classes.stream()
-                .flatMap(c -> classSubjectRepository.findByClazz_ClassId(c.getClassId()).stream())
+                .flatMap(c -> classSubjectRepository.findByTerm_Clazz_ClassId(c.getClassId()).stream())
                 .toList();
     }
 }

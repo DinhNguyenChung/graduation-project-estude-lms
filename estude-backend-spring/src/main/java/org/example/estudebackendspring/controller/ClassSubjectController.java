@@ -43,10 +43,11 @@ public class ClassSubjectController {
 
 
     @PostMapping
-    public ResponseEntity<ClassSubject> assignSubject(@Valid @RequestBody CreateClassSubjectRequest req) {
-        ClassSubject created = service.assignSubjectToClass(req);
+    public ResponseEntity<List<ClassSubject>> assignSubject(@Valid @RequestBody CreateClassSubjectRequest req) {
+        List<ClassSubject> created = service.assignSubjectToClass(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
 
     @DeleteMapping("/{classSubjectId}")
     public ResponseEntity<Void> removeAssignment(@PathVariable Long classSubjectId) {

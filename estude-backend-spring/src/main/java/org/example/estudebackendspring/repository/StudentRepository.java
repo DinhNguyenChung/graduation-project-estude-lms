@@ -11,30 +11,36 @@ import java.util.Optional;
 public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByStudentCode(String studentCode);
     // Lấy điểm theo studentId
+    // Lấy điểm theo studentId
     @Query(value = """
-        SELECT 
-            s.user_id AS studentId,
-            s.student_code AS studentCode,
-            u.full_name AS fullName,
-            subj.name AS subjectName,
-            sg.midterm_score AS midtermScore,
-            sg.final_score AS finalScore,
-            sg.actual_average AS actualAverage,
-            sg.predicted_mid_term AS predictedMidTerm,
-            sg.predicted_final AS predictedFinal,
-            sg.predicted_average AS predictedAverage,
-            sg.comment AS comment,
-            c.name AS className,
-            c.term AS term
-        FROM subject_grades sg
-        JOIN students s ON sg.student_id = s.user_id
-        JOIN users u ON s.user_id = u.user_id
-        JOIN class_subjects cs ON sg.class_subject_id = cs.class_subject_id
-        JOIN subjects subj ON cs.subject_id = subj.subject_id
-        JOIN classes c ON cs.class_id = c.class_id
-        WHERE s.user_id = :studentId AND CURRENT_DATE BETWEEN c.begin_date AND c.end_date
-        """, nativeQuery = true)
+    SELECT 
+        s.user_id AS studentId,
+        s.student_code AS studentCode,
+        u.full_name AS fullName,
+        subj.name AS subjectName,
+        sg.midterm_score AS midtermScore,
+        sg.final_score AS finalScore,
+        sg.actual_average AS actualAverage,
+        sg.predicted_mid_term AS predictedMidTerm,
+        sg.predicted_final AS predictedFinal,
+        sg.predicted_average AS predictedAverage,
+        sg.comment AS comment,
+        c.name AS className,
+        t.name AS termName,
+        t.begin_date AS termBeginDate,
+        t.end_date AS termEndDate
+    FROM subject_grades sg
+    JOIN students s ON sg.student_id = s.user_id
+    JOIN users u ON s.user_id = u.user_id
+    JOIN class_subjects cs ON sg.class_subject_id = cs.class_subject_id
+    JOIN subjects subj ON cs.subject_id = subj.subject_id
+    JOIN classes c ON cs.class_id = c.class_id
+    JOIN terms t ON t.class_id = c.class_id
+    WHERE s.user_id = :studentId 
+      AND CURRENT_DATE BETWEEN t.begin_date AND t.end_date
+    """, nativeQuery = true)
     List<Object[]> findGradesByStudentId(@Param("studentId") Long studentId);
+
 
     Optional<Student> findByEmail(String email);
     // lấy student theo id

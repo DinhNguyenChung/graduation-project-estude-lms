@@ -31,11 +31,13 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END " +
             "FROM Enrollment e " +
             "JOIN e.clazz c " +
+            "JOIN c.terms t " +
             "WHERE e.student = :student " +
-            "AND (c.beginDate <= :endDate AND c.endDate >= :beginDate)")
+            "AND (t.beginDate <= :endDate AND t.endDate >= :beginDate)")
     boolean existsEnrollmentConflict(@Param("student") Student student,
                                      @Param("beginDate") Date beginDate,
                                      @Param("endDate") Date endDate);
+
 
 
 

@@ -21,14 +21,9 @@ public class Clazz {
 
     @Column(nullable = false)
     private String name;
-    private String term;
+
     private Integer classSize;
-    @Column
-    @Temporal(TemporalType.DATE)
-    private Date beginDate;
-    @Column
-    @Temporal(TemporalType.DATE)
-    private Date endDate;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homeroom_teacher_id", unique = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -37,17 +32,13 @@ public class Clazz {
     @JsonIgnore
     private List<Enrollment> enrollments;
 
-    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<ClassSubject> classSubjects;
-
-    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Schedule> schedules;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private School school;
+    @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private List<Term> terms; // Danh sách các kỳ học (Kỳ 1, Kỳ 2)
 
 
 }

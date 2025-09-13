@@ -37,7 +37,7 @@ public class TeacherService {
         // Lấy học sinh từ lớp chủ nhiệm
         return teacher.getClassSubjects()
                 .stream()
-                .flatMap(cs -> cs.getClazz().getEnrollments().stream()
+                .flatMap(cs -> cs.getTerm().getClazz().getEnrollments().stream()
                         .map(e -> e.getStudent()))
                 .distinct()
                 .collect(Collectors.toList());
@@ -50,7 +50,7 @@ public class TeacherService {
 
         return teacher.getClassSubjects().stream()
                 .filter(cs -> cs.getSubject().getSubjectId().equals(subjectId))
-                .flatMap(cs -> cs.getClazz().getEnrollments().stream()
+                .flatMap(cs -> cs.getTerm().getClazz().getEnrollments().stream()
                         .map(e -> e.getStudent()))
                 .distinct()
                 .collect(Collectors.toList());

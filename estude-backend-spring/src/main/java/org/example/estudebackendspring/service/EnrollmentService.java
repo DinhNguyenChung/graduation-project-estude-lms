@@ -5,6 +5,7 @@ import org.example.estudebackendspring.dto.CreateEnrollmentRequest;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Student;
+import org.example.estudebackendspring.entity.Term;
 import org.example.estudebackendspring.exception.DuplicateResourceException;
 import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.ClazzRepository;
@@ -33,14 +34,31 @@ public class EnrollmentService {
     public List<Enrollment> enrollStudents(Long classId, List<Long> studentIds) {
         Clazz clazz = clazzRepository.findById(classId).orElseThrow();
 
+        // Lấy các term của lớp này
+        List<Term> terms = clazz.getTerms();
+        if (terms == null || terms.isEmpty()) {
+            throw new IllegalArgumentException("Lớp này chưa có kỳ học (Term) nào, không thể ghi danh!");
+        }
+
         List<Enrollment> saved = new ArrayList<>();
+
         for (Long sid : studentIds) {
             Student student = studentRepository.findById(sid).orElseThrow();
-            // Kiểm tra xem học sinh đã ở lớp khác trong thời gian này chưa
-            boolean conflict = enrollmentRepository.existsEnrollmentConflict(student, clazz.getBeginDate(), clazz.getEndDate());
-            if (conflict) {
-                throw new IllegalArgumentException("Học sinh " + student.getFullName() + " đã tham gia một lớp khác trong khoảng thời gian này!");
+
+            // Kiểm tra conflict với từng term của lớp
+            for (Term term : terms) {
+                boolean conflict = enrollmentRepository.existsEnrollmentConflict(
+                        student,
+                        term.getBeginDate(),
+                        term.getEndDate()
+                );
+
+                if (conflict) {
+                    throw new IllegalArgumentException("Học sinh " + student.getFullName()
+                            + " đã tham gia một lớp khác trong khoảng thời gian của kỳ: " + term.getName());
+                }
             }
+
             // Kiểm tra trùng chính lớp này
             if (!enrollmentRepository.existsByClazzAndStudent(clazz, student)) {
                 Enrollment e = new Enrollment();
@@ -51,11 +69,13 @@ public class EnrollmentService {
             }
         }
 
+        // Cập nhật sĩ số
         clazz.setClassSize(enrollmentRepository.countByClazz(clazz));
         clazzRepository.save(clazz);
 
         return saved;
     }
+
 
 
     @Transactional

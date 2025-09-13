@@ -9,6 +9,7 @@ public class ClassSubjectDTO {
     private Long classSubjectId;
     private String subjectName;
     private String teacherName;
+    private String termName;
     private String className;
 
 }

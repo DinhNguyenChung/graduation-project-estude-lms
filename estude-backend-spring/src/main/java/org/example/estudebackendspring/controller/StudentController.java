@@ -70,19 +70,32 @@ public class StudentController {
         return ResponseEntity.ok(list);
     }
     @GetMapping("/{studentId}/classes")
-    public ResponseEntity<?> getClassesByStudent(@PathVariable Long studentId ) {
-        List<Clazz> classes = studentService.getClassesByStudent(studentId );
-        List<ClassDTO> result = classes.stream().map(clazz ->
-                new ClassDTO(
-                        clazz.getClassId(),
-                        clazz.getName(),
-                        clazz.getTerm(),
-                        clazz.getEnrollments().size(),
-                        clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null
-                )
-        ).toList();
+    public ResponseEntity<?> getClassesByStudent(@PathVariable Long studentId) {
+        List<Clazz> classes = studentService.getClassesByStudent(studentId);
+
+        List<ClassDTO> result = classes.stream().map(clazz -> {
+            // Map Term -> TermInfo
+            List<ClassDTO.TermInfo> termInfos = clazz.getTerms().stream()
+                    .map(term -> new ClassDTO.TermInfo(
+                            term.getTermId(),
+                            term.getName(),
+                            term.getBeginDate(),
+                            term.getEndDate()
+                    ))
+                    .toList();
+
+            return new ClassDTO(
+                    clazz.getClassId(),
+                    clazz.getName(),
+                    termInfos,
+                    clazz.getEnrollments() != null ? clazz.getEnrollments().size() : 0,
+                    clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null
+            );
+        }).toList();
+
         return ResponseEntity.ok(result);
     }
+
 
     @GetMapping("/{studentId}/subjects")
     public ResponseEntity<?> getSubjects(@PathVariable Long studentId) {
@@ -93,7 +106,9 @@ public class StudentController {
                         cs.getClassSubjectId(),
                         cs.getSubject() != null ? cs.getSubject().getName() : null,
                         cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
-                        cs.getClazz() != null ? cs.getClazz().getName() : null
+                        cs.getTerm() != null ? cs.getTerm().getName() :null,
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
+
                 ))
                 .toList();
 

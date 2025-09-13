@@ -14,7 +14,7 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
     boolean existsById(Long subjectId);
     Optional<Subject> findBySubjectId(Long subjectId);
     // Tìm tất cả môn học theo classId thông qua bảng trung gian class_subjects
-    @Query("SELECT cs.subject FROM ClassSubject cs WHERE cs.clazz.classId = :classId")
+    @Query("SELECT cs.subject FROM ClassSubject cs WHERE cs.term.clazz.classId = :classId")
     List<Subject> findSubjectsByClassId(@Param("classId") Long classId);
     @Query("SELECT DISTINCT s FROM Subject s JOIN s.schools sc WHERE sc.schoolId = :schoolId")
     List<Subject> findSubjectsBySchoolId(@Param("schoolId") Long schoolId);
