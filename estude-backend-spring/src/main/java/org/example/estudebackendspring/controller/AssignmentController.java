@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assignments")
@@ -65,10 +67,18 @@ public class AssignmentController {
             LocalDate begin = convertToLocalDate(term.getBeginDate());
             LocalDate end = convertToLocalDate(term.getEndDate());
             if (today.isBefore(begin) || today.isAfter(end)) {
-                throw new IllegalArgumentException(
-                        "Không thể tạo bài vì thời gian hiện tại không nằm trong kỳ học ["
-                                + begin + " - " + end + "]");
+                Map<String, Object> data = new HashMap<>();
+                data.put("today", today);
+                data.put("termBegin", begin);
+                data.put("termEnd", end);
+
+                return ResponseEntity.badRequest().body(
+                        new AuthResponse(false,
+                                "Không thể tạo bài vì thời gian hiện tại không nằm trong kỳ học [" + begin + " - " + end + "]",
+                                data)
+                );
             }
+
             // Gắn teacher và classSubject vào assignment
             assignment.setTeacher(teacher);
             assignment.setClassSubject(classSubject);

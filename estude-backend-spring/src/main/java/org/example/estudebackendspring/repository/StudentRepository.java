@@ -13,7 +13,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     // Lấy điểm theo studentId
     // Lấy điểm theo studentId
     @Query(value = """
-    SELECT 
+
+            SELECT\s
         s.user_id AS studentId,
         s.student_code AS studentCode,
         u.full_name AS fullName,
@@ -34,9 +35,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     JOIN users u ON s.user_id = u.user_id
     JOIN class_subjects cs ON sg.class_subject_id = cs.class_subject_id
     JOIN subjects subj ON cs.subject_id = subj.subject_id
-    JOIN classes c ON cs.class_id = c.class_id
-    JOIN terms t ON t.class_id = c.class_id
-    WHERE s.user_id = :studentId 
+    JOIN terms t ON cs.term_id = t.term_id
+    JOIN classes c ON t.class_id = c.class_id
+    WHERE s.user_id = :studentId
       AND CURRENT_DATE BETWEEN t.begin_date AND t.end_date
     """, nativeQuery = true)
     List<Object[]> findGradesByStudentId(@Param("studentId") Long studentId);
