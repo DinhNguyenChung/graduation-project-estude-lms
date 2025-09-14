@@ -106,7 +106,9 @@ public class StudentController {
                         cs.getClassSubjectId(),
                         cs.getSubject() != null ? cs.getSubject().getName() : null,
                         cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
+                        cs.getTerm() != null ? cs.getTerm().getTermId() :null,
                         cs.getTerm() != null ? cs.getTerm().getName() :null,
+                        cs.getTerm().getClazz()!= null ? cs.getTerm().getClazz().getClassId():null,
                         cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
 
                 ))
