@@ -15,4 +15,5 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
         // Lấy assignment theo classId
         @Query("SELECT a FROM Assignment a WHERE a.classSubject.term.clazz.classId = :classId")
         List<Assignment> findByClassId(@Param("classId") Long classId);
+        List<Assignment> findAssignmentsByClassSubject_ClassSubjectId(Long classId);
 }

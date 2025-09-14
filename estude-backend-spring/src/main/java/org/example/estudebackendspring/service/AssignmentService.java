@@ -60,4 +60,7 @@ public class AssignmentService {
     public List<Assignment> getAssignmentsByClass(Long classId) {
         return assignmentRepository.findByClassId(classId);
     }
+    public List<Assignment> getAssignmentsByClassSubject(Long subjectId) {
+        return assignmentRepository.findAssignmentsByClassSubject_ClassSubjectId(subjectId);
+    }
 }

@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,6 +37,11 @@ public class AttendanceService {
     }
     // Hằng số cho khoảng cách GPS tối đa (mét)
     private static final double MAX_ALLOWED_DISTANCE = 50.0;
+    private LocalDate convertToLocalDate(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
 
     // Giáo viên tạo buổi điểm danh
     @Transactional
@@ -46,7 +53,17 @@ public class AttendanceService {
         if (!classSubject.getTeacher().getUserId().equals(teacherId)) {
             throw new IllegalArgumentException("Giáo viên không có quyền cho môn học này");
         }
+        // Kiểm tra thời gian hiện tại có nằm trong Term không
+        Term term = classSubject.getTerm();
+        LocalDate today = LocalDate.now();
+        LocalDate begin = convertToLocalDate(term.getBeginDate());
+        LocalDate end = convertToLocalDate(term.getEndDate());
 
+        if (today.isBefore(begin) || today.isAfter(end)) {
+            throw new IllegalArgumentException(
+                    "Không thể tạo điểm danh vì thời gian hiện tại không nằm trong kỳ học ["
+                            + begin + " - " + end + "]");
+        }
         AttendanceSession session = new AttendanceSession();
         session.setTeacher(new Teacher(teacherId));
         session.setClassSubject(classSubject);

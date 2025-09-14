@@ -7,6 +7,7 @@ import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.entity.Term;
 import org.example.estudebackendspring.repository.AssignmentRepository;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
@@ -16,6 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -36,6 +40,11 @@ public class AssignmentController {
         this.teacherRepository = teacherRepository;
         this.classSubjectRepository = classSubjectRepository;
     }
+    private LocalDate convertToLocalDate(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
     @GetMapping
     public List<Assignment> getAllAssignments() {
         return assignmentRepository.findAll();
@@ -50,7 +59,16 @@ public class AssignmentController {
             // Lấy classSubject từ DB
             ClassSubject classSubject = classSubjectRepository.findById(assignment.getClassSubject().getClassSubjectId())
                     .orElseThrow(() -> new RuntimeException("ClassSubject not found"));
-
+            // Kiểm tra thời gian hiện tại có nằm trong Term không
+            Term term = classSubject.getTerm();
+            LocalDate today = LocalDate.now();
+            LocalDate begin = convertToLocalDate(term.getBeginDate());
+            LocalDate end = convertToLocalDate(term.getEndDate());
+            if (today.isBefore(begin) || today.isAfter(end)) {
+                throw new IllegalArgumentException(
+                        "Không thể tạo bài vì thời gian hiện tại không nằm trong kỳ học ["
+                                + begin + " - " + end + "]");
+            }
             // Gắn teacher và classSubject vào assignment
             assignment.setTeacher(teacher);
             assignment.setClassSubject(classSubject);
@@ -123,6 +141,14 @@ public class AssignmentController {
         if (assignments.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("No assignments found for classId: " + classId);
+        }
+        return ResponseEntity.ok(assignments);
+    }
+    @GetMapping("/class-subject/{classSubjectId}")
+    public ResponseEntity<?> getAssignmentsByClassSubject(@PathVariable Long classSubjectId) {
+        List<Assignment> assignments = assignmentService.getAssignmentsByClassSubject(classSubjectId);
+        if (assignments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No assignments found for classId: " + classSubjectId);
         }
         return ResponseEntity.ok(assignments);
     }
