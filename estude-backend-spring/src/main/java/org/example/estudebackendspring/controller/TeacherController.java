@@ -1,5 +1,6 @@
 package org.example.estudebackendspring.controller;
 
+import org.example.estudebackendspring.dto.ClassSubjectDTO;
 import org.example.estudebackendspring.dto.StudentDTO;
 import org.example.estudebackendspring.dto.StudentGradeResponse;
 import org.example.estudebackendspring.dto.SubjectDTO;
@@ -59,9 +60,25 @@ public class TeacherController {
 //        return ResponseEntity.ok(teacherService.getStudentsBySubject(teacherId, subjectId));
 //    }
     @GetMapping("/{teacherId}/class-subjects")
-    public ResponseEntity<List<ClassSubject>> getClassSubjectsByTeacher(@PathVariable Long teacherId) {
+    public ResponseEntity<?> getClassSubjectsByTeacher(@PathVariable Long teacherId) {
         List<ClassSubject> classSubjects = classSubjectService.getClassSubjectsByTeacher(teacherId);
-        return ResponseEntity.ok(classSubjects);
+        List<ClassSubjectDTO> dtoList = classSubjects.stream()
+                .map(cs -> new ClassSubjectDTO(
+                        cs.getClassSubjectId(),
+                        cs.getSubject() != null ? cs.getSubject().getName() : null,
+                        cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
+                        cs.getTerm() != null ? cs.getTerm().getTermId() :null,
+                        cs.getTerm() != null ? cs.getTerm().getName() :null,
+                        cs.getTerm() != null ? cs.getTerm().getBeginDate() :null,
+                        cs.getTerm() != null ? cs.getTerm().getEndDate() :null,
+                        cs.getTerm().getClazz()!= null ? cs.getTerm().getClazz().getClassId():null,
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
+
+                ))
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
+
     }
     @GetMapping("/{teacherId}/subjects")
     public ResponseEntity<List<SubjectDTO>> getSubjectsByTeacher(@PathVariable Long teacherId) {

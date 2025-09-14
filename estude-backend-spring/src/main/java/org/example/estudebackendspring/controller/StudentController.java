@@ -108,6 +108,8 @@ public class StudentController {
                         cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
                         cs.getTerm() != null ? cs.getTerm().getTermId() :null,
                         cs.getTerm() != null ? cs.getTerm().getName() :null,
+                        cs.getTerm() != null ? cs.getTerm().getBeginDate() :null,
+                        cs.getTerm() != null ? cs.getTerm().getEndDate() :null,
                         cs.getTerm().getClazz()!= null ? cs.getTerm().getClazz().getClassId():null,
                         cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
 
