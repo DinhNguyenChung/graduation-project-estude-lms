@@ -2,16 +2,14 @@ package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.dto.SubjectGradeDTO;
 import org.example.estudebackendspring.dto.SubjectGradeRequest;
+import org.example.estudebackendspring.dto.TermGradesDTO;
 import org.example.estudebackendspring.service.SubjectGradeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/subject-grades")
@@ -55,6 +53,15 @@ public class SubjectGradeController {
             // Trả về mảng rỗng thay vì message + status
             return ResponseEntity.ok(Collections.emptyList());
         }
+    }
+    /**
+     * GET /api/grades/student/{studentId}/by-terms
+     * Trả về tất cả bảng điểm của học sinh, nhóm theo kỳ.
+     */
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<List<TermGradesDTO>> getAllGradesByStudentGroupedByTerm(@PathVariable Long studentId) {
+        List<TermGradesDTO> data = subjectGradeService.getAllGradesGroupedByTerm(studentId);
+        return ResponseEntity.ok(data);
     }
 
 }

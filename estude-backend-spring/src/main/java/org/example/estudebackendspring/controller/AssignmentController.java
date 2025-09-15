@@ -62,22 +62,22 @@ public class AssignmentController {
             ClassSubject classSubject = classSubjectRepository.findById(assignment.getClassSubject().getClassSubjectId())
                     .orElseThrow(() -> new RuntimeException("ClassSubject not found"));
             // Kiểm tra thời gian hiện tại có nằm trong Term không
-            Term term = classSubject.getTerm();
-            LocalDate today = LocalDate.now();
-            LocalDate begin = convertToLocalDate(term.getBeginDate());
-            LocalDate end = convertToLocalDate(term.getEndDate());
-            if (today.isBefore(begin) || today.isAfter(end)) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("today", today);
-                data.put("termBegin", begin);
-                data.put("termEnd", end);
-
-                return ResponseEntity.badRequest().body(
-                        new AuthResponse(false,
-                                "Không thể tạo bài vì thời gian hiện tại không nằm trong kỳ học [" + begin + " - " + end + "]",
-                                data)
-                );
-            }
+//            Term term = classSubject.getTerm();
+//            LocalDate today = LocalDate.now();
+//            LocalDate begin = convertToLocalDate(term.getBeginDate());
+//            LocalDate end = convertToLocalDate(term.getEndDate());
+//            if (today.isBefore(begin) || today.isAfter(end)) {
+//                Map<String, Object> data = new HashMap<>();
+//                data.put("today", today);
+//                data.put("termBegin", begin);
+//                data.put("termEnd", end);
+//
+//                return ResponseEntity.badRequest().body(
+//                        new AuthResponse(false,
+//                                "Không thể tạo bài vì thời gian hiện tại không nằm trong kỳ học [" + begin + " - " + end + "]",
+//                                data)
+//                );
+//            }
 
             // Gắn teacher và classSubject vào assignment
             assignment.setTeacher(teacher);

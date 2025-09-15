@@ -3,7 +3,9 @@ package org.example.estudebackendspring.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.estudebackendspring.dto.SubjectGradeDTO;
+import org.example.estudebackendspring.dto.SubjectGradeInfoDTO;
 import org.example.estudebackendspring.dto.SubjectGradeRequest;
+import org.example.estudebackendspring.dto.TermGradesDTO;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.SubjectGrade;
@@ -15,9 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -138,6 +139,76 @@ public class SubjectGradeService {
             if (f != null) { sum += f; count++; }
         }
         return count == 0 ? Double.NaN : sum / count;
+    }
+    /**
+     * Trả về tất cả bảng điểm của học sinh, nhóm theo kỳ (term).
+     */
+    public List<TermGradesDTO> getAllGradesGroupedByTerm(Long studentId) {
+        List<SubjectGrade> grades = subjectGradeRepository.findAllByStudentIdFetchAll(studentId);
+
+        // Lọc an toàn: chỉ lấy các record có ClassSubject + Term
+        List<SubjectGrade> filtered = grades.stream()
+                .filter(sg -> sg.getClassSubject() != null && sg.getClassSubject().getTerm() != null)
+                .collect(Collectors.toList());
+
+        // Group theo termId (dùng LinkedHashMap để giữ thứ tự)
+        Map<Long, List<SubjectGrade>> grouped = filtered.stream()
+                .collect(Collectors.groupingBy(
+                        sg -> sg.getClassSubject().getTerm().getTermId(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        List<TermGradesDTO> result = new ArrayList<>();
+        for (Map.Entry<Long, List<SubjectGrade>> entry : grouped.entrySet()) {
+            List<SubjectGrade> list = entry.getValue();
+            var term = list.get(0).getClassSubject().getTerm();
+
+            List<SubjectGradeInfoDTO> subjectDtos = list.stream()
+                    .map(this::toSubjectGradeInfoDTO)
+                    .collect(Collectors.toList());
+
+            TermGradesDTO termDto = new TermGradesDTO(
+                    term.getTermId(),
+                    term.getName(),
+                    term.getBeginDate(),
+                    term.getEndDate(),
+                    subjectDtos
+            );
+            result.add(termDto);
+        }
+
+        return result;
+    }
+
+    private SubjectGradeInfoDTO toSubjectGradeInfoDTO(SubjectGrade sg) {
+        var cs = sg.getClassSubject();
+        var subj = cs != null ? cs.getSubject() : null;
+        var term = cs != null ? cs.getTerm() : null;
+        var clazz = term != null ? term.getClazz() : null;
+        var teacher = cs != null ? cs.getTeacher() : null;
+
+        SubjectGradeInfoDTO dto = new SubjectGradeInfoDTO();
+        dto.setSubjectGradeId(sg.getSubjectGradeId());
+        dto.setRegularScores(sg.getRegularScores());
+        dto.setMidtermScore(sg.getMidtermScore());
+        dto.setFinalScore(sg.getFinalScore());
+        dto.setActualAverage(sg.getActualAverage());
+        dto.setComment(sg.getComment());
+
+        dto.setClassSubjectId(cs != null ? cs.getClassSubjectId() : null);
+
+        dto.setSubjectId(subj != null ? subj.getSubjectId() : null);
+        dto.setSubjectName(subj != null ? subj.getName() : null);
+        dto.setSubjectDescription(subj != null ? subj.getDescription() : null);
+
+        dto.setTeacherId(teacher != null ? teacher.getUserId() : null);
+        dto.setTeacherName(teacher != null ? teacher.getFullName() : null);
+
+        dto.setClassId(clazz != null ? clazz.getClassId() : null);
+        dto.setClassName(clazz != null ? clazz.getName() : null);
+
+        return dto;
     }
 
     private SubjectGradeDTO toDto(SubjectGrade g) {

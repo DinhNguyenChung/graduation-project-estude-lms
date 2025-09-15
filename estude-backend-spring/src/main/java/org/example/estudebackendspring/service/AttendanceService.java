@@ -54,16 +54,16 @@ public class AttendanceService {
             throw new IllegalArgumentException("Giáo viên không có quyền cho môn học này");
         }
         // Kiểm tra thời gian hiện tại có nằm trong Term không
-        Term term = classSubject.getTerm();
-        LocalDate today = LocalDate.now();
-        LocalDate begin = convertToLocalDate(term.getBeginDate());
-        LocalDate end = convertToLocalDate(term.getEndDate());
-
-        if (today.isBefore(begin) || today.isAfter(end)) {
-            throw new IllegalArgumentException(
-                    "Không thể tạo điểm danh vì thời gian hiện tại không nằm trong kỳ học ["
-                            + begin + " - " + end + "]");
-        }
+//        Term term = classSubject.getTerm();
+//        LocalDate today = LocalDate.now();
+//        LocalDate begin = convertToLocalDate(term.getBeginDate());
+//        LocalDate end = convertToLocalDate(term.getEndDate());
+//
+//        if (today.isBefore(begin) || today.isAfter(end)) {
+//            throw new IllegalArgumentException(
+//                    "Không thể tạo điểm danh vì thời gian hiện tại không nằm trong kỳ học ["
+//                            + begin + " - " + end + "]");
+//        }
         AttendanceSession session = new AttendanceSession();
         session.setTeacher(new Teacher(teacherId));
         session.setClassSubject(classSubject);

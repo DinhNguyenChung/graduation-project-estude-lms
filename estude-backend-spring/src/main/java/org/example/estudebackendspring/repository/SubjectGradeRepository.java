@@ -33,4 +33,17 @@ public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long
 List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long classSubjectId);
     Optional<SubjectGrade> findByStudent_UserIdAndClassSubject_ClassSubjectId(Long studentUserId, Long classSubjectId);
     List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
+    /**
+     * Lấy tất cả SubjectGrade của 1 học sinh, fetch các relation cần thiết:
+     * classSubject -> subject, term -> clazz, teacher
+     */
+    @Query("SELECT sg FROM SubjectGrade sg " +
+            "JOIN FETCH sg.classSubject cs " +
+            "JOIN FETCH cs.subject subj " +
+            "JOIN FETCH cs.term t " +
+            "LEFT JOIN FETCH cs.teacher teacher " +
+            "LEFT JOIN FETCH t.clazz cl " +
+            "WHERE sg.student.userId = :studentId " +
+            "ORDER BY t.beginDate ASC, subj.name ASC")
+    List<SubjectGrade> findAllByStudentIdFetchAll(@Param("studentId") Long studentId);
 }
