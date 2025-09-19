@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class CreateClassSubjectRequest {
+    private Long classSubjectId;
     @NotNull
     private Long classId;
     @NotNull
