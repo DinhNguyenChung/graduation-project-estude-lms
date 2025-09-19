@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.example.estudebackendspring.enums.GradeLevel;
 
 @Data
 @AllArgsConstructor
@@ -14,6 +15,9 @@ import lombok.NoArgsConstructor;
 public class CreateClazzRequest {
     @NotBlank(message = "Tên lớp không được để trống")
     private String name;
+
+    @NotNull(message = "Khối lớp không được để trống")
+    private GradeLevel gradeLevel; // Thêm trường gradeLevel
 
     @Min(value = 0, message = "Sĩ số lớp phải lớn hơn hoặc bằng 0")
     private Integer classSize;

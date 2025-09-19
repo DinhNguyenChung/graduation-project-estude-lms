@@ -87,6 +87,7 @@ public class StudentController {
             return new ClassDTO(
                     clazz.getClassId(),
                     clazz.getName(),
+                    clazz.getGradeLevel(),
                     termInfos,
                     clazz.getEnrollments() != null ? clazz.getEnrollments().size() : 0,
                     clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null
@@ -111,7 +112,8 @@ public class StudentController {
                         cs.getTerm() != null ? cs.getTerm().getBeginDate() :null,
                         cs.getTerm() != null ? cs.getTerm().getEndDate() :null,
                         cs.getTerm().getClazz()!= null ? cs.getTerm().getClazz().getClassId():null,
-                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null,
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getGradeLevel() : null
 
                 ))
                 .toList();

@@ -72,7 +72,8 @@ public class TeacherController {
                         cs.getTerm() != null ? cs.getTerm().getBeginDate() :null,
                         cs.getTerm() != null ? cs.getTerm().getEndDate() :null,
                         cs.getTerm().getClazz()!= null ? cs.getTerm().getClazz().getClassId():null,
-                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null,
+                        cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getGradeLevel() : null
 
                 ))
                 .toList();

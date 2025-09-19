@@ -2,6 +2,7 @@ package org.example.estudebackendspring.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.example.estudebackendspring.enums.GradeLevel;
 
 import java.util.Date;
 
@@ -17,5 +18,6 @@ public class ClassSubjectDTO {
     private Date endDate;
     private Long classId;
     private String className;
+    private GradeLevel gradeLevel;
 
 }

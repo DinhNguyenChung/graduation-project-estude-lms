@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.estudebackendspring.enums.GradeLevel;
 
 import java.util.Date;
 import java.util.List;
@@ -21,6 +22,10 @@ public class Clazz {
 
     @Column(nullable = false)
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grade_level")
+    private GradeLevel gradeLevel; // Khối 6, 7, 8, 9, 10, 11, 12
 
     private Integer classSize;
 

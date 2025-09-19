@@ -42,6 +42,7 @@ public class ClazzService {
         // Tạo Clazz
         Clazz clazz = new Clazz();
         clazz.setName(req.getName());
+        clazz.setGradeLevel(req.getGradeLevel()); // Gán gradeLevel
         clazz.setClassSize(req.getClassSize());
         clazz.setSchool(school);
 
@@ -97,6 +98,7 @@ public class ClazzService {
 
         // Cập nhật thông tin Clazz
         clazz.setName(req.getName());
+        clazz.setGradeLevel(req.getGradeLevel()); // Gán gradeLevel
         clazz.setClassSize(req.getClassSize());
         clazz.setSchool(school);
 
