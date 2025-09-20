@@ -1,14 +1,14 @@
 package org.example.estudebackendspring.service;
 
+import org.example.estudebackendspring.dto.ClazzWithStudentsDTO;
 import org.example.estudebackendspring.dto.StudentDTO;
 import org.example.estudebackendspring.dto.SubjectDTO;
-import org.example.estudebackendspring.entity.Student;
-import org.example.estudebackendspring.entity.Subject;
-import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,19 +29,37 @@ public class TeacherService {
     }
 
     // ds học sinh chủ nhiệm
-    public List<Student> getHomeroomStudents(Long teacherId) {
+    public List<ClazzWithStudentsDTO> getHomeroomStudents(Long teacherId) {
         Teacher teacher = teacherRepository.findByUserId(teacherId);
-        if (teacher == null || !teacher.isHomeroomTeacher()) {
-            return List.of();
+        if (teacher == null) {
+            return Collections.emptyList();
         }
-        // Lấy học sinh từ lớp chủ nhiệm
-        return teacher.getClassSubjects()
-                .stream()
-                .flatMap(cs -> cs.getTerm().getClazz().getEnrollments().stream()
-                        .map(e -> e.getStudent()))
-                .distinct()
-                .collect(Collectors.toList());
+
+        return teacher.getHomeroomClasses().stream().map(clazz -> {
+            List<StudentDTO> students = clazz.getEnrollments().stream()
+                    .map(e -> {
+                        Student s = e.getStudent();
+                        return new StudentDTO(
+                                s.getUserId(),
+                                s.getStudentCode(),
+                                s.getFullName(),
+                                s.getEmail(),
+                                s.getNumberPhone()
+                        );
+                    })
+                    .collect(Collectors.toList());
+
+            return new ClazzWithStudentsDTO(
+                    clazz.getClassId(),
+                    clazz.getName(),
+                    clazz.getGradeLevel().name(),
+                    clazz.getClassSize(),
+                    clazz.getTerms(),
+                    students
+            );
+        }).collect(Collectors.toList());
     }
+
 
     // ds học sinh theo môn học
     public List<Student> getStudentsBySubject(Long teacherId, Long subjectId) {
@@ -68,7 +86,8 @@ public class TeacherService {
                         s.getUserId(),
                         s.getStudentCode(),
                         s.getFullName(),
-                        s.getEmail()
+                        s.getEmail(),
+                        s.getNumberPhone()
                 ))
                 .collect(Collectors.toList());
     }

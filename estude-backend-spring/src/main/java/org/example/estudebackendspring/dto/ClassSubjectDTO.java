@@ -10,6 +10,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class ClassSubjectDTO {
     private Long classSubjectId;
+    private Long subjectId;
     private String subjectName;
     private String teacherName;
     private Long termId;

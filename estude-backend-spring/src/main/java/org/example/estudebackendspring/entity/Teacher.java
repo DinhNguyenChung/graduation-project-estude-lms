@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,9 +28,9 @@ public class Teacher extends User {
     private boolean isAdmin;
     private boolean isHomeroomTeacher;
 
-    @OneToOne(mappedBy = "homeroomTeacher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "homeroomTeacher",fetch = FetchType.LAZY)
     @JsonIgnore
-    private Clazz homeroomClass; // Thêm mối quan hệ ngược lại
+    private List<Clazz> homeroomClasses = new ArrayList<>();
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<ClassSubject> classSubjects;

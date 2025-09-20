@@ -1,10 +1,15 @@
 package org.example.estudebackendspring.repository;
 
+import org.example.estudebackendspring.entity.ClassSubject;
+import org.example.estudebackendspring.entity.Clazz;
+import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.SubjectGrade;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,4 +51,10 @@ List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long
             "WHERE sg.student.userId = :studentId " +
             "ORDER BY t.beginDate ASC, subj.name ASC")
     List<SubjectGrade> findAllByStudentIdFetchAll(@Param("studentId") Long studentId);
+
+    List<SubjectGrade> findByStudent(Student student);
+
+    @Query("SELECT sg FROM SubjectGrade sg WHERE sg.student = :student AND sg.classSubject = :classSubject")
+    SubjectGrade findByStudentAndClassSubject(@Param("student") Student student, @Param("classSubject") ClassSubject classSubject);
+
 }

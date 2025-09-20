@@ -29,10 +29,10 @@ public class Clazz {
 
     private Integer classSize;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "homeroom_teacher_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "homeroom_teacher_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Teacher homeroomTeacher; // Mối quan hệ 1-1 với giáo viên chủ nhiệm
+    private Teacher homeroomTeacher;
     @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Enrollment> enrollments;

@@ -15,6 +15,7 @@ public class ClassDTO {
     private GradeLevel gradeLevel;
     private List<TermInfo> terms;
     private Integer classSize;
+    private Long teacherId;
     private String homeroomTeacherName;
 
     @Data

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
@@ -38,7 +39,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
                                      @Param("beginDate") Date beginDate,
                                      @Param("endDate") Date endDate);
 
-
+    Optional<Enrollment> findByStudent(Student student);
+    List<Enrollment> findByClazz(Clazz clazz);
 
 
 

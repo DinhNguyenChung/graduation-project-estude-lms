@@ -90,6 +90,7 @@ public class StudentController {
                     clazz.getGradeLevel(),
                     termInfos,
                     clazz.getEnrollments() != null ? clazz.getEnrollments().size() : 0,
+                    clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getUserId() : null,
                     clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null
             );
         }).toList();
@@ -105,6 +106,7 @@ public class StudentController {
         List<ClassSubjectDTO> dtoList = subjects.stream()
                 .map(cs -> new ClassSubjectDTO(
                         cs.getClassSubjectId(),
+                        cs.getSubject() != null ? cs.getSubject().getSubjectId() : null,
                         cs.getSubject() != null ? cs.getSubject().getName() : null,
                         cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
                         cs.getTerm() != null ? cs.getTerm().getTermId() :null,

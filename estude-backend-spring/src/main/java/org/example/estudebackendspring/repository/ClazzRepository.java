@@ -20,6 +20,7 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long> {
      */
     Optional<Clazz> findByNameAndSchool(String name, School school);
     List<Clazz> findBySchool_SchoolId(Long schoolId);
+    List<Clazz> findByHomeroomTeacher_UserId(Long teacherId);
 
 
 }

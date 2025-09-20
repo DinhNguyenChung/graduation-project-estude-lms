@@ -1,9 +1,6 @@
 package org.example.estudebackendspring.controller;
 
-import org.example.estudebackendspring.dto.ClassSubjectDTO;
-import org.example.estudebackendspring.dto.StudentDTO;
-import org.example.estudebackendspring.dto.StudentGradeResponse;
-import org.example.estudebackendspring.dto.SubjectDTO;
+import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Teacher;
@@ -49,7 +46,7 @@ public class TeacherController {
     }
 
     @GetMapping("/{teacherId}/homeroom-students")
-    public ResponseEntity<List<Student>> getHomeroomStudents(@PathVariable Long teacherId) {
+    public ResponseEntity<List<ClazzWithStudentsDTO>> getHomeroomStudents(@PathVariable Long teacherId) {
         return ResponseEntity.ok(teacherService.getHomeroomStudents(teacherId));
     }
 
@@ -65,6 +62,7 @@ public class TeacherController {
         List<ClassSubjectDTO> dtoList = classSubjects.stream()
                 .map(cs -> new ClassSubjectDTO(
                         cs.getClassSubjectId(),
+                        cs.getSubject() != null ? cs.getSubject().getSubjectId() : null,
                         cs.getSubject() != null ? cs.getSubject().getName() : null,
                         cs.getTeacher() != null ? cs.getTeacher().getFullName() : null,
                         cs.getTerm() != null ? cs.getTerm().getTermId() :null,
