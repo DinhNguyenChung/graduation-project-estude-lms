@@ -10,6 +10,7 @@ import org.example.estudebackendspring.enums.AttendanceStatus;
 import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.AttendanceService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -20,9 +21,11 @@ import java.util.List;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public AttendanceController(AttendanceService attendanceService) {
+    public AttendanceController(AttendanceService attendanceService, SimpMessagingTemplate messagingTemplate) {
         this.attendanceService = attendanceService;
+        this.messagingTemplate = messagingTemplate;
     }
     // Giáo viên tạo buổi điểm danh
     @PostMapping("/sessions")
@@ -42,6 +45,11 @@ public class AttendanceController {
                 LocalDateTime.parse(endTime),
                 gpsLatitude,
                 gpsLongitude);
+        // thông báo cho tất cả học sinh trong lớp
+        messagingTemplate.convertAndSend(
+                "/topic/class/" + classSubjectId + "/sessions",
+                session
+        );
         return ResponseEntity.ok(session);
     }
 
@@ -62,6 +70,11 @@ public class AttendanceController {
             @RequestParam Long teacherId,
             @RequestParam AttendanceStatus status) {
         AttendanceRecordDTO record = attendanceService.markAttendanceByTeacher(sessionId, studentId, teacherId, status);
+        // 🔔 thông báo cho học sinh và các client khác
+        messagingTemplate.convertAndSend(
+                "/topic/session/" + sessionId + "/records",
+                record
+        );
         return ResponseEntity.ok(record);
     }
 
@@ -83,6 +96,11 @@ public class AttendanceController {
             @RequestParam(required = false) Double gpsLatitude,
             @RequestParam(required = false) Double gpsLongitude) {
         AttendanceRecordDTO record = attendanceService.markAttendanceByStudent(sessionId, studentId,method, gpsLatitude, gpsLongitude);
+        // 🔔 thông báo cho giáo viên quản lý buổi này
+        messagingTemplate.convertAndSend(
+                "/topic/session/" + sessionId + "/records",
+                record
+        );
         return ResponseEntity.ok(record);
     }
     // Giáo viên xem danh sách học sinh và trạng thái điểm danh
