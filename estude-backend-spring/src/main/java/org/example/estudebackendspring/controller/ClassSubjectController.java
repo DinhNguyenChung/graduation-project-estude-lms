@@ -1,7 +1,7 @@
 package org.example.estudebackendspring.controller;
 
 import jakarta.validation.Valid;
-import org.example.estudebackendspring.dto.CreateClassSubjectRequest;
+import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
@@ -25,21 +25,40 @@ public class ClassSubjectController {
         this.service = service;
         this.repository = repository;
     }
-    @GetMapping
-    public List<ClassSubject> getAllClassSubjects() {
-        return repository.findAll();
-    }
 //    @GetMapping
-//    public List<ClassSubjectDTO> getAllClassSubjects() {
-//        return repository.findAll().stream()
-//                .map(cs -> new ClassSubjectDTO(
-//                        cs.getClassSubjectId(),
-//                        cs.getClazz().getName(),
-//                        cs.getSubject().getName(),
-//                        cs.getTeacher().getFullName()
-//                ))
-//                .toList();
+//    public List<ClassSubject> getAllClassSubjects() {
+//        return repository.findAll();
 //    }
+    @GetMapping
+    public List<ClazzSubjectsDTO> getAllClassSubjectsDTO() {
+        return repository.findAll().stream()
+                .map(cs -> new ClazzSubjectsDTO(
+                        cs.getClassSubjectId(),
+                        cs.getTerm() != null ? new TermDTO(
+                                cs.getTerm().getTermId(),
+                                cs.getTerm().getName(),
+                                cs.getTerm().getBeginDate(),
+                                cs.getTerm().getEndDate()
+                        ) : null,
+                        cs.getSubject() != null ? new SubjectDTO(
+                                cs.getSubject().getSubjectId(),
+                                cs.getSubject().getName(),
+                                cs.getSubject().getDescription()
+                        ) : null,
+                        cs.getTeacher() != null ? new TeacherDTO(
+                                cs.getTeacher().getTeacherCode(),
+                                cs.getTeacher().getFullName(),
+                                cs.getTeacher().getHireDate(),
+                                cs.getTeacher().getEndDate(),
+                                cs.getTeacher().isAdmin(),
+                                cs.getTeacher().isHomeroomTeacher()
+                        ) : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getClassId() : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getGradeLevel() : null
+                ))
+                .toList();
+    }
 
 
     @PostMapping
