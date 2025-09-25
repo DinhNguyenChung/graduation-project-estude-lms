@@ -8,6 +8,7 @@ import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.example.estudebackendspring.service.SubmissionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,10 +22,14 @@ public class SubmissionController {
     private final SubmissionService submissionService;
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final ObjectMapper objectMapper;
-    public SubmissionController(SubmissionService submissionService, AssignmentSubmissionService assignmentSubmissionService) {
+    private final SimpMessagingTemplate messagingTemplate;
+    public SubmissionController(SubmissionService submissionService, AssignmentSubmissionService assignmentSubmissionService,
+                                ObjectMapper objectMapper, SimpMessagingTemplate messagingTemplate) {
         this.submissionService = submissionService;
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.objectMapper = new ObjectMapper();
+        this.messagingTemplate = messagingTemplate;
+
     }
 //    @GetMapping("/submissions")
 //    public List<Submission> getSubmissions() {
@@ -37,6 +42,11 @@ public class SubmissionController {
     ) throws Exception {
         SubmissionRequest req = objectMapper.readValue(submissionJson, SubmissionRequest.class);
         SubmissionResultDTO res = assignmentSubmissionService.submitAssignment(req, files == null ? Collections.emptyList() : files);
+        // Gửi thông báo WebSocket cho FE (các client subscribe)
+        messagingTemplate.convertAndSend(
+                "/topic/assignment/" + req.getAssignmentId() + "/submissions",
+                res
+        );
         return ResponseEntity.ok(res);
     }
 //    @GetMapping("/submissions/{submissionId}")

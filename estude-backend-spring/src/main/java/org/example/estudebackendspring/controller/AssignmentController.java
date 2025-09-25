@@ -15,14 +15,12 @@ import org.example.estudebackendspring.service.AssignmentService;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/assignments")
@@ -33,14 +31,17 @@ public class AssignmentController {
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final TeacherRepository teacherRepository;
     private final ClassSubjectRepository classSubjectRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public AssignmentController(AssignmentService assignmentService , AssignmentRepository assignmentRepository,
-                                AssignmentSubmissionService assignmentSubmissionService, TeacherRepository teacherRepository, ClassSubjectRepository classSubjectRepository) {
+                                AssignmentSubmissionService assignmentSubmissionService, TeacherRepository teacherRepository, ClassSubjectRepository classSubjectRepository,
+                                SimpMessagingTemplate messagingTemplate) {
         this.assignmentService = assignmentService;
         this.assignmentRepository = assignmentRepository;
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.teacherRepository = teacherRepository;
         this.classSubjectRepository = classSubjectRepository;
+        this.messagingTemplate = messagingTemplate;
     }
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant()
@@ -85,7 +86,11 @@ public class AssignmentController {
 
             // Lưu assignment
             Assignment created = assignmentService.createAssignment(assignment);
-
+            // Gửi thông báo WebSocket cho FE (các client subscribe)
+            messagingTemplate.convertAndSend(
+                    "/topic/class/" + classSubject.getClassSubjectId() + "/assignments",
+                    created
+            );
             return ResponseEntity.ok(
                     new AuthResponse(true, "Assignment created successfully", created)
             );
@@ -122,6 +127,11 @@ public class AssignmentController {
             @RequestBody Assignment updated) {
         try {
             Assignment assignment = assignmentService.updateAssignment(assignmentId, updated);
+            //  Gửi thông báo cập nhật
+            messagingTemplate.convertAndSend(
+                    "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
+                    assignment
+            );
             return ResponseEntity.ok(
                     new AuthResponse(true, "Assignment updated successfully", assignment)
             );
@@ -136,7 +146,12 @@ public class AssignmentController {
     @DeleteMapping("/{assignmentId}")
     public ResponseEntity<?> deleteAssignment(@PathVariable Long assignmentId) {
         try {
+            Assignment assignment = assignmentService.getAssignment(assignmentId);
             assignmentService.deleteAssignment(assignmentId);
+            messagingTemplate.convertAndSend(
+                    "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
+                    "Assignment with ID " + assignmentId + " deleted"
+            );
             return ResponseEntity.ok(
                     new ApiResponse(true, "Assignment deleted successfully")
             );
@@ -150,8 +165,9 @@ public class AssignmentController {
     public ResponseEntity<?> getAssignmentsByClass(@PathVariable Long classId) {
         List<Assignment> assignments = assignmentService.getAssignmentsByClass(classId);
         if (assignments.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("No assignments found for classId: " + classId);
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("No assignments found for classId: " + classId);
+            return ResponseEntity.ok(Collections.emptyList());
         }
         return ResponseEntity.ok(assignments);
     }
@@ -159,7 +175,8 @@ public class AssignmentController {
     public ResponseEntity<?> getAssignmentsByClassSubject(@PathVariable Long classSubjectId) {
         List<Assignment> assignments = assignmentService.getAssignmentsByClassSubject(classSubjectId);
         if (assignments.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No assignments found for classId: " + classSubjectId);
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No assignments found for classId: " + classSubjectId);
+            return ResponseEntity.ok(Collections.emptyList());
         }
         return ResponseEntity.ok(assignments);
     }

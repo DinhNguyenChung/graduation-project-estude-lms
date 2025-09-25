@@ -13,7 +13,7 @@ import java.util.Date;
 public class ClazzSubjectsDTO {
     private Long classSubjectId;
     private TermDTO term;
-    private SubjectDTO subject;
+    private SubjectClazzDTO subject;
     private TeacherDTO teacher;
     private Long classId;
     private String className;

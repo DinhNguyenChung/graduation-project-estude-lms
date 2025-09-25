@@ -16,7 +16,7 @@ public class AttendanceRecordDTO {
     private Long sessionId;
     private String sessionName; // Tên buổi điểm danh
     private Long studentId;
-//    private String studentCode;
+    private String studentName;
     private Long teacherId; // Mã giáo viên
     private String teacherName;
     private Long classId;

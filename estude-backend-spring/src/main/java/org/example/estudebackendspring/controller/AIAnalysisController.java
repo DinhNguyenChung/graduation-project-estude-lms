@@ -11,6 +11,7 @@ import org.example.estudebackendspring.service.TestAnalysisService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +51,8 @@ public class AIAnalysisController {
                 AnalysisType.PREDICT_SEMESTER_PERFORMANCE
         );
         if (result == null) {
-            return ResponseEntity.notFound().build();
+//            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(new AIAnalysisResult());
         }
         return ResponseEntity.ok(result);
     }

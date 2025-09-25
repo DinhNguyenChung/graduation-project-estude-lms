@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -40,10 +41,17 @@ public class ClassSubjectController {
                                 cs.getTerm().getBeginDate(),
                                 cs.getTerm().getEndDate()
                         ) : null,
-                        cs.getSubject() != null ? new SubjectDTO(
+                        cs.getSubject() != null ? new SubjectClazzDTO(
                                 cs.getSubject().getSubjectId(),
                                 cs.getSubject().getName(),
-                                cs.getSubject().getDescription()
+                                cs.getSubject().getDescription(),
+                                cs.getSubject().getSchools() !=null ?
+                                        cs.getSubject().getSchools().stream().map(s -> new SchoolDTO(
+                                                s.getSchoolId(),
+                                                s.getSchoolCode(),
+                                                s.getSchoolName()
+                                        ))
+                                                .collect(Collectors.toList()):null
                         ) : null,
                         cs.getTeacher() != null ? new TeacherDTO(
                                 cs.getTeacher().getTeacherCode(),

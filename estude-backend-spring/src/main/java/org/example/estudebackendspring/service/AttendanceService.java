@@ -302,6 +302,7 @@ public class AttendanceService {
         dto.setSessionId(record.getSession().getSessionId());
         dto.setSessionName(record.getSession().getSessionName());
         dto.setStudentId(record.getStudent().getUserId());
+        dto.setStudentName(record.getStudent().getFullName());
         dto.setTeacherId(record.getSession().getTeacher().getUserId());
         dto.setTeacherName(record.getSession().getTeacher().getFullName());
         dto.setClassId(record.getSession().getClassSubject().getClassSubjectId());

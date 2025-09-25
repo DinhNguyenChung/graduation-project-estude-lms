@@ -4,13 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SubjectDTO {
+public class SubjectClazzDTO {
     private Long subjectId;
     private String name;
     private String description;
-
+    private List<SchoolDTO> schools;
 }
-
