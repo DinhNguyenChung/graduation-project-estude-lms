@@ -69,16 +69,31 @@ public class StatisticsService {
                 .collect(Collectors.toList());
 
         // 5. Kiểm tra tất cả môn đều có actualAverage
-        boolean allSubjectsGraded = grades.stream()
-                .allMatch(g -> g.getActualAverage() != null);
+//        boolean allSubjectsGraded = grades.stream()
+//                .allMatch(g -> g.getActualAverage() != null);
+//
+//        Double avg = null;
+//        if (allSubjectsGraded && !grades.isEmpty()) {
+//            avg = grades.stream()
+//                    .mapToDouble(g -> g.getActualAverage())
+//                    .average()
+//                    .orElse(0.0);
+//        }
+        // 5. Tính điểm trung bình (có môn nào tính môn đó)
+        List<Float> availableGrades = grades.stream()
+                .map(SubjectGrade::getActualAverage)
+                .filter(Objects::nonNull)
+                .toList();
 
         Double avg = null;
-        if (allSubjectsGraded && !grades.isEmpty()) {
-            avg = grades.stream()
-                    .mapToDouble(g -> g.getActualAverage())
+        if (!availableGrades.isEmpty()) {
+            avg = availableGrades.stream()
+                    .mapToDouble(Float::doubleValue)  // chuyển Float sang double khi tính
                     .average()
                     .orElse(0.0);
         }
+
+
 
         // 6. Xếp hạng học sinh trong lớp theo điểm trung bình
         List<Student> allStudents = enrollmentRepository.findByClazz(clazz).stream()
