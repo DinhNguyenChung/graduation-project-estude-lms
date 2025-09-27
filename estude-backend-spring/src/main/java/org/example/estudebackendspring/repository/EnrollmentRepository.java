@@ -39,7 +39,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
                                      @Param("beginDate") Date beginDate,
                                      @Param("endDate") Date endDate);
 
-    Optional<Enrollment> findByStudent(Student student);
+//    Optional<Enrollment> findByStudent(Student student);
+        List<Enrollment> findByStudent(Student student);
     List<Enrollment> findByClazz(Clazz clazz);
 
 

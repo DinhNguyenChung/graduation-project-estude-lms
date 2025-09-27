@@ -34,8 +34,18 @@ public class StatisticsService {
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 
         // 1. Lấy enrollment hiện tại (lấy lớp mới nhất nếu học sinh có nhiều enrollment)
-        Enrollment enrollment = enrollmentRepository.findByStudent(student)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found for student"));
+//        Enrollment enrollment = enrollmentRepository.findByStudent(student)
+//                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found for student"));
+        List<Enrollment> enrollments = enrollmentRepository.findByStudent(student);
+        if (enrollments.isEmpty()) {
+            throw new ResourceNotFoundException("Enrollment not found for student");
+        }
+
+    // Lấy enrollment mới nhất theo dateJoined
+        Enrollment enrollment = enrollments.stream()
+                    .max(Comparator.comparing(Enrollment::getDateJoined))
+                    .orElseThrow(() -> new ResourceNotFoundException("No enrollment found"));
+
         Clazz clazz = enrollment.getClazz();
 
         if (clazz == null) {
