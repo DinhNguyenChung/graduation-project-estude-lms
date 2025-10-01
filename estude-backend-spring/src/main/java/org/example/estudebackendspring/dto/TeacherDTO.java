@@ -3,6 +3,7 @@ package org.example.estudebackendspring.dto;
 import java.util.Date;
 
 public class TeacherDTO {
+    private Long userId;
     private String teacherCode;
     private String fullName;
     private Date hireDate;
@@ -10,8 +11,9 @@ public class TeacherDTO {
     private boolean isAdmin;
     private boolean isHomeroomTeacher;
 
-    public TeacherDTO(String teacherCode, String fullName, Date hireDate, Date endDate,
+    public TeacherDTO(Long UserId,String teacherCode, String fullName, Date hireDate, Date endDate,
                       boolean isAdmin, boolean isHomeroomTeacher) {
+        this.userId = UserId;
         this.teacherCode = teacherCode;
         this.fullName = fullName;
         this.hireDate = hireDate;
@@ -21,6 +23,12 @@ public class TeacherDTO {
     }
 
     // Getters and Setters
+    public Long getUserId() {
+        return userId;
+    }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
     public String getTeacherCode() {
         return teacherCode;
     }

@@ -54,6 +54,7 @@ public class ClassSubjectController {
                                                 .collect(Collectors.toList()):null
                         ) : null,
                         cs.getTeacher() != null ? new TeacherDTO(
+                                cs.getTeacher().getUserId(),
                                 cs.getTeacher().getTeacherCode(),
                                 cs.getTeacher().getFullName(),
                                 cs.getTeacher().getHireDate(),
