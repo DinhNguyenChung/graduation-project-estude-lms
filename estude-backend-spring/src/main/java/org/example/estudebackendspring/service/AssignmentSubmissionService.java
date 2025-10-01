@@ -67,12 +67,15 @@ public class AssignmentSubmissionService {
             dto.setSubmissionLimit(a.getSubmissionLimit());
             dto.setAllowLateSubmission(a.getAllowLateSubmission());
             dto.setStatus(
-                    a.getSubmissions().stream()
-                            .sorted(Comparator.comparing(Submission::getSubmittedAt).reversed()) // sắp xếp mới nhất trước
+                    a.getSubmissions().isEmpty()
+                            ? SubmissionStatus.NOT_SUBMITTED
+                            : a.getSubmissions().stream()
+                            .sorted(Comparator.comparing(Submission::getSubmittedAt).reversed())
                             .map(Submission::getStatus)
                             .findFirst()
-                            .orElse(null)
+                            .orElse(SubmissionStatus.NOT_SUBMITTED)
             );
+
 
             return dto;
         }).collect(Collectors.toList());

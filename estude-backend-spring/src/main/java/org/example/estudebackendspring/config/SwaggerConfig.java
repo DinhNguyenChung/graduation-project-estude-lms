@@ -11,7 +11,7 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Estudee API")
+                        .title("Estude API")
                         .version("1.0")
                         .description("Tài liệu API cho hệ thống quản lý học tập Estudee"));
     }

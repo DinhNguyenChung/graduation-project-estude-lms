@@ -45,6 +45,7 @@ public class StatisticsService {
         Enrollment enrollment = enrollments.stream()
                     .max(Comparator.comparing(Enrollment::getDateJoined))
                     .orElseThrow(() -> new ResourceNotFoundException("No enrollment found"));
+        System.out.println("enrollment mới nhất theo dateJoined: "+enrollment.getDateJoined());
 
         Clazz clazz = enrollment.getClazz();
 
@@ -58,9 +59,11 @@ public class StatisticsService {
                 .filter(term -> !term.getBeginDate().after(today) && !term.getEndDate().before(today))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("No current term found for class"));
+        System.out.println(" kỳ hiện tại của lớp: "+currentTerm);
 
         // 3. Lấy danh sách môn học hiện tại của kỳ
         List<ClassSubject> currentSubjects = currentTerm.getClassSubjects();
+        System.out.println("danh sách môn học hiện tại của kỳ: "+currentSubjects.size());
 
         // 4. Lấy điểm của học sinh theo môn hiện tại
         List<SubjectGrade> grades = currentSubjects.stream()
