@@ -2,19 +2,21 @@ package org.example.estudebackendspring.dto;
 
 import lombok.Data;
 import org.example.estudebackendspring.enums.ScheduleStatus;
+import org.example.estudebackendspring.enums.ScheduleType;
 
 import java.util.Date;
 
 @Data
 public class ScheduleDTO {
     private Long scheduleId;
-    private String week;
+    private Integer week;
     private String details;
     private Date date;
     private Integer startPeriod;
     private Integer endPeriod;
     private String room;
     private ScheduleStatus status;
+    private ScheduleType type;
     private TermDTO term;
     private ClassSubjectDTO classSubject;
 

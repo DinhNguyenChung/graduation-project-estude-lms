@@ -3,6 +3,7 @@ package org.example.estudebackendspring.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.estudebackendspring.enums.ScheduleStatus;
+import org.example.estudebackendspring.enums.ScheduleType;
 
 import java.util.Date;
 
@@ -17,7 +18,7 @@ public class Schedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long scheduleId;
     
-    private String week;
+    private Integer week;
     
     @Column(columnDefinition = "TEXT")
     private String details;
@@ -25,11 +26,14 @@ public class Schedule {
     @Temporal(TemporalType.DATE)
     private Date date;
     
-    private Integer startPeriod;    private Integer endPeriod;
+    private Integer startPeriod;
+    private Integer endPeriod;
     private String room;
     
     @Enumerated(EnumType.STRING)
     private ScheduleStatus status;
+    @Enumerated(EnumType.STRING)
+    private ScheduleType type;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "term_id")

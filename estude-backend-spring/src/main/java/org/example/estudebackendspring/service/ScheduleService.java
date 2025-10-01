@@ -49,6 +49,9 @@ public class ScheduleService {
         if (scheduleDetails.getStatus() != null) {
             schedule.setStatus(scheduleDetails.getStatus());
         }
+        if (scheduleDetails.getType() != null) {
+            schedule.setType(scheduleDetails.getType());
+        }
         if (scheduleDetails.getTerm() != null) {
             schedule.setTerm(scheduleDetails.getTerm());
         }
@@ -100,6 +103,7 @@ public class ScheduleService {
         dto.setEndPeriod(schedule.getEndPeriod());
         dto.setRoom(schedule.getRoom());
         dto.setStatus(schedule.getStatus());
+        dto.setType(schedule.getType());
 
         // Map Term
         ScheduleDTO.TermDTO termDTO = new ScheduleDTO.TermDTO();
