@@ -29,6 +29,13 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("SELECT COUNT(s) FROM Submission s WHERE s.student.userId = :studentId AND s.assignment.classSubject.term.termId = :termId")
     long countByStudentAndTerm(@Param("studentId") Long studentId, @Param("termId") Long termId);
 
-    @Query("SELECT COUNT(s) FROM Submission s WHERE s.student.userId = :studentId AND s.assignment.classSubject.term.termId = :termId AND s.isLate = true")
+//    @Query("SELECT COUNT(s) FROM Submission s WHERE s.student.userId = :studentId AND s.assignment.classSubject.term.termId = :termId AND s.isLate = true")
+//    long countLateByStudentAndTerm(@Param("studentId") Long studentId, @Param("termId") Long termId);
+    @Query("SELECT COUNT(DISTINCT s.assignment) \n" +
+            "    FROM Submission s\n" +
+            "    WHERE s.student.userId = :studentId\n" +
+            "    AND s.assignment.classSubject.term.termId = :termId\n" +
+            "    AND s.isLate = true")
     long countLateByStudentAndTerm(@Param("studentId") Long studentId, @Param("termId") Long termId);
+
 }

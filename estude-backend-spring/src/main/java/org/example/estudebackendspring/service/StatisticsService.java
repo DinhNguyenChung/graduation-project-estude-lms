@@ -136,12 +136,14 @@ public class StatisticsService {
                 .count();
 
         // 8. Thống kê Assignment / Submission
-        long totalAssignments = assignmentRepository.countByStudentAndTerm(studentId, currentTerm.getTermId());
+        long totalAssignments = assignmentRepository.countByStudentAndTerm(studentId,currentTerm.getTermId());
         long submitted = submissionRepository.countByStudentAndTerm(studentId, currentTerm.getTermId());
         long late = submissionRepository.countLateByStudentAndTerm(studentId, currentTerm.getTermId());
         double submissionRate = totalAssignments == 0 ? 0 : (double) submitted / totalAssignments * 100;
         double lateRate = totalAssignments == 0 ? 0 : (double) late / totalAssignments * 100;
+        System.out.println("totalAssi"+totalAssignments+ "submitted"+submitted+"late: "+late+ "submissionRate: "+submissionRate
 
+        + "lateRate: "+lateRate);
         // 9. Thống kê Attendance
         long totalSessions = attendanceRecordRepository.countByStudentAndTerm(studentId, currentTerm.getTermId());
         long absentSessions = attendanceRecordRepository.countAbsentByStudentAndTerm(studentId, currentTerm.getTermId());
