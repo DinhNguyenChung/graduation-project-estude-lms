@@ -63,6 +63,17 @@ public class AssignmentSubmissionService {
                 dto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
                 dto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
             }
+            dto.setType(a.getType());
+            dto.setSubmissionLimit(a.getSubmissionLimit());
+            dto.setAllowLateSubmission(a.getAllowLateSubmission());
+            dto.setStatus(
+                    a.getSubmissions().stream()
+                            .sorted(Comparator.comparing(Submission::getSubmittedAt).reversed()) // sắp xếp mới nhất trước
+                            .map(Submission::getStatus)
+                            .findFirst()
+                            .orElse(null)
+            );
+
             return dto;
         }).collect(Collectors.toList());
     }
