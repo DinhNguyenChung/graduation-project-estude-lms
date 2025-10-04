@@ -2,12 +2,17 @@ package org.example.estudebackendspring.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.dto.GradeUpdateRequest;
 import org.example.estudebackendspring.entity.Grade;
 import org.example.estudebackendspring.entity.SubjectGrade;
+import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.GradeService;
 import org.example.estudebackendspring.service.SubjectGradeService;
+import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +22,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Slf4j
 public class GradeController {
     private final GradeService gradeService;
     private final SubjectGradeService subjectGradeService;
+    private final LogEntryService logEntryService;
+    private final TeacherRepository teacherRepository;
 
     // POST /api/grades -> assign grade
     @PostMapping("/grades")
@@ -29,6 +37,23 @@ public class GradeController {
                                          @RequestParam(required = false) String feedback) {
         try {
             Grade grade = gradeService.assignGrade(submissionId, score, feedback, teacherId);
+            
+            // Tạo log entry
+            try {
+                Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
+                logEntryService.createLog(
+                        "Grade",
+                        grade.getGradeId(),
+                        "Chấm điểm bài nộp ID: " + submissionId + " với điểm số: " + score + (feedback != null ? " - Nhận xét: " + feedback : ""),
+                        ActionType.GRADE,
+                        submissionId,
+                        "Submission",
+                        teacher
+                );
+            } catch (Exception e) {
+                log.warn("Failed to log grade assignment", e);
+            }
+            
             return ResponseEntity.ok(new AuthResponse(true, "Grade assigned", grade));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
@@ -42,6 +67,22 @@ public class GradeController {
                                          @RequestParam(required = false) String feedback) {
         try {
             Grade grade = gradeService.updateGrade(gradeId, score, feedback);
+
+            // Tạo log entry
+            try {
+                logEntryService.createLog(
+                        "Grade",
+                        gradeId,
+                        "Cập nhật điểm số: " + score + (feedback != null ? " - Nhận xét: " + feedback : ""),
+                        ActionType.UPDATE,
+                        grade.getSubmission() != null ? grade.getSubmission().getSubmissionId() : null,
+                        "Submission",
+                        grade.getTeacher()
+                );
+            } catch (Exception e) {
+                log.warn("Failed to log grade update", e);
+            }
+            
             return ResponseEntity.ok(new AuthResponse(true, "Grade updated", grade));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
@@ -78,6 +119,22 @@ public class GradeController {
                     updated.getFinalScore(),
                     updated.getComment()
             );
+            
+            // Tạo log entry
+            try {
+                logEntryService.createLog(
+                        "SubjectGrade",
+                        subjectGradeId,
+                        "Cập nhật điểm môn học - Giữa kỳ: " + updated.getMidtermScore() + ", Cuối kỳ: " + updated.getFinalScore(),
+                        ActionType.UPDATE,
+                        sg.getClassSubject() != null ? sg.getClassSubject().getClassSubjectId() : null,
+                        "ClassSubject",
+                        null // Không có thông tin giáo viên trong request
+                );
+            } catch (Exception e) {
+                log.warn("Failed to log subject grade update", e);
+            }
+            
             return ResponseEntity.ok(new AuthResponse(true, "Subject grade updated", sg));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));

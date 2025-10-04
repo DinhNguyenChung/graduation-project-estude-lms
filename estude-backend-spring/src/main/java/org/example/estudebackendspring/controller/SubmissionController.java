@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.Submission;
+import org.example.estudebackendspring.entity.User;
+import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
+import org.example.estudebackendspring.service.LogEntryService;
 import org.example.estudebackendspring.service.SubmissionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +27,17 @@ public class SubmissionController {
     private final AssignmentSubmissionService assignmentSubmissionService;
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final LogEntryService logEntryService;
+    private final UserRepository userRepository;
+
     public SubmissionController(SubmissionService submissionService, AssignmentSubmissionService assignmentSubmissionService,
-                                ObjectMapper objectMapper, SimpMessagingTemplate messagingTemplate) {
+                                ObjectMapper objectMapper, SimpMessagingTemplate messagingTemplate, LogEntryService logEntryService, UserRepository userRepository) {
         this.submissionService = submissionService;
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.objectMapper = new ObjectMapper();
         this.messagingTemplate = messagingTemplate;
-
+        this.logEntryService = logEntryService;
+        this.userRepository = userRepository;
     }
 //    @GetMapping("/submissions")
 //    public List<Submission> getSubmissions() {
@@ -42,6 +50,29 @@ public class SubmissionController {
     ) throws Exception {
         SubmissionRequest req = objectMapper.readValue(submissionJson, SubmissionRequest.class);
         SubmissionResultDTO res = assignmentSubmissionService.submitAssignment(req, files == null ? Collections.emptyList() : files);
+        
+        // Log submission creation
+        try {
+            SubmissionDTO submission = submissionService.getSubmission(res.getSubmissionId())
+                    .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
+            User user = userRepository.findById(submission.getStudentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid actingUserId"));
+            int fileCount = files != null ? files.size() : 0;
+            String fileInfo = fileCount > 0 ? " (kèm " + fileCount + " file)" : "";
+            logEntryService.createLog(
+                "Submission",
+                res.getSubmissionId(),
+                "Học sinh nộp bài tập: " + submission.getAssignmentName() + fileInfo,
+                ActionType.CREATE,
+                req.getAssignmentId(),
+                "Assignment",
+                user
+            );
+        } catch (Exception e) {
+            // Log warning but don't fail the main operation
+            System.err.println("Failed to log submission: " + e.getMessage());
+        }
+        
         // Gửi thông báo WebSocket cho FE (các client subscribe)
         messagingTemplate.convertAndSend(
                 "/topic/assignment/" + req.getAssignmentId() + "/submissions",

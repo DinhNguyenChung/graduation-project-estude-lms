@@ -29,12 +29,13 @@ public class JwtTokenUtil {
     }
 
     // existing: generate token for login (keeps current behavior)
-    public String generateToken(String loginCode) {
+    public String generateToken(String loginCode,Long userId) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
                 .setSubject(loginCode)
+                .claim("userId", userId)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -57,6 +58,9 @@ public class JwtTokenUtil {
 
     public String getLoginCodeFromToken(String token) {
         return getAllClaimsFromToken(token).getSubject();
+    }
+    public Long getUserIdFromToken(String token) {
+        return getAllClaimsFromToken(token).get("userId", Long.class);
     }
 
     public Claims getAllClaimsFromToken(String token) {

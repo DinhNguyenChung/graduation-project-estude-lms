@@ -212,7 +212,7 @@ public class AuthService {
         Optional<Student> optStudent = studentRepository.findByStudentCode(loginCode);
         if (optStudent.isPresent()) {
             Student student = optStudent.get();
-            return updatePasswordForUser(student.getStudentCode(), student.getPassword(),
+            return updatePasswordForUser(student.getStudentCode(),student.getUserId(), student.getPassword(),
                     p -> { student.setPassword(p); studentRepository.save(student); }, currentPassword, newPassword);
         }
 
@@ -220,7 +220,7 @@ public class AuthService {
         Optional<Teacher> optTeacher = teacherRepository.findByTeacherCode(loginCode);
         if (optTeacher.isPresent()) {
             Teacher teacher = optTeacher.get();
-            return updatePasswordForUser(teacher.getTeacherCode(), teacher.getPassword(),
+            return updatePasswordForUser(teacher.getTeacherCode(),teacher.getUserId(), teacher.getPassword(),
                     p -> { teacher.setPassword(p); teacherRepository.save(teacher); }, currentPassword, newPassword);
         }
 
@@ -228,7 +228,7 @@ public class AuthService {
         Optional<Admin> optAdmin = adminRepository.findByAdminCode(loginCode);
         if (optAdmin.isPresent()) {
             Admin admin = optAdmin.get();
-            return updatePasswordForUser(admin.getAdminCode(), admin.getPassword(),
+            return updatePasswordForUser(admin.getAdminCode(),admin.getUserId(), admin.getPassword(),
                     p -> { admin.setPassword(p); adminRepository.save(admin); }, currentPassword, newPassword);
         }
 
@@ -247,6 +247,7 @@ public class AuthService {
      */
     private String updatePasswordForUser(
             String tokenSubject,
+            Long userId,
             String currentHashedPassword,
             java.util.function.Consumer<String> saveAction,
             String currentPassword,
@@ -268,7 +269,7 @@ public class AuthService {
 
         // Optionally: update a "passwordLastChangedAt" field on user here to invalidate old JWTs (recommended)
         // Trả JWT mới
-        return jwtTokenUtil.generateToken(tokenSubject);
+        return jwtTokenUtil.generateToken(tokenSubject,userId);
     }
 
 

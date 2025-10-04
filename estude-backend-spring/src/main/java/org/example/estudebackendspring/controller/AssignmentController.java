@@ -8,11 +8,13 @@ import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.Term;
+import org.example.estudebackendspring.enums.ActionType;
 import org.example.estudebackendspring.repository.AssignmentRepository;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.AssignmentService;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
+import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -32,16 +34,18 @@ public class AssignmentController {
     private final TeacherRepository teacherRepository;
     private final ClassSubjectRepository classSubjectRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final LogEntryService logEntryService;
 
     public AssignmentController(AssignmentService assignmentService , AssignmentRepository assignmentRepository,
                                 AssignmentSubmissionService assignmentSubmissionService, TeacherRepository teacherRepository, ClassSubjectRepository classSubjectRepository,
-                                SimpMessagingTemplate messagingTemplate) {
+                                SimpMessagingTemplate messagingTemplate, LogEntryService logEntryService) {
         this.assignmentService = assignmentService;
         this.assignmentRepository = assignmentRepository;
         this.assignmentSubmissionService = assignmentSubmissionService;
         this.teacherRepository = teacherRepository;
         this.classSubjectRepository = classSubjectRepository;
         this.messagingTemplate = messagingTemplate;
+        this.logEntryService = logEntryService;
     }
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant()
@@ -86,6 +90,16 @@ public class AssignmentController {
 
             // Lưu assignment
             Assignment created = assignmentService.createAssignment(assignment);
+            // Tạo logEntry
+            logEntryService.createLog(
+                    "Assignment",
+                    created.getAssignmentId(),
+                    "Tạo mới bài tập: " + assignment.getTitle() + " của lớp "+created.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ created.getClassSubject().getSubject().getName(),
+                    ActionType.CREATE,
+                    created.getClassSubject().getClassSubjectId(),
+                    "ClassSubject",
+                    created.getTeacher()
+            );
             // Gửi thông báo WebSocket cho FE (các client subscribe)
             messagingTemplate.convertAndSend(
                     "/topic/class/" + classSubject.getClassSubjectId() + "/assignments",
@@ -127,6 +141,16 @@ public class AssignmentController {
             @RequestBody Assignment updated) {
         try {
             Assignment assignment = assignmentService.updateAssignment(assignmentId, updated);
+            // tạo log
+            logEntryService.createLog(
+                    "Assignment",
+                    assignment.getAssignmentId(),
+                    "Cập nhật bài tập: " + assignment.getTitle() + " của lớp "+assignment.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ assignment.getClassSubject().getSubject().getName(),
+                    ActionType.UPDATE,
+                    assignment.getClassSubject().getClassSubjectId(),
+                    "ClassSubject",
+                    assignment.getTeacher()
+            );
             //  Gửi thông báo cập nhật
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
@@ -148,6 +172,16 @@ public class AssignmentController {
         try {
             Assignment assignment = assignmentService.getAssignment(assignmentId);
             assignmentService.deleteAssignment(assignmentId);
+            // Tạo log
+            logEntryService.createLog(
+                    "Assignment",
+                    assignmentId,
+                    "Xóa bài tập: " + assignment.getTitle() + " của lớp "+assignment.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ assignment.getClassSubject().getSubject().getName(),
+                    ActionType.DELETE,
+                    assignment.getClassSubject().getClassSubjectId(),
+                    "ClassSubject",
+                    assignment.getTeacher()
+            );
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
                     "Assignment with ID " + assignmentId + " deleted"

@@ -166,4 +166,9 @@ public class ClassSubjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("ClassSubject not found with id: " + classSubjectId));
         classSubjectRepository.delete(cs);
     }
+
+    public ClassSubject getClassSubjectById(Long classSubjectId) {
+        return classSubjectRepository.findByClassSubjectId(classSubjectId)
+                .orElseThrow(() -> new ResourceNotFoundException("ClassSubject not found with id: " + classSubjectId));
+    }
 }

@@ -1,10 +1,13 @@
 package org.example.estudebackendspring.enums;
 
 public enum ActionType {
-    SUBMIT_ASSIGNMENT,
+    CREATE,
+    UPDATE,
+    DELETE,
+    SUBMIT,
+    GRADE,
     ATTENDANCE,
-    SEND_NOTIFICATION,
-    GRADE_ASSIGNMENT,
-    SYSTEM_MAINTENANCE,
+    NOTIFICATION,
+    SYSTEM,
     GENERAL
 }

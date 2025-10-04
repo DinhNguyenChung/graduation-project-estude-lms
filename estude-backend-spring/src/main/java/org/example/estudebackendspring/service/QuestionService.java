@@ -70,4 +70,8 @@ public class QuestionService {
         }
         questionRepository.deleteById(questionId);
     }
+
+    public Question getQuestion(Long questionId) {
+        return questionRepository.findById(questionId).orElseThrow(() -> new RuntimeException("Question not found"));
+    }
 }

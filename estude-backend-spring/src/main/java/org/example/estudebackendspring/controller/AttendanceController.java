@@ -1,14 +1,21 @@
 package org.example.estudebackendspring.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.AttendanceRecordDTO;
 import org.example.estudebackendspring.dto.AttendanceSessionDTO;
 import org.example.estudebackendspring.dto.StudentAttendanceDTO;
 import org.example.estudebackendspring.entity.AttendanceRecord;
 import org.example.estudebackendspring.entity.AttendanceSession;
+import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.enums.AttendanceMethod;
 import org.example.estudebackendspring.enums.AttendanceStatus;
+import org.example.estudebackendspring.enums.ActionType;
 import org.example.estudebackendspring.repository.UserRepository;
+import org.example.estudebackendspring.repository.TeacherRepository;
+import org.example.estudebackendspring.repository.StudentRepository;
 import org.example.estudebackendspring.service.AttendanceService;
+import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +25,23 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/attendance")
+@Slf4j
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final LogEntryService logEntryService;
+    private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
 
-    public AttendanceController(AttendanceService attendanceService, SimpMessagingTemplate messagingTemplate) {
+    public AttendanceController(AttendanceService attendanceService, SimpMessagingTemplate messagingTemplate,
+                               LogEntryService logEntryService, TeacherRepository teacherRepository, 
+                               StudentRepository studentRepository) {
         this.attendanceService = attendanceService;
         this.messagingTemplate = messagingTemplate;
+        this.logEntryService = logEntryService;
+        this.teacherRepository = teacherRepository;
+        this.studentRepository = studentRepository;
     }
     // Giáo viên tạo buổi điểm danh
     @PostMapping("/sessions")
@@ -45,6 +61,23 @@ public class AttendanceController {
                 LocalDateTime.parse(endTime),
                 gpsLatitude,
                 gpsLongitude);
+        
+        // Tạo log entry
+        try {
+            Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
+            logEntryService.createLog(
+                    "AttendanceSession",
+                    session.getSessionId(),
+                    "Tạo buổi điểm danh: " + sessionName + " từ " + startTime + " đến " + endTime,
+                    ActionType.CREATE,
+                    classSubjectId,
+                    "ClassSubject",
+                    teacher
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log attendance session creation", e);
+        }
+        
         // thông báo cho tất cả học sinh trong lớp
         messagingTemplate.convertAndSend(
                 "/topic/class/" + classSubjectId + "/sessions",
@@ -70,6 +103,26 @@ public class AttendanceController {
             @RequestParam Long teacherId,
             @RequestParam AttendanceStatus status) {
         AttendanceRecordDTO record = attendanceService.markAttendanceByTeacher(sessionId, studentId, teacherId, status);
+        
+        // Tạo log entry
+        try {
+            Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
+            Student student = studentRepository.findById(studentId).orElse(null);
+            String studentName = student != null ? student.getFullName() : "Unknown Student";
+            
+            logEntryService.createLog(
+                    "AttendanceRecord",
+                    record.getAttendanceId(),
+                    "Giáo viên điểm danh cho học sinh " + studentName + " với trạng thái: " + status.name(),
+                    ActionType.ATTENDANCE,
+                    sessionId,
+                    "AttendanceSession",
+                    teacher
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log teacher attendance marking", e);
+        }
+        
         // 🔔 thông báo cho học sinh và các client khác
         messagingTemplate.convertAndSend(
                 "/topic/session/" + sessionId + "/records",
@@ -96,6 +149,25 @@ public class AttendanceController {
             @RequestParam(required = false) Double gpsLatitude,
             @RequestParam(required = false) Double gpsLongitude) {
         AttendanceRecordDTO record = attendanceService.markAttendanceByStudent(sessionId, studentId,method, gpsLatitude, gpsLongitude);
+        
+        // Tạo log entry
+        try {
+            Student student = studentRepository.findById(studentId).orElse(null);
+            
+            logEntryService.createLog(
+                    "AttendanceRecord",
+                    record.getAttendanceId(),
+                    "Học sinh tự điểm danh bằng phương thức: " + method.name() + 
+                    (gpsLatitude != null && gpsLongitude != null ? " tại vị trí: " + gpsLatitude + ", " + gpsLongitude : ""),
+                    ActionType.ATTENDANCE,
+                    sessionId,
+                    "AttendanceSession",
+                    student
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log student attendance marking", e);
+        }
+        
         // 🔔 thông báo cho giáo viên quản lý buổi này
         messagingTemplate.convertAndSend(
                 "/topic/session/" + sessionId + "/records",

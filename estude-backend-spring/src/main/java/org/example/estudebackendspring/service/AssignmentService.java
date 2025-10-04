@@ -29,7 +29,7 @@ public class AssignmentService {
     // Read
     public Assignment getAssignment(Long assignmentId) {
         return assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy bài tập"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
     }
 
     // Update
@@ -53,7 +53,7 @@ public class AssignmentService {
     public void deleteAssignment(Long assignmentId) {
         Assignment existing = getAssignment(assignmentId);
         if (existing.getSubmissions() != null && !existing.getSubmissions().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể xóa bài tập đã nộp");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete assignment with submissions");
         }
         assignmentRepository.delete(existing);
     }

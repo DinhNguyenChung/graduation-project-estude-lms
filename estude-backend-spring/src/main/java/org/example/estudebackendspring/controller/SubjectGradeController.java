@@ -3,6 +3,10 @@ package org.example.estudebackendspring.controller;
 import org.example.estudebackendspring.dto.SubjectGradeDTO;
 import org.example.estudebackendspring.dto.SubjectGradeRequest;
 import org.example.estudebackendspring.dto.TermGradesDTO;
+import org.example.estudebackendspring.entity.User;
+import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.repository.UserRepository;
+import org.example.estudebackendspring.service.LogEntryService;
 import org.example.estudebackendspring.service.SubjectGradeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +21,13 @@ import java.util.*;
 public class SubjectGradeController {
 
     private final SubjectGradeService subjectGradeService;
+    private final LogEntryService logEntryService;
+    private final UserRepository userRepository;
 
-    public SubjectGradeController(SubjectGradeService subjectGradeService) {
+    public SubjectGradeController(SubjectGradeService subjectGradeService, LogEntryService logEntryService, UserRepository userRepository) {
         this.subjectGradeService = subjectGradeService;
+        this.logEntryService = logEntryService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -28,6 +36,33 @@ public class SubjectGradeController {
     @PostMapping
     public ResponseEntity<SubjectGradeDTO> upsertGrade(@RequestBody @Validated SubjectGradeRequest req) {
         SubjectGradeDTO dto = subjectGradeService.upsertSubjectGrade(req);
+        
+        // Log subject grade creation/update
+        try {
+            String action = dto.getSubjectGradeId() != null ? "Cập nhật" : "Tạo mới";
+            String gradeInfo = "";
+            if (dto.getRegularScores()!= null || dto.getMidtermScore() != null || dto.getFinalScore() != null) {
+                gradeInfo =
+                        "(Thường xuyên: "+(dto.getRegularScores() != null ? dto.getRegularScores() : "N/A")+
+                        " Giữa kỳ: " + (dto.getMidtermScore() != null ? dto.getMidtermScore() : "N/A") +
+                           ", Cuối kỳ: " + (dto.getFinalScore() != null ? dto.getFinalScore() : "N/A") + ")";
+            }
+            User user = userRepository.findById(req.getStudentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid actingUserId"));
+            logEntryService.createLog(
+                "SubjectGrade",
+                dto.getSubjectGradeId(),
+                action + " điểm môn học cho học sinh" + gradeInfo,
+                ActionType.GRADE,
+                req.getClassSubjectId(),
+                "ClassSubject",
+                user
+            );
+        } catch (Exception e) {
+            // Log warning but don't fail the main operation
+            System.err.println("Failed to log subject grade operation: " + e.getMessage());
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 

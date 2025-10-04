@@ -16,17 +16,18 @@ public class LogEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long logId;
-      private String action;
+//      private String action;
     private String entity;
     private Long entityId;
     private LocalDateTime timestamp;
     
     @Column(columnDefinition = "TEXT")
-    private String details;
+    private String content;
     
     @Enumerated(EnumType.STRING)
     private ActionType actionType;
     private Long relatedEntityId;
+    private String relatedEntity;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

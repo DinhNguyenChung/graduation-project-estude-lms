@@ -15,6 +15,8 @@ import org.example.estudebackendspring.exception.InvalidStudentCodeException;
 import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.AuthService;
 import org.example.estudebackendspring.service.JwtBlacklistService;
+import org.example.estudebackendspring.service.LogEntryService;
+import org.example.estudebackendspring.enums.ActionType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,6 +33,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtBlacklistService jwtBlacklistService;
+    private final LogEntryService logEntryService;
 
 
     @PostMapping("/login-student")
@@ -38,7 +41,19 @@ public class AuthController {
         try {
             Student student = authService.loginByCode(loginRequest.getUsername(), loginRequest.getPassword());
             // JWT
-            String token = jwtTokenUtil.generateToken(student.getStudentCode());
+            String token = jwtTokenUtil.generateToken(student.getStudentCode(),student.getUserId());
+            
+            // Tạo log entry
+            logEntryService.createLog(
+                    "User",
+                    student.getUserId(),
+                    "Học sinh " + student.getFullName() + " (" + student.getStudentCode() + ") đã đăng nhập vào hệ thống",
+                    ActionType.GENERAL,
+                    null,
+                    "",
+                    student
+            );
+            
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", student, token));
         } catch (InvalidStudentCodeException e) {
             return ResponseEntity
@@ -55,7 +70,19 @@ public class AuthController {
         try {
             Teacher teacher = authService.loginByCodeByTeacher(loginRequest.getUsername(), loginRequest.getPassword());
             // JWT
-            String token = jwtTokenUtil.generateToken(teacher.getTeacherCode());
+            String token = jwtTokenUtil.generateToken(teacher.getTeacherCode(),teacher.getUserId());
+
+            // Tạo log entry
+            logEntryService.createLog(
+                    "User",
+                    teacher.getUserId(),
+                    "Giáo viên " + teacher.getFullName() + " (" + teacher.getTeacherCode() + ") đã đăng nhập vào hệ thống",
+                    ActionType.GENERAL,
+                    null,
+                    "",
+                    teacher
+            );
+
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", teacher, token));
         } catch (InvalidStudentCodeException e) {
             return ResponseEntity
@@ -72,7 +99,19 @@ public class AuthController {
         try {
             Admin admin = authService.loginByCodeByAdmin(loginRequest.getUsername(), loginRequest.getPassword());
             // JWT
-            String token = jwtTokenUtil.generateToken(admin.getAdminCode());
+            String token = jwtTokenUtil.generateToken(admin.getAdminCode(),admin.getUserId());
+            
+            // Tạo log entry
+            logEntryService.createLog(
+                    "User",
+                    admin.getUserId(),
+                    "Quản trị viên " + admin.getFullName() + " (" + admin.getAdminCode() + ") đã đăng nhập vào hệ thống",
+                    ActionType.GENERAL,
+                    null,
+                    "",
+                    admin
+            );
+            
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", admin, token));
         } catch (InvalidStudentCodeException e) {
             return ResponseEntity
@@ -99,6 +138,22 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
+        
+        // Tạo log entry (không có user cụ thể nên dùng system log)
+        try {
+            logEntryService.createLog(
+                    "User",
+                    null,
+                    "Thực hiện reset mật khẩu cho email: " + request.getEmail(),
+                    ActionType.SYSTEM,
+                    null,
+                    "",
+                    null
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log password reset", e);
+        }
+        
         return ResponseEntity.ok(new ApiResponse(true, "Password reset successful"));
     }
     @PutMapping("/update-password")
@@ -123,6 +178,22 @@ public class AuthController {
         }
 
         String newToken = authService.updatePassword(loginCode, request.getCurrentPassword(), request.getNewPassword());
+        
+        // Tạo log entry
+        try {
+            logEntryService.createLog(
+                    "User",
+                    null,
+                    "Người dùng (" + loginCode + ") đã cập nhật mật khẩu",
+                    ActionType.UPDATE,
+                    null,
+                    "",
+                    null
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log password update", e);
+        }
+        
         return ResponseEntity.ok(new UpdatePasswordResponse(true, "Password updated successfully", newToken));
     }
     @PostMapping("/logout")
@@ -140,6 +211,22 @@ public class AuthController {
 
         // Add to blacklist
         jwtBlacklistService.blacklistToken(token);
+        
+        // Tạo log entry
+        try {
+            String loginCode = jwtTokenUtil.getLoginCodeFromToken(token);
+            logEntryService.createLog(
+                    "User",
+                    null,
+                    "Người dùng (" + loginCode + ") đã đăng xuất khỏi hệ thống",
+                    ActionType.GENERAL,
+                    null,
+                    "",
+                    null
+            );
+        } catch (Exception e) {
+            log.warn("Failed to log logout", e);
+        }
 
         return ResponseEntity.ok(new SimpleResponse(true, "Logged out successfully"));
     }
