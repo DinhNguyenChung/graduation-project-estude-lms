@@ -55,4 +55,9 @@ public class ScheduleController {
         List<ScheduleDTO> schedules = scheduleService.getSchedulesForStudent(studentId);
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByClassId(@PathVariable Long classId) {
+        List<ScheduleDTO> schedules = scheduleService.getSchedulesByClassId(classId);
+        return ResponseEntity.ok(schedules);
+    }
 }

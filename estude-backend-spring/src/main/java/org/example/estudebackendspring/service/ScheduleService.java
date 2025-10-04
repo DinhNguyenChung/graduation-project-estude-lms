@@ -3,6 +3,7 @@ package org.example.estudebackendspring.service;
 import org.example.estudebackendspring.dto.ScheduleDTO;
 import org.example.estudebackendspring.entity.Schedule;
 import org.example.estudebackendspring.repository.ScheduleRepository;
+import org.example.estudebackendspring.repository.TermRepository;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,26 @@ public class ScheduleService {
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+    @Autowired
+    private TermRepository termRepository;
 
     public ScheduleDTO createSchedule(Schedule schedule) {
+//        Ràng buộc lịch bị trùng ngày và tiết dạy
+        // Lấy classId từ termId
+        Long termId = schedule.getTerm().getTermId();
+        Long classId = termRepository.findClassIdByTermId(termId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp cho termId = " + termId));
+        System.out.println("ClassId :"+classId);
+        // Kiểm tra trùng lịch
+        List<Schedule> conflicts = scheduleRepository.findConflictingSchedulesForClass(
+                classId,
+                schedule.getDate(),
+                schedule.getStartPeriod(),
+                schedule.getEndPeriod()
+        );
+        if (!conflicts.isEmpty()) {
+            throw new IllegalArgumentException("Lịch học của lớp bị trùng tiết trong ngày này!");
+        }
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return mapToDTO(savedSchedule);
     }
@@ -58,7 +77,23 @@ public class ScheduleService {
         if (scheduleDetails.getClassSubject() != null) {
             schedule.setClassSubject(scheduleDetails.getClassSubject());
         }
+        // Lấy classId từ termId
+        Long termId = schedule.getTerm().getTermId();
+        Long classId = termRepository.findClassIdByTermId(termId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp cho termId = " + termId));
+        // Kiểm tra trùng lịch (trừ chính nó ra)
+        List<Schedule> conflicts = scheduleRepository.findConflictingSchedulesForClass(
+                        classId,
+                        schedule.getDate(),
+                        schedule.getStartPeriod(),
+                        schedule.getEndPeriod()
+                ).stream()
+                .filter(s -> !s.getScheduleId().equals(schedule.getScheduleId())) // bỏ chính nó
+                .toList();
 
+        if (!conflicts.isEmpty()) {
+            throw new IllegalArgumentException("Lịch học của lớp bị trùng tiết trong ngày này!");
+        }
         Schedule updatedSchedule = scheduleRepository.save(schedule);
         return mapToDTO(updatedSchedule);
     }
@@ -79,6 +114,10 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.findSchedulesForStudent(studentId);
         return schedules.stream().map(schedule -> mapToDTO(schedule)).collect(Collectors.toList());
 
+    }
+    public List<ScheduleDTO> getSchedulesByClassId(Long classId) {
+        List<Schedule> schedules = scheduleRepository.findSchedulesByClassId(classId);
+        return schedules.stream().map(this::mapToDTO).toList();
     }
 
     private ScheduleDTO mapToDTO(Schedule schedule) {
