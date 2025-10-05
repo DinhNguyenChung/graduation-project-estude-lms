@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/enrollments")
 @Validated
-public class EnrollmentController {
+public class  EnrollmentController {
 
     private final EnrollmentService service;
     private final EnrollmentRepository enrollmentRepository;
@@ -53,15 +53,15 @@ public class EnrollmentController {
         // Log batch enrollment
         try {
             User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            logEntryService.createLog(
-                "Enrollment",
-                null, // No single enrollment ID for batch
-                "Đăng ký hàng loạt " + studentIds.size() + " học sinh vào lớp",
-                ActionType.CREATE,
-                classId,
-                "Clazz",
-                currentUser
-            );
+//            logEntryService.createLog(
+//                "Enrollment",
+//                null, // No single enrollment ID for batch
+//                "Đăng ký hàng loạt " + studentIds.size() + " học sinh vào lớp",
+//                ActionType.CREATE,
+//                classId,
+//                "Clazz",
+//                currentUser
+//            );
             
             // Log individual enrollments
             for (Enrollment enrollment : created) {

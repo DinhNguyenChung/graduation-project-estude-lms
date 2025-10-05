@@ -4,17 +4,22 @@ package org.example.estudebackendspring.controller;
 import org.example.estudebackendspring.dto.ApiResponse;
 import org.example.estudebackendspring.dto.AssignmentDetailDTO;
 import org.example.estudebackendspring.dto.AuthResponse;
+import org.example.estudebackendspring.dto.CreateNotificationRequest;
 import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.Term;
 import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.enums.NotificationPriority;
+import org.example.estudebackendspring.enums.NotificationTargetType;
+import org.example.estudebackendspring.enums.NotificationType;
 import org.example.estudebackendspring.repository.AssignmentRepository;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.AssignmentService;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.example.estudebackendspring.service.LogEntryService;
+import org.example.estudebackendspring.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -35,10 +41,12 @@ public class AssignmentController {
     private final ClassSubjectRepository classSubjectRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final LogEntryService logEntryService;
+    private final NotificationService notificationService;
 
     public AssignmentController(AssignmentService assignmentService , AssignmentRepository assignmentRepository,
                                 AssignmentSubmissionService assignmentSubmissionService, TeacherRepository teacherRepository, ClassSubjectRepository classSubjectRepository,
-                                SimpMessagingTemplate messagingTemplate, LogEntryService logEntryService) {
+                                SimpMessagingTemplate messagingTemplate, LogEntryService logEntryService,
+                                NotificationService notificationService) {
         this.assignmentService = assignmentService;
         this.assignmentRepository = assignmentRepository;
         this.assignmentSubmissionService = assignmentSubmissionService;
@@ -46,6 +54,7 @@ public class AssignmentController {
         this.classSubjectRepository = classSubjectRepository;
         this.messagingTemplate = messagingTemplate;
         this.logEntryService = logEntryService;
+        this.notificationService = notificationService;
     }
     private LocalDate convertToLocalDate(Date date) {
         return date.toInstant()
@@ -94,12 +103,28 @@ public class AssignmentController {
             logEntryService.createLog(
                     "Assignment",
                     created.getAssignmentId(),
-                    "Tạo mới bài tập: " + assignment.getTitle() + " của lớp "+created.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ created.getClassSubject().getSubject().getName(),
+                    "Tạo mới bài: " + assignment.getTitle() + " của lớp "+created.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ created.getClassSubject().getSubject().getName(),
                     ActionType.CREATE,
                     created.getClassSubject().getClassSubjectId(),
                     "ClassSubject",
                     created.getTeacher()
             );
+            // Tạo Notification cho bài tập
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String formattedDueDate = created.getDueDate().format(formatter);
+
+            String message = assignment.getTitle()  + " môn "+created.getClassSubject().getSubject().getName()+" với thời gian hoàn thành " +formattedDueDate;
+            // Tạo request
+            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+            createNotificationRequest.setMessage(message);
+            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            createNotificationRequest.setTargetId(created.getClassSubject().getClassSubjectId());
+            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+
+            // Gọi notificationService
+            notificationService.createNotification(createNotificationRequest,created.getTeacher());
+
             // Gửi thông báo WebSocket cho FE (các client subscribe)
             messagingTemplate.convertAndSend(
                     "/topic/class/" + classSubject.getClassSubjectId() + "/assignments",
@@ -145,12 +170,27 @@ public class AssignmentController {
             logEntryService.createLog(
                     "Assignment",
                     assignment.getAssignmentId(),
-                    "Cập nhật bài tập: " + assignment.getTitle() + " của lớp "+assignment.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ assignment.getClassSubject().getSubject().getName(),
+                    "Cập nhật bài: " + assignment.getTitle() + " của lớp "+assignment.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ assignment.getClassSubject().getSubject().getName(),
                     ActionType.UPDATE,
                     assignment.getClassSubject().getClassSubjectId(),
                     "ClassSubject",
                     assignment.getTeacher()
             );
+            // Tạo Notification cho bài tập
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String formattedDueDate = assignment.getDueDate().format(formatter);
+            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " được cập nhật lại với thời gian hoàn thành " +formattedDueDate;
+
+            // Tạo request
+            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+            createNotificationRequest.setMessage(message);
+            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
+            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+
+            // Gọi notificationService
+            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
             //  Gửi thông báo cập nhật
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
@@ -182,6 +222,19 @@ public class AssignmentController {
                     "ClassSubject",
                     assignment.getTeacher()
             );
+            // Tạo Notification cho xóa bài tập
+            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " đã được xóa";
+
+            // Tạo request
+            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+            createNotificationRequest.setMessage(message);
+            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
+            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+
+            // Gọi notificationService
+            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
                     "Assignment with ID " + assignmentId + " deleted"

@@ -3,6 +3,8 @@ package org.example.estudebackendspring.repository;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.School;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,6 +23,8 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long> {
     Optional<Clazz> findByNameAndSchool(String name, School school);
     List<Clazz> findBySchool_SchoolId(Long schoolId);
     List<Clazz> findByHomeroomTeacher_UserId(Long teacherId);
+    @Query("SELECT e.student.userId FROM Enrollment e WHERE e.clazz.classId = :classId")
+    List<Long> findStudentUserIdsByClassId(@Param("classId") Long classId);
 
 
 }

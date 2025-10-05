@@ -15,6 +15,6 @@ public class Admin extends User {
     @Column(unique = true, nullable = false)
     private String adminCode;
     
-    @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Notification> notifications;
+//    @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<Notification> notifications;
 }

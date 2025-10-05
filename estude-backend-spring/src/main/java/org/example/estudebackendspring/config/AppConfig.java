@@ -70,6 +70,7 @@ public class AppConfig {
                         .requestMatchers("/ws-attendance/**").permitAll()
                         .requestMatchers("/api/schedules/**").permitAll()
                         .requestMatchers("/api/logentries/**").permitAll()
+                        .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
 
                         .anyRequest().authenticated()

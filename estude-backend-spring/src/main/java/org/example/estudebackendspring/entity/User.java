@@ -52,11 +52,15 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
-    
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Notification> sentNotifications;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Notification> notifications;
-    
+    private List<NotificationRecipient> receivedNotifications;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Report> reports;

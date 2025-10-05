@@ -3,24 +3,25 @@ package org.example.estudebackendspring.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.AttendanceRecordDTO;
 import org.example.estudebackendspring.dto.AttendanceSessionDTO;
+import org.example.estudebackendspring.dto.CreateNotificationRequest;
 import org.example.estudebackendspring.dto.StudentAttendanceDTO;
 import org.example.estudebackendspring.entity.AttendanceRecord;
 import org.example.estudebackendspring.entity.AttendanceSession;
 import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.Student;
-import org.example.estudebackendspring.enums.AttendanceMethod;
-import org.example.estudebackendspring.enums.AttendanceStatus;
-import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.enums.*;
 import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.repository.StudentRepository;
 import org.example.estudebackendspring.service.AttendanceService;
 import org.example.estudebackendspring.service.LogEntryService;
+import org.example.estudebackendspring.service.NotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -33,15 +34,17 @@ public class AttendanceController {
     private final LogEntryService logEntryService;
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final NotificationService notificationService;
 
     public AttendanceController(AttendanceService attendanceService, SimpMessagingTemplate messagingTemplate,
                                LogEntryService logEntryService, TeacherRepository teacherRepository, 
-                               StudentRepository studentRepository) {
+                               StudentRepository studentRepository, NotificationService notificationService) {
         this.attendanceService = attendanceService;
         this.messagingTemplate = messagingTemplate;
         this.logEntryService = logEntryService;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
+        this.notificationService = notificationService;
     }
     // Giáo viên tạo buổi điểm danh
     @PostMapping("/sessions")
@@ -74,6 +77,22 @@ public class AttendanceController {
                     "ClassSubject",
                     teacher
             );
+            // Tạo Notification cho bài tập
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+//            String formattedDueDate = session.getDueDate().format(formatter);
+
+            String message = session.getSessionName()  + " môn "+session.getSubjectName()+" với thời gian điểm danh từ " + session.getStartTime().format(formatter) + " đến " + session.getEndTime().format(formatter);
+            // Tạo request
+            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+            createNotificationRequest.setMessage(message);
+            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            createNotificationRequest.setTargetId(session.getClassSubjectId());
+            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+
+            // Gọi notificationService
+            notificationService.createNotification(createNotificationRequest,teacher);
+
         } catch (Exception e) {
             log.warn("Failed to log attendance session creation", e);
         }

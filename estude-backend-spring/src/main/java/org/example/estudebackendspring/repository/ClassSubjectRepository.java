@@ -28,4 +28,13 @@ public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long
 
 
     boolean existsByTermAndSubject(Term term, Subject subject);
+
+    @Query("""
+        SELECT e.student.userId
+        FROM Enrollment e
+        JOIN e.clazz c
+        JOIN ClassSubject cs ON cs.term.clazz.classId = c.classId
+        WHERE cs.classSubjectId = :csId
+    """)
+    List<Long> findStudentUserIdsByClassSubjectId(@Param("csId") Long classSubjectId);
 }
