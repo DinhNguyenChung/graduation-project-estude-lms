@@ -13,6 +13,6 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Estude API")
                         .version("1.0")
-                        .description("Tài liệu API cho hệ thống quản lý học tập Estudee"));
+                        .description("Tài liệu API cho hệ thống quản lý học tập Estude"));
     }
 }
