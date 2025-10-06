@@ -268,6 +268,42 @@ public class AttendanceService {
                 .map(this::toAttendanceRecordDTO)
                 .collect(Collectors.toList());
     }
+    @Transactional
+    public AttendanceSessionDTO updateAttendanceSession(Long sessionId, Long teacherId, UpdateAttendanceSessionRequest req) {
+        AttendanceSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh"));
+
+        // Kiểm tra quyền giáo viên
+        if (!session.getTeacher().getUserId().equals(teacherId)) {
+            throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa buổi điểm danh này");
+        }
+
+        // Cập nhật
+        if (req.getSessionName() != null) session.setSessionName(req.getSessionName());
+        if (req.getStartTime() != null) session.setStartTime(req.getStartTime());
+        if (req.getEndTime() != null) session.setEndTime(req.getEndTime());
+        session.setGpsLatitude(req.getGpsLatitude());
+        session.setGpsLongitude(req.getGpsLongitude());
+
+        AttendanceSession saved = sessionRepository.save(session);
+        return toAttendanceSessionDTO(saved, null);
+    }
+
+    @Transactional
+    public AttendanceSessionDTO deleteAttendanceSession(Long sessionId, Long teacherId) {
+        AttendanceSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy buổi điểm danh"));
+
+        if (!session.getTeacher().getUserId().equals(teacherId)) {
+            throw new IllegalArgumentException("Bạn không có quyền xóa buổi điểm danh này");
+        }
+        // convert sang DTO trước khi delete
+        AttendanceSessionDTO dto = toAttendanceSessionDTO(session, null);
+
+        sessionRepository.delete(session);
+        return dto;
+    }
+
     // Chuyển đổi AttendanceSession thành DTO
     private AttendanceSessionDTO toAttendanceSessionDTO(AttendanceSession session, Long studentId) {
         AttendanceSessionDTO dto = new AttendanceSessionDTO();

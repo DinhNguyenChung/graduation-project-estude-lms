@@ -1,10 +1,7 @@
 package org.example.estudebackendspring.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.estudebackendspring.dto.AttendanceRecordDTO;
-import org.example.estudebackendspring.dto.AttendanceSessionDTO;
-import org.example.estudebackendspring.dto.CreateNotificationRequest;
-import org.example.estudebackendspring.dto.StudentAttendanceDTO;
+import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.AttendanceRecord;
 import org.example.estudebackendspring.entity.AttendanceSession;
 import org.example.estudebackendspring.entity.Teacher;
@@ -78,10 +75,11 @@ public class AttendanceController {
                     teacher
             );
             // Tạo Notification cho bài tập
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-//            String formattedDueDate = session.getDueDate().format(formatter);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
-            String message = session.getSessionName()  + " môn "+session.getSubjectName()+" với thời gian điểm danh từ " + session.getStartTime().format(formatter) + " đến " + session.getEndTime().format(formatter);
+            String message = "Có buổi điểm danh mới: " + session.getSessionName()
+                    + " môn " + session.getSubjectName()
+                    + " (" + session.getStartTime().format(formatter) + " - " + session.getEndTime().format(formatter) + ")";
             // Tạo request
             CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
             createNotificationRequest.setMessage(message);
@@ -104,6 +102,98 @@ public class AttendanceController {
         );
         return ResponseEntity.ok(session);
     }
+    // Update buổi điểm danh
+    @PutMapping("/sessions/{sessionId}")
+    public ResponseEntity<?> updateAttendanceSession(
+            @PathVariable Long sessionId,
+            @RequestParam Long teacherId,
+            @RequestBody UpdateAttendanceSessionRequest request
+    ) {
+        try {
+            AttendanceSessionDTO updated = attendanceService.updateAttendanceSession(
+                    sessionId, teacherId, request);
+
+            // log
+            Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
+            logEntryService.createLog(
+                    "AttendanceSession",
+                    sessionId,
+                    "Cập nhật buổi điểm danh: " + request.getSessionName(),
+                    ActionType.UPDATE,
+                    updated.getClassSubjectId(),
+                    "ClassSubject",
+                    teacher
+            );
+
+            // notification (ví dụ chỉ update message gửi cho học sinh)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+            String message = "Cập nhật buổi điểm danh: " + updated.getSessionName()
+                    + " môn " + updated.getSubjectName()
+                    + " (" + updated.getStartTime().format(formatter) + " - " + updated.getEndTime().format(formatter) + ")";
+            CreateNotificationRequest notifReq = new CreateNotificationRequest();
+            notifReq.setMessage(message);
+            notifReq.setPriority(NotificationPriority.MEDIUM);
+            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            notifReq.setTargetId(updated.getClassSubjectId());
+            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
+
+            notificationService.createNotification(notifReq, teacher);
+            // thông báo cho tất cả học sinh trong lớp
+            messagingTemplate.convertAndSend(
+                    "/topic/class/" + updated.getClassSubjectId() + "/sessions",
+                    updated
+            );
+            return ResponseEntity.ok(updated);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Delete buổi điểm danh
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<?> deleteAttendanceSession(
+            @PathVariable Long sessionId,
+            @RequestParam Long teacherId
+    ) {
+        try {
+            AttendanceSessionDTO deleted = attendanceService.deleteAttendanceSession(sessionId, teacherId);
+
+            Teacher teacher = teacherRepository.findById(teacherId).orElse(null);
+            logEntryService.createLog(
+                    "AttendanceSession",
+                    sessionId,
+                    "Xóa buổi điểm danh: " + deleted.getSessionName(),
+                    ActionType.DELETE,
+                    deleted.getClassSubjectId(),
+                    "ClassSubject",
+                    teacher
+            );
+            // notification (ví dụ chỉ update message gửi cho học sinh)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+
+            String message = "Đã xóa buổi điểm danh: " + deleted.getSessionName()
+                    + " môn " + deleted.getSubjectName()
+                    + " (" + deleted.getStartTime().format(formatter) + " - " + deleted.getEndTime().format(formatter) + ")";
+            CreateNotificationRequest notifReq = new CreateNotificationRequest();
+            notifReq.setMessage(message);
+            notifReq.setPriority(NotificationPriority.MEDIUM);
+            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+            notifReq.setTargetId(deleted.getClassSubjectId());
+            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
+
+            notificationService.createNotification(notifReq, teacher);
+            // thông báo cho tất cả học sinh trong lớp
+            messagingTemplate.convertAndSend(
+                    "/topic/class/" + deleted.getClassSubjectId() + "/sessions",
+                    deleted
+            );
+            return ResponseEntity.ok("Deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 
     // Giáo viên xem danh sách học sinh đã điểm danh
     @GetMapping("/sessions/{sessionId}/records")

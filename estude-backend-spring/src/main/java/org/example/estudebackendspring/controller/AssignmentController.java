@@ -110,7 +110,7 @@ public class AssignmentController {
                     created.getTeacher()
             );
             // Tạo Notification cho bài tập
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
             String formattedDueDate = created.getDueDate().format(formatter);
 
             String message = assignment.getTitle()  + " môn "+created.getClassSubject().getSubject().getName()+" với thời gian hoàn thành " +formattedDueDate;
@@ -177,7 +177,7 @@ public class AssignmentController {
                     assignment.getTeacher()
             );
             // Tạo Notification cho bài tập
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
             String formattedDueDate = assignment.getDueDate().format(formatter);
             String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " được cập nhật lại với thời gian hoàn thành " +formattedDueDate;
 
