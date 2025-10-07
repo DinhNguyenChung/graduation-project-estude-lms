@@ -86,7 +86,7 @@ public class AttendanceController {
             createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
             createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
             createNotificationRequest.setTargetId(session.getClassSubjectId());
-            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+            createNotificationRequest.setType(NotificationType.ATTENDANCE_REMINDER);
 
             // Gọi notificationService
             notificationService.createNotification(createNotificationRequest,teacher);
@@ -126,18 +126,18 @@ public class AttendanceController {
             );
 
             // notification (ví dụ chỉ update message gửi cho học sinh)
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
-            String message = "Cập nhật buổi điểm danh: " + updated.getSessionName()
-                    + " môn " + updated.getSubjectName()
-                    + " (" + updated.getStartTime().format(formatter) + " - " + updated.getEndTime().format(formatter) + ")";
-            CreateNotificationRequest notifReq = new CreateNotificationRequest();
-            notifReq.setMessage(message);
-            notifReq.setPriority(NotificationPriority.MEDIUM);
-            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
-            notifReq.setTargetId(updated.getClassSubjectId());
-            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
-
-            notificationService.createNotification(notifReq, teacher);
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+//            String message = "Cập nhật buổi điểm danh: " + updated.getSessionName()
+//                    + " môn " + updated.getSubjectName()
+//                    + " (" + updated.getStartTime().format(formatter) + " - " + updated.getEndTime().format(formatter) + ")";
+//            CreateNotificationRequest notifReq = new CreateNotificationRequest();
+//            notifReq.setMessage(message);
+//            notifReq.setPriority(NotificationPriority.MEDIUM);
+//            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+//            notifReq.setTargetId(updated.getClassSubjectId());
+//            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
+//
+//            notificationService.createNotification(notifReq, teacher);
             // thông báo cho tất cả học sinh trong lớp
             messagingTemplate.convertAndSend(
                     "/topic/class/" + updated.getClassSubjectId() + "/sessions",
@@ -170,19 +170,19 @@ public class AttendanceController {
                     teacher
             );
             // notification (ví dụ chỉ update message gửi cho học sinh)
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
-
-            String message = "Đã xóa buổi điểm danh: " + deleted.getSessionName()
-                    + " môn " + deleted.getSubjectName()
-                    + " (" + deleted.getStartTime().format(formatter) + " - " + deleted.getEndTime().format(formatter) + ")";
-            CreateNotificationRequest notifReq = new CreateNotificationRequest();
-            notifReq.setMessage(message);
-            notifReq.setPriority(NotificationPriority.MEDIUM);
-            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
-            notifReq.setTargetId(deleted.getClassSubjectId());
-            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
-
-            notificationService.createNotification(notifReq, teacher);
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+//
+//            String message = "Đã xóa buổi điểm danh: " + deleted.getSessionName()
+//                    + " môn " + deleted.getSubjectName()
+//                    + " (" + deleted.getStartTime().format(formatter) + " - " + deleted.getEndTime().format(formatter) + ")";
+//            CreateNotificationRequest notifReq = new CreateNotificationRequest();
+//            notifReq.setMessage(message);
+//            notifReq.setPriority(NotificationPriority.MEDIUM);
+//            notifReq.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+//            notifReq.setTargetId(deleted.getClassSubjectId());
+//            notifReq.setType(NotificationType.ATTENDANCE_REMINDER);
+//
+//            notificationService.createNotification(notifReq, teacher);
             // thông báo cho tất cả học sinh trong lớp
             messagingTemplate.convertAndSend(
                     "/topic/class/" + deleted.getClassSubjectId() + "/sessions",

@@ -56,6 +56,7 @@ public class AssignmentSubmissionService {
         return assignments.stream().map(a -> {
             AssignmentSummaryDTO dto = new AssignmentSummaryDTO();
             dto.setAssignmentId(a.getAssignmentId());
+            dto.setClassSubjectId(a.getClassSubject().getClassSubjectId());
             dto.setTitle(a.getTitle());
             dto.setDueDate(a.getDueDate());
             dto.setIsExam(a.getIsExam());

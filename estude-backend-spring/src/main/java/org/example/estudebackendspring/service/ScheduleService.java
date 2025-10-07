@@ -119,6 +119,9 @@ public class ScheduleService {
         List<Schedule> schedules = scheduleRepository.findSchedulesByClassId(classId);
         return schedules.stream().map(this::mapToDTO).toList();
     }
+    public Schedule getScheduleById(Long id) {
+        return scheduleRepository.findScheduleByScheduleId(id);
+    }
 
     private ScheduleDTO mapToDTO(Schedule schedule) {
         // Initialize lazy-loaded relationships

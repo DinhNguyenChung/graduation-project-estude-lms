@@ -177,20 +177,20 @@ public class AssignmentController {
                     assignment.getTeacher()
             );
             // Tạo Notification cho bài tập
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
-            String formattedDueDate = assignment.getDueDate().format(formatter);
-            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " được cập nhật lại với thời gian hoàn thành " +formattedDueDate;
-
-            // Tạo request
-            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
-            createNotificationRequest.setMessage(message);
-            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
-            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
-            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
-            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+//            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+//            String formattedDueDate = assignment.getDueDate().format(formatter);
+//            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " được cập nhật lại với thời gian hoàn thành " +formattedDueDate;
+//
+//            // Tạo request
+//            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+//            createNotificationRequest.setMessage(message);
+//            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+//            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+//            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
+//            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
 
             // Gọi notificationService
-            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
+//            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
             //  Gửi thông báo cập nhật
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
@@ -223,18 +223,18 @@ public class AssignmentController {
                     assignment.getTeacher()
             );
             // Tạo Notification cho xóa bài tập
-            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " đã được xóa";
-
-            // Tạo request
-            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
-            createNotificationRequest.setMessage(message);
-            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
-            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
-            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
-            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
-
-            // Gọi notificationService
-            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
+//            String message = assignment.getTitle()+" môn "+assignment.getClassSubject().getSubject().getName()+ " đã được xóa";
+//
+//            // Tạo request
+//            CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
+//            createNotificationRequest.setMessage(message);
+//            createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
+//            createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
+//            createNotificationRequest.setTargetId(assignment.getClassSubject().getClassSubjectId());
+//            createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
+//
+//            // Gọi notificationService
+//            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
             messagingTemplate.convertAndSend(
                     "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
                     "Assignment with ID " + assignmentId + " deleted"

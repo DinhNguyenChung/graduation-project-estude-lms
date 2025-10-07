@@ -79,4 +79,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                                     @Param("startPeriod") Integer startPeriod,
                                                     @Param("endPeriod") Integer endPeriod);
 
+    Schedule findScheduleByScheduleId(@Param("id") Long id);
+
 }

@@ -15,6 +15,7 @@ public class AssignmentSummaryDTO {
     private Long assignmentId;
     private String title;
     private LocalDateTime dueDate;
+    private Long classSubjectId;
     private Long classId;
     private String className;
     private Boolean isExam;
