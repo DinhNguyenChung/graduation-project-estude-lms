@@ -3,6 +3,7 @@ package org.example.estudebackendspring.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.estudebackendspring.entity.AIAnalysisRequest;
@@ -15,6 +16,7 @@ import org.example.estudebackendspring.repository.StudentRepository;
 import org.example.estudebackendspring.repository.SubmissionReportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -40,7 +42,13 @@ public class TestAnalysisService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     // AI endpoint
-    private static final String AI_URL = "http://127.0.0.1:8000/test/analyze";
+    @Value("${ai.service.url}")
+    private String aiServiceUrl;
+    private String AI_URL;
+    @PostConstruct
+    public void init() {
+        AI_URL = aiServiceUrl + "/test/analyze";
+    }
 
     /**
      * Lấy bài làm (JSON) -> gửi AI -> lưu request & result -> trả về JsonNode response.
@@ -93,7 +101,7 @@ public class TestAnalysisService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<JsonNode> entity = new HttpEntity<>(payloadNode, headers);
-
+//            AI_URL =aiServiceUrl+ "/test/analyze";
             ResponseEntity<JsonNode> resp = restTemplate.postForEntity(AI_URL, entity, JsonNode.class);
             if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
                 aiResponse = resp.getBody();

@@ -3,6 +3,7 @@ package org.example.estudebackendspring.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.estudebackendspring.entity.*;
@@ -13,6 +14,7 @@ import org.example.estudebackendspring.repository.StudentRepository;
 import org.example.estudebackendspring.repository.SubjectGradeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -32,7 +34,13 @@ public class SubjectAnalysisService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private static final String AI_URL = "http://127.0.0.1:8000/predict/subjects";
+    @Value("${ai.service.url}")
+    private String aiServiceUrl;
+    private String AI_URL ;
+    @PostConstruct
+    public void init() {
+        AI_URL = aiServiceUrl+ "/predict/subjects";
+    }
 
     @Transactional
     public JsonNode analyzeSubjectsAndSave(Long studentId) {

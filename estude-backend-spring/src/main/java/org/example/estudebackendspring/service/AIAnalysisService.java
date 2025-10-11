@@ -33,7 +33,8 @@ public class AIAnalysisService  {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${ai.service.url:http://127.0.0.1:8000/predict}")
+//    @Value("${ai.service.url:http://127.0.0.1:8000/predict}")
+    @Value("${ai.service.url}")
     private String aiServiceUrl;
 
     public AIAnalysisService(StudentRepository studentRepository,
@@ -155,7 +156,8 @@ public class AIAnalysisService  {
         ResponseEntity<String> resp;
         String rawBody;
         try {
-            resp = restTemplate.postForEntity(aiServiceUrl, entity, String.class);
+            String url = aiServiceUrl + "/predict";
+            resp = restTemplate.postForEntity(url, entity, String.class);
             rawBody = resp.getBody();
             System.out.println("RAW AI response: " + rawBody);
         } catch (Exception ex) {
