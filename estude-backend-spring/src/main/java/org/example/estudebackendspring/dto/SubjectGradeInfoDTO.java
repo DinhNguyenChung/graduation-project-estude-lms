@@ -17,6 +17,7 @@ public class SubjectGradeInfoDTO {
     private Float finalScore;
     private Float actualAverage;
     private String comment;
+    private String rank;
 
     // subject
     private Long subjectId;

@@ -187,6 +187,8 @@ public class SubjectGradeService {
         var term = cs != null ? cs.getTerm() : null;
         var clazz = term != null ? term.getClazz() : null;
         var teacher = cs != null ? cs.getTeacher() : null;
+        Float avg = sg.getActualAverage();
+        String rank = calculateRank(avg);
 
         SubjectGradeInfoDTO dto = new SubjectGradeInfoDTO();
         dto.setSubjectGradeId(sg.getSubjectGradeId());
@@ -195,6 +197,7 @@ public class SubjectGradeService {
         dto.setFinalScore(sg.getFinalScore());
         dto.setActualAverage(sg.getActualAverage());
         dto.setComment(sg.getComment());
+        dto.setRank(rank);
 
         dto.setClassSubjectId(cs != null ? cs.getClassSubjectId() : null);
 
@@ -212,6 +215,8 @@ public class SubjectGradeService {
     }
 
     private SubjectGradeDTO toDto(SubjectGrade g) {
+        Float avg = g.getActualAverage();
+        String rank = calculateRank(avg);
         SubjectGradeDTO dto = new SubjectGradeDTO();
         dto.setSubjectGradeId(g.getSubjectGradeId());
         dto.setStudentId(g.getStudent() != null ? g.getStudent().getUserId() : null);
@@ -224,6 +229,17 @@ public class SubjectGradeService {
 //        dto.setPredictedFinal(g.getPredictedFinal());
 //        dto.setPredictedAverage(g.getPredictedAverage());
 //        dto.setComment(g.getComment());
+        dto.setRank(rank);
         return dto;
     }
+    private String calculateRank(Float avg) {
+        if (avg == null) return "";
+
+        if (avg >= 8.0f) return "Tốt";
+        if (avg >= 6.5f) return "Khá";
+        if (avg >= 5.0f) return "Đạt";
+        if (avg >= 3.5f) return "Kém";
+        return "Chưa đạt";
+    }
+
 }

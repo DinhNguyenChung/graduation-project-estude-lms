@@ -21,4 +21,5 @@ public class SubjectGradeDTO {
     private Float predictedFinal;
     private Float predictedAverage;
     private String comment;
+    private String rank;
 }
