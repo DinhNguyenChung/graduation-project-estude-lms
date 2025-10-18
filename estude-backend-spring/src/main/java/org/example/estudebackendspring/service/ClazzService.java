@@ -35,9 +35,9 @@ public class ClazzService {
                 .orElseThrow(() -> new ResourceNotFoundException("School not found with id: " + req.getSchoolId()));
 
         // Kiểm tra trùng lặp tên lớp trong trường
-        if (clazzRepository.existsByNameAndSchool(req.getName(), school)) {
-            throw new DuplicateResourceException("Class with name " + req.getName() + " already exists in this school");
-        }
+//        if (clazzRepository.existsByNameAndSchool(req.getName(), school)) {
+//            throw new DuplicateResourceException("Class with name " + req.getName() + " already exists in this school");
+//        }
 
         // Tạo Clazz
         Clazz clazz = new Clazz();
