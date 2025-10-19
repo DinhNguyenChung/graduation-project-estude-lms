@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.service;
 
 import jakarta.transaction.Transactional;
+import org.example.estudebackendspring.dto.ClassSubjectResponse;
 import org.example.estudebackendspring.dto.CreateClassSubjectRequest;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.exception.DuplicateResourceException;
@@ -8,10 +9,7 @@ import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.*;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class ClassSubjectService {
@@ -33,6 +31,25 @@ public class ClassSubjectService {
 
     public List<ClassSubject> getClassSubjectsByTeacher(Long teacherId) {
         return classSubjectRepository.findByTeacher_UserId(teacherId);
+    }
+    public ClassSubjectResponse getClassSubjectByClassSubjectId(Long classSubjectId) {
+        ClassSubject cs = classSubjectRepository.findById(classSubjectId)
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy ClassSubject với id: " + classSubjectId));
+
+        // Lấy lớp từ term
+        Clazz clazz = cs.getTerm().getClazz();
+
+        return ClassSubjectResponse.builder()
+                .classSubjectId(cs.getClassSubjectId())
+                .subjectId(cs.getSubject() != null ? cs.getSubject().getSubjectId() : null)
+                .subjectName(cs.getSubject() != null ? cs.getSubject().getName() : null)
+                .teacherId(cs.getTeacher() != null ? cs.getTeacher().getUserId() : null)
+                .teacherName(cs.getTeacher() != null ? cs.getTeacher().getFullName() : null)
+                .termName(cs.getTerm() != null ? cs.getTerm().getName() : null)
+                .classId(clazz != null ? clazz.getClassId() : null)
+                .className(clazz != null ? clazz.getName() : null)
+                .gradeLevel(clazz != null && clazz.getGradeLevel() != null ? clazz.getGradeLevel().name() : null)
+                .build();
     }
 
     @Transactional

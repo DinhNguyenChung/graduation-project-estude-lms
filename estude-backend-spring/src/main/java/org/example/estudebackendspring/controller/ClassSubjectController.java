@@ -37,6 +37,11 @@ public class ClassSubjectController {
 //    public List<ClassSubject> getAllClassSubjects() {
 //        return repository.findAll();
 //    }
+    @GetMapping("/{classSubjectId}")
+    public ResponseEntity<ClassSubjectResponse> getClassSubjectById(@PathVariable("classSubjectId") Long id) {
+        ClassSubjectResponse dto = service.getClassSubjectByClassSubjectId(id);
+        return ResponseEntity.ok(dto);
+    }
     @GetMapping
     public List<ClazzSubjectsDTO> getAllClassSubjectsDTO() {
         return repository.findAll().stream()
