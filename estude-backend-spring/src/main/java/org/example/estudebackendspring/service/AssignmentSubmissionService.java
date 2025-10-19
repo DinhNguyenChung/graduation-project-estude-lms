@@ -278,7 +278,7 @@ public class AssignmentSubmissionService {
         result.setCorrectCount(correctCount);
         result.setTotalQuestions(totalQ);
         result.setScore(totalScore);
-        result.setAiFeedback(grade.getAutoGradedFeedback());
+//        result.setAiFeedback(grade.getAutoGradedFeedback());
 
         return result;
     }

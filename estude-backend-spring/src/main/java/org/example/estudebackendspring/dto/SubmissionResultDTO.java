@@ -12,5 +12,5 @@ public class SubmissionResultDTO {
     private int correctCount;
     private int totalQuestions;
     private float score;
-    private String aiFeedback;
+//    private String aiFeedback;
 }

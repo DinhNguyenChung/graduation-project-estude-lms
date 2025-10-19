@@ -1,20 +1,25 @@
 package org.example.estudebackendspring.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.example.estudebackendspring.dto.learning.*;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.enums.AnalysisType;
-import org.example.estudebackendspring.service.AIAnalysisService;
-import org.example.estudebackendspring.service.SubjectAnalysisService;
-import org.example.estudebackendspring.service.SubmissionReportService;
-import org.example.estudebackendspring.service.TestAnalysisService;
+import org.example.estudebackendspring.service.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+@Tag(name = "Assignment API", description = "Quản lý Analysis tương tác Với AI Service ")
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class AIAnalysisController {
     private final SubjectAnalysisService subjectAnalysisService;
     private final SubmissionReportService submissionReportService;
     private final TestAnalysisService testAnalysisService;
+    private final LearningLoopService learningLoopService;
 
 
     @GetMapping("/health")
@@ -122,4 +128,267 @@ public class AIAnalysisController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ========== LEARNING LOOP AI ENDPOINTS ==========
+    
+    /**
+     * Layer 1: Learning Feedback - Phân tích chi tiết từng câu hỏi
+     * POST /api/ai/learning-feedback
+     */
+    @Operation(
+            summary = "Layer 1: Learning Feedback - Phân tích chi tiết từng câu hỏi",
+            description = "API này trả về phân tích chi tiết từng câu hỏi, xác định topic và giải thích lỗi sai .",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/learning-feedback")
+    public ResponseEntity<FeedbackResponse> getLearningFeedback(@RequestBody FeedbackRequest request) {
+        try {
+            FeedbackResponse response = learningLoopService.getLearningFeedback(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
+     * Layer 2: Learning Recommendation - Đưa ra gợi ý học tập cá nhân hóa
+     * POST /api/ai/learning-recommendation
+     */
+    @Operation(
+            summary = "Layer 2: Learning Recommendation - Đưa ra gợi ý học tập cá nhân hóa",
+            description = "API Đưa ra gợi ý học tập cá nhân hóa .",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/learning-recommendation")
+    public ResponseEntity<RecommendationResponse> getLearningRecommendation(@RequestBody RecommendationRequest request) {
+        try {
+            RecommendationResponse response = learningLoopService.getLearningRecommendation(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
+     * Layer 3: Practice Quiz Generation - Sinh bộ câu hỏi luyện tập
+     * POST /api/ai/generate-practice-quiz
+     */
+    @Operation(
+            summary = "Layer 3: Practice Quiz Generation - Sinh bộ câu hỏi luyện tập",
+            description = "API Sinh bộ câu hỏi luyện tập.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/generate-practice-quiz")
+    public ResponseEntity<PracticeQuizResponse> generatePracticeQuiz(@RequestBody PracticeQuizRequest request) {
+        try {
+            PracticeQuizResponse response = learningLoopService.generatePracticeQuiz(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
+     * Layer 4: Improvement Evaluation - Đánh giá tiến bộ sau luyện tập
+     * POST /api/ai/improvement-evaluation
+     */
+    @Operation(
+            summary = "Layer 4: Improvement Evaluation - Đánh giá tiến bộ sau luyện tập",
+            description = "API Đánh giá tiến bộ sau luyện tập.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/improvement-evaluation")
+    public ResponseEntity<ImprovementResponse> evaluateImprovement(@RequestBody ImprovementRequest request) {
+        try {
+            ImprovementResponse response = learningLoopService.evaluateImprovement(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
+     * Full Learning Loop - Chạy toàn bộ Layer 1, 2, 3 cùng lúc
+     * POST /api/ai/full-learning-loop
+     */
+    @Operation(
+            summary = "Full Learning Loop - Chạy toàn bộ Layer 1, 2, 3 cùng lúc",
+            description = "Chạy toàn bộ Layer 1, 2, 3 cùng lúc.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/full-learning-loop")
+    public ResponseEntity<FullLearningLoopResponse> runFullLearningLoop(@RequestBody FeedbackRequest request) {
+        try {
+            FullLearningLoopResponse response = learningLoopService.runFullLearningLoop(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    // ========= Student self-serve GET endpoints =========
+    private Long currentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof org.example.estudebackendspring.entity.User u) {
+            return u.getUserId();
+        }
+        return null;
+    }
+    @Operation(
+            summary = "Lấy danhh sách LatestFeedback layer 1 ( Beer Token)",
+            description = "",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/feedback/latest")
+    public ResponseEntity<?> getMyLatestFeedback() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_FEEDBACK);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    @Operation(
+            summary = "Lấy danhh sách LatestRecommendation layer 2 ( Beer Token)",
+            description = "",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/recommendation/latest")
+    public ResponseEntity<?> getMyLatestRecommendation() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_RECOMMENDATION);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    @Operation(
+            summary = "Lấy danhh sách LatestPracticeQuiz layer 3 ( Beer Token)",
+            description = "",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/quiz/latest")
+    public ResponseEntity<?> getMyLatestPracticeQuiz() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_QUIZ);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    @Operation(
+            summary = "Lấy danhh sách LatestImprovement layer 4 ( Beer Token)",
+            description = "",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/improvement/latest")
+    public ResponseEntity<?> getMyLatestImprovement() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.IMPROVEMENT_EVALUATION);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    @Operation(
+            summary = "Lấy danhh sách LatestFullLearningLoop ( Beer Token) ",
+            description = "Nếu FE dùng layer Full learning Loop thì dùng API này để lấy danh sách ",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/full-learning-loop/latest")
+    public ResponseEntity<?> getMyLatestFullLearningLoop() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.FULL_LEARNING_LOOP);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+
+    @Operation(
+            summary = "Lấy danhh sách LearningLoopDashboard layer 1,2,3,4 ( Beer Token)",
+            description = "Nếu FE chạy từng layer 1,2,3 thì dùng API này để lấy danh sách từng layer",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @GetMapping("/me/dashboard")
+    public ResponseEntity<?> getMyLearningLoopDashboard() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("feedback", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_FEEDBACK));
+        data.put("recommendation", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_RECOMMENDATION));
+        data.put("practice_quiz", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_QUIZ));
+        data.put("improvement", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.IMPROVEMENT_EVALUATION));
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", data
+        ));
+    }
 }
