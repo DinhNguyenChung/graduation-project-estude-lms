@@ -11,6 +11,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionDTO {
+    @JsonProperty("question_id")
+    private Long questionId;
     private String question;
     private List<String> options;
     

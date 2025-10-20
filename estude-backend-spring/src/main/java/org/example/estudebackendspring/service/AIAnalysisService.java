@@ -288,6 +288,23 @@ public class AIAnalysisService  {
     public AIAnalysisResult getLatestResultByStudentId(Long studentId,AnalysisType analysisType) {
         return resultRepository.findLatestResultByStudentId(studentId, analysisType.name());
     }
+    
+    /**
+     * Lấy TẤT CẢ kết quả của student theo analysis type (ORDER BY mới nhất)
+     */
+    public List<AIAnalysisResult> getAllResultsByStudentIdAndType(Long studentId, AnalysisType analysisType) {
+        return resultRepository.findAllByStudentIdAndAnalysisType(studentId, analysisType.name());
+    }
+    
+    /**
+     * Lấy TẤT CẢ kết quả theo student + assignment + analysis type
+     */
+    public List<AIAnalysisResult> getResultsByStudentAndAssignmentAndType(
+            Long studentId, String assignmentId, AnalysisType analysisType) {
+        return resultRepository.findAllByStudentAndAssignmentAndAnalysisType(
+                studentId, assignmentId, analysisType.name());
+    }
+    
     public Optional<AIAnalysisResult> getLatestResult(Long studentId, String assignmentId) {
         return resultRepository.findLatestByStudentAndAssignment(studentId, assignmentId);
     }

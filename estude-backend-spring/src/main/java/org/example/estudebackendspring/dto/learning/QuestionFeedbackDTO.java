@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionFeedbackDTO {
+    @JsonProperty("question_id")
+    private Long questionId;
     private String question;
     
     @JsonProperty("student_answer")
