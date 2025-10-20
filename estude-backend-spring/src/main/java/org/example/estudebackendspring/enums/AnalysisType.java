@@ -7,6 +7,7 @@ public enum AnalysisType {
     LEARNING_FEEDBACK,
     LEARNING_RECOMMENDATION,
     PRACTICE_QUIZ,
+    PRACTICE_REVIEW,  // Layer 3.5: Review Practice Results
     IMPROVEMENT_EVALUATION,
     FULL_LEARNING_LOOP
 }

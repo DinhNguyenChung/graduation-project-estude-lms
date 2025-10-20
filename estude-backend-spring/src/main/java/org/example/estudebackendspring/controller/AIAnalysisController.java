@@ -209,6 +209,32 @@ public class AIAnalysisController {
     }
     
     /**
+     * Layer 3.5: Review Practice Results - Xem lại kết quả bài luyện tập
+     * POST /api/ai/review-practice-results
+     */
+    @Operation(
+            summary = "Layer 3.5: Review Practice Results - Xem lại kết quả bài luyện tập",
+            description = "API xem lại chi tiết kết quả bài luyện tập với feedback từng câu, giải thích lỗi sai và phân tích theo topic.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/review-practice-results")
+    public ResponseEntity<ReviewPracticeResponse> reviewPracticeResults(@RequestBody ReviewPracticeRequest request) {
+        try {
+            ReviewPracticeResponse response = learningLoopService.reviewPracticeResults(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
      * Layer 4: Improvement Evaluation - Đánh giá tiến bộ sau luyện tập
      * POST /api/ai/improvement-evaluation
      */
@@ -383,6 +409,44 @@ public class AIAnalysisController {
         return ResponseEntity.ok(results);
     }
     
+    // ========= LAYER 3.5: PRACTICE REVIEW =========
+    @Operation(
+            summary = "Lấy TẤT CẢ Practice Review layer 3.5 của user hiện tại (Bearer Token)",
+            description = "Trả về danh sách tất cả kết quả review bài luyện tập theo thứ tự mới nhất"
+    )
+    @GetMapping("/me/practice-review")
+    public ResponseEntity<?> getMyAllPracticeReview() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var results = aiAnalysisService.getAllResultsByStudentIdAndType(uid, AnalysisType.PRACTICE_REVIEW);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
+            summary = "Lấy Practice Review mới nhất layer 3.5 của user hiện tại (Bearer Token)",
+            description = "Trả về kết quả review bài luyện tập mới nhất"
+    )
+    @GetMapping("/me/practice-review/latest")
+    public ResponseEntity<?> getMyLatestPracticeReview() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_REVIEW);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    
+    @Operation(
+            summary = "Lấy TẤT CẢ Practice Review layer 3.5 theo assignment_id của user hiện tại (Bearer Token)",
+            description = "Trả về tất cả kết quả review của một assignment cụ thể"
+    )
+    @GetMapping("/me/practice-review/assignment/{assignmentId}")
+    public ResponseEntity<?> getMyPracticeReviewByAssignment(@PathVariable String assignmentId) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var results = aiAnalysisService.getResultsByStudentAndAssignmentAndType(
+                uid, assignmentId, AnalysisType.PRACTICE_REVIEW);
+        return ResponseEntity.ok(results);
+    }
+    
     // ========= LAYER 4: IMPROVEMENT =========
     @Operation(
             summary = "Lấy TẤT CẢ Improvement layer 4 của user hiện tại (Bearer Token)",
@@ -462,7 +526,7 @@ public class AIAnalysisController {
     // ========= DASHBOARD - COMBINED VIEW =========
     @Operation(
             summary = "Dashboard Learning Loop - Lấy kết quả mới nhất của tất cả layers (Bearer Token)",
-            description = "Nếu FE chạy từng layer 1,2,3,4 thì dùng API này để lấy dashboard tổng hợp"
+            description = "Nếu FE chạy từng layer 1,2,3,3.5,4 thì dùng API này để lấy dashboard tổng hợp"
     )
     @GetMapping("/me/dashboard")
     public ResponseEntity<?> getMyLearningLoopDashboard() {
@@ -473,6 +537,7 @@ public class AIAnalysisController {
         data.put("feedback", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_FEEDBACK));
         data.put("recommendation", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_RECOMMENDATION));
         data.put("practice_quiz", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_QUIZ));
+        data.put("practice_review", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_REVIEW));  // Layer 3.5
         data.put("improvement", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.IMPROVEMENT_EVALUATION));
         return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -548,6 +613,28 @@ public class AIAnalysisController {
     }
     
     @Operation(
+            summary = "[Admin/Teacher] Lấy TẤT CẢ Practice Review layer 3.5 của một student",
+            description = "Dành cho admin/teacher xem tất cả kết quả review bài luyện tập của một học sinh"
+    )
+    @GetMapping("/student/{studentId}/practice-review")
+    public ResponseEntity<?> getStudentAllPracticeReview(@PathVariable Long studentId) {
+        var results = aiAnalysisService.getAllResultsByStudentIdAndType(studentId, AnalysisType.PRACTICE_REVIEW);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
+            summary = "[Admin/Teacher] Lấy Practice Review layer 3.5 theo assignment của một student",
+            description = "Dành cho admin/teacher xem kết quả review của một học sinh trong một assignment"
+    )
+    @GetMapping("/student/{studentId}/practice-review/assignment/{assignmentId}")
+    public ResponseEntity<?> getStudentPracticeReviewByAssignment(
+            @PathVariable Long studentId, @PathVariable String assignmentId) {
+        var results = aiAnalysisService.getResultsByStudentAndAssignmentAndType(
+                studentId, assignmentId, AnalysisType.PRACTICE_REVIEW);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
             summary = "[Admin/Teacher] Lấy TẤT CẢ Improvement layer 4 của một student",
             description = "Dành cho admin/teacher xem tất cả improvement evaluation của một học sinh"
     )
@@ -601,6 +688,7 @@ public class AIAnalysisController {
         data.put("feedback", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.LEARNING_FEEDBACK));
         data.put("recommendation", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.LEARNING_RECOMMENDATION));
         data.put("practice_quiz", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.PRACTICE_QUIZ));
+        data.put("practice_review", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.PRACTICE_REVIEW));  // Layer 3.5
         data.put("improvement", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.IMPROVEMENT_EVALUATION));
         return ResponseEntity.ok(Map.of(
                 "success", true,

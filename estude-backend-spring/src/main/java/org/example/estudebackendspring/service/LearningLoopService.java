@@ -53,6 +53,7 @@ public class LearningLoopService {
     private String FEEDBACK_URL;
     private String RECOMMENDATION_URL;
     private String PRACTICE_QUIZ_URL;
+    private String PRACTICE_REVIEW_URL;  // Layer 3.5
     private String IMPROVEMENT_URL;
     private String FULL_LOOP_URL;
     
@@ -61,9 +62,15 @@ public class LearningLoopService {
         FEEDBACK_URL = aiServiceUrl + "/api/ai/learning-feedback";
         RECOMMENDATION_URL = aiServiceUrl + "/api/ai/learning-recommendation";
         PRACTICE_QUIZ_URL = aiServiceUrl + "/api/ai/generate-practice-quiz";
+        PRACTICE_REVIEW_URL = aiServiceUrl + "/api/ai/review-practice-results";  // Layer 3.5
         IMPROVEMENT_URL = aiServiceUrl + "/api/ai/improvement-evaluation";
         FULL_LOOP_URL = aiServiceUrl + "/api/ai/full-learning-loop";
     }
+//        RECOMMENDATION_URL = aiServiceUrl + "/api/ai/learning-recommendation";
+//        PRACTICE_QUIZ_URL = aiServiceUrl + "/api/ai/generate-practice-quiz";
+//        IMPROVEMENT_URL = aiServiceUrl + "/api/ai/improvement-evaluation";
+//        FULL_LOOP_URL = aiServiceUrl + "/api/ai/full-learning-loop";
+//    }
     
     /**
      * Layer 1: Learning Feedback - Phân tích chi tiết từng câu hỏi
@@ -209,6 +216,55 @@ public class LearningLoopService {
                 "Error: " + ex.getMessage()
             );
             throw new RuntimeException("Failed to generate practice quiz: " + ex.getMessage(), ex);
+        }
+    }
+    
+    /**
+     * Layer 3.5: Review Practice Results - Xem lại kết quả bài luyện tập
+     */
+    @Transactional
+    public ReviewPracticeResponse reviewPracticeResults(ReviewPracticeRequest request) {
+        log.info("Reviewing practice results for student: {}, subject: {}", 
+                request.getStudentName(), request.getSubject());
+        
+        // Lưu request
+        AIAnalysisRequest analysisRequest = saveAnalysisRequest(
+            null,
+            AnalysisType.PRACTICE_REVIEW,
+            objectMapper.valueToTree(request)
+        );
+        
+        try {
+            // Gọi AI service
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<ReviewPracticeRequest> entity = new HttpEntity<>(request, headers);
+            
+            ResponseEntity<ReviewPracticeResponse> response = restTemplate.postForEntity(
+                PRACTICE_REVIEW_URL, entity, ReviewPracticeResponse.class
+            );
+            
+            ReviewPracticeResponse reviewResponse = response.getBody();
+            
+            if (reviewResponse != null && reviewResponse.getSuccess()) {
+                // Lưu result
+                saveAnalysisResult(
+                    analysisRequest.getRequestId(),
+                    objectMapper.valueToTree(reviewResponse.getData()),
+                    "Practice review completed successfully"
+                );
+            }
+            
+            return reviewResponse;
+            
+        } catch (Exception ex) {
+            log.error("Error reviewing practice results", ex);
+            saveAnalysisResult(
+                analysisRequest.getRequestId(),
+                null,
+                "Error: " + ex.getMessage()
+            );
+            throw new RuntimeException("Failed to review practice results: " + ex.getMessage(), ex);
         }
     }
     
