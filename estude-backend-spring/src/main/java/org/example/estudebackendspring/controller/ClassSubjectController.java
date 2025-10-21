@@ -131,7 +131,7 @@ public class ClassSubjectController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            System.err.println("⚠Failed to log class-subject removal: " + e.getMessage());
+            System.err.println("Failed to log class-subject removal: " + e.getMessage());
         }
 
         return ResponseEntity.noContent().build();

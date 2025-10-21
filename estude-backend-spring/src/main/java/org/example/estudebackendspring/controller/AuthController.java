@@ -44,15 +44,15 @@ public class AuthController {
             String token = jwtTokenUtil.generateToken(student.getStudentCode(),student.getUserId());
             
             // Tạo log entry
-            logEntryService.createLog(
-                    "User",
-                    student.getUserId(),
-                    "Học sinh " + student.getFullName() + " (" + student.getStudentCode() + ") đã đăng nhập vào hệ thống",
-                    ActionType.GENERAL,
-                    null,
-                    "",
-                    student
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    student.getUserId(),
+//                    "Học sinh " + student.getFullName() + " (" + student.getStudentCode() + ") đã đăng nhập vào hệ thống",
+//                    ActionType.GENERAL,
+//                    null,
+//                    "",
+//                    student
+//            );
             
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", student, token));
         } catch (InvalidStudentCodeException e) {
@@ -73,15 +73,15 @@ public class AuthController {
             String token = jwtTokenUtil.generateToken(teacher.getTeacherCode(),teacher.getUserId());
 
             // Tạo log entry
-            logEntryService.createLog(
-                    "User",
-                    teacher.getUserId(),
-                    "Giáo viên " + teacher.getFullName() + " (" + teacher.getTeacherCode() + ") đã đăng nhập vào hệ thống",
-                    ActionType.GENERAL,
-                    null,
-                    "",
-                    teacher
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    teacher.getUserId(),
+//                    "Giáo viên " + teacher.getFullName() + " (" + teacher.getTeacherCode() + ") đã đăng nhập vào hệ thống",
+//                    ActionType.GENERAL,
+//                    null,
+//                    "",
+//                    teacher
+//            );
 
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", teacher, token));
         } catch (InvalidStudentCodeException e) {
@@ -102,15 +102,15 @@ public class AuthController {
             String token = jwtTokenUtil.generateToken(admin.getAdminCode(),admin.getUserId());
             
             // Tạo log entry
-            logEntryService.createLog(
-                    "User",
-                    admin.getUserId(),
-                    "Quản trị viên " + admin.getFullName() + " (" + admin.getAdminCode() + ") đã đăng nhập vào hệ thống",
-                    ActionType.GENERAL,
-                    null,
-                    "",
-                    admin
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    admin.getUserId(),
+//                    "Quản trị viên " + admin.getFullName() + " (" + admin.getAdminCode() + ") đã đăng nhập vào hệ thống",
+//                    ActionType.GENERAL,
+//                    null,
+//                    "",
+//                    admin
+//            );
             
             return ResponseEntity.ok(new LoginResponse(true, "Login successful", admin, token));
         } catch (InvalidStudentCodeException e) {
@@ -141,15 +141,15 @@ public class AuthController {
         
         // Tạo log entry (không có user cụ thể nên dùng system log)
         try {
-            logEntryService.createLog(
-                    "User",
-                    null,
-                    "Thực hiện reset mật khẩu cho email: " + request.getEmail(),
-                    ActionType.SYSTEM,
-                    null,
-                    "",
-                    null
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    null,
+//                    "Thực hiện reset mật khẩu cho email: " + request.getEmail(),
+//                    ActionType.SYSTEM,
+//                    null,
+//                    "",
+//                    null
+//            );
         } catch (Exception e) {
             log.warn("Failed to log password reset", e);
         }
@@ -181,15 +181,15 @@ public class AuthController {
         
         // Tạo log entry
         try {
-            logEntryService.createLog(
-                    "User",
-                    null,
-                    "Người dùng (" + loginCode + ") đã cập nhật mật khẩu",
-                    ActionType.UPDATE,
-                    null,
-                    "",
-                    null
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    null,
+//                    "Người dùng (" + loginCode + ") đã cập nhật mật khẩu",
+//                    ActionType.UPDATE,
+//                    null,
+//                    "",
+//                    null
+//            );
         } catch (Exception e) {
             log.warn("Failed to log password update", e);
         }
@@ -215,15 +215,15 @@ public class AuthController {
         // Tạo log entry
         try {
             String loginCode = jwtTokenUtil.getLoginCodeFromToken(token);
-            logEntryService.createLog(
-                    "User",
-                    null,
-                    "Người dùng (" + loginCode + ") đã đăng xuất khỏi hệ thống",
-                    ActionType.GENERAL,
-                    null,
-                    "",
-                    null
-            );
+//            logEntryService.createLog(
+//                    "User",
+//                    null,
+//                    "Người dùng (" + loginCode + ") đã đăng xuất khỏi hệ thống",
+//                    ActionType.GENERAL,
+//                    null,
+//                    "",
+//                    null
+//            );
         } catch (Exception e) {
             log.warn("Failed to log logout", e);
         }

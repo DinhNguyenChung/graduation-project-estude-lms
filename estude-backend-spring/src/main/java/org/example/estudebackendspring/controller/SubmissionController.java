@@ -59,15 +59,15 @@ public class SubmissionController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid actingUserId"));
             int fileCount = files != null ? files.size() : 0;
             String fileInfo = fileCount > 0 ? " (kèm " + fileCount + " file)" : "";
-            logEntryService.createLog(
-                "Submission",
-                res.getSubmissionId(),
-                "Học sinh nộp bài tập: " + submission.getAssignmentName() + fileInfo,
-                ActionType.CREATE,
-                req.getAssignmentId(),
-                "Assignment",
-                user
-            );
+//            logEntryService.createLog(
+//                "Submission",
+//                res.getSubmissionId(),
+//                "Học sinh nộp bài tập: " + submission.getAssignmentName() + fileInfo,
+//                ActionType.CREATE,
+//                req.getAssignmentId(),
+//                "Assignment",
+//                user
+//            );
         } catch (Exception e) {
             // Log warning but don't fail the main operation
             System.err.println("Failed to log submission: " + e.getMessage());
