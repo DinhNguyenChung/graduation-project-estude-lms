@@ -17,6 +17,12 @@ public class ImprovementDataDTO {
     
     private String subject;
     
+    @JsonProperty("previous_result_id")
+    private String previousResultId;  // ID của AIAnalysisResult từ Layer 1
+    
+    @JsonProperty("result_id")
+    private String resultId;  // ID của AIAnalysisResult từ Layer 3.5
+    
     @JsonProperty("evaluation_time")
     private LocalDateTime evaluationTime;
     

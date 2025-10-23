@@ -16,8 +16,8 @@ import java.util.List;
 @AllArgsConstructor
 public class PracticeQuestionReviewDTO {
     
-    @JsonProperty("question_id")
-    private Integer questionId;
+//    @JsonProperty("question_id")
+//    private Integer questionId;
     
     @JsonProperty("question")
     private String question;

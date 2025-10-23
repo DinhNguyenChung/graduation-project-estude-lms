@@ -12,6 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeedbackDataDTO {
+    
+    @JsonProperty("result_id")
+    private Long resultId;  // ID của AIAnalysisResult - dùng cho Layer 4
+    
     @JsonProperty("assignment_id")
     private String assignmentId;
     

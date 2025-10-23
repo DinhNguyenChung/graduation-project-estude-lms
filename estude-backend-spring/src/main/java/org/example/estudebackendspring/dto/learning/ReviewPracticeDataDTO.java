@@ -14,8 +14,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewPracticeDataDTO {
+    
+    @JsonProperty("result_id")
+    private Long resultId;  // ID của AIAnalysisResult - dùng cho Layer 4
+    
     @JsonProperty("assignment_id")
     private String assignmentId;
+    
     @JsonProperty("session_type")
     private String sessionType = "practice_review";
     

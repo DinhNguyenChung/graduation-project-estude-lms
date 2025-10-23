@@ -65,16 +65,49 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
     
     /**
      * Lấy TẤT CẢ kết quả theo student + assignment + analysis type
+     * Xử lý assignment_id ở cả root level VÀ nested trong feedback_data
      */
+//    @Query(value = """
+//    SELECT r.result_id,
+//           r.predicted_average,
+//           r.predicted_performance,
+//           r.actual_performance,
+//           r.comment,
+//           r.suggested_actions,
+//           r.detailed_analysis,
+//           r.statistics,
+//           r.generated_at,
+//           r.request_id
+//    FROM ai_analysis_results r
+//    JOIN ai_analysis_requests req
+//        ON r.request_id = req.request_id
+//    WHERE req.student_id = :studentId
+//      AND req.analysis_type = :analysisType
+//      AND (
+//        (req.data_payload::jsonb ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+//        OR
+//        (req.data_payload::jsonb -> 'feedback_data' ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+//      )
+//    ORDER BY r.generated_at DESC
+//    """, nativeQuery = true)
+//    List<AIAnalysisResult> findAllByStudentAndAssignmentAndAnalysisType(
+//            @Param("studentId") Long studentId,
+//            @Param("assignmentId") String assignmentId,
+//            @Param("analysisType") String analysisType
+//    );
+
     @Query(value = """
-    SELECT r.result_id, r.predicted_average, r.predicted_performance,
-           r.actual_performance, r.comment, r.suggested_actions,
-           r.detailed_analysis, r.statistics, r.generated_at, r.request_id
+    SELECT r.*
     FROM ai_analysis_results r
-    JOIN ai_analysis_requests req ON r.request_id = req.request_id
+    JOIN ai_analysis_requests req 
+        ON r.request_id = req.request_id
     WHERE req.student_id = :studentId 
       AND req.analysis_type = :analysisType
-      AND (req.data_payload::jsonb ->> 'assignment_id') = :assignmentId
+      AND (
+        (req.data_payload::jsonb ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+        OR 
+        (req.data_payload::jsonb -> 'feedback_data' ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+      )
     ORDER BY r.generated_at DESC
     """, nativeQuery = true)
     List<AIAnalysisResult> findAllByStudentAndAssignmentAndAnalysisType(
@@ -82,6 +115,7 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
             @Param("assignmentId") String assignmentId,
             @Param("analysisType") String analysisType
     );
+
 
 
 }

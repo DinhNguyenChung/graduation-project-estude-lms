@@ -100,12 +100,18 @@ public class LearningLoopService {
             FeedbackResponse feedbackResponse = response.getBody();
             
             if (feedbackResponse != null && feedbackResponse.getSuccess()) {
-                // Lưu result
-                saveAnalysisResult(
+                // Lưu result và lấy result_id
+                AIAnalysisResult savedResult = saveAnalysisResult(
                     analysisRequest.getRequestId(),
                     objectMapper.valueToTree(feedbackResponse.getData()),
                     "Learning feedback completed successfully"
                 );
+                
+                // Gắn result_id vào response để FE có thể dùng cho Layer 4
+                if (feedbackResponse.getData() != null) {
+                    feedbackResponse.getData().setResultId(savedResult.getResultId());
+                    log.info("✅ Layer 1 result_id set: {}", savedResult.getResultId());
+                }
             }
             
             return feedbackResponse;
@@ -247,12 +253,18 @@ public class LearningLoopService {
             ReviewPracticeResponse reviewResponse = response.getBody();
             
             if (reviewResponse != null && reviewResponse.getSuccess()) {
-                // Lưu result
-                saveAnalysisResult(
+                // Lưu result và lấy result_id
+                AIAnalysisResult savedResult = saveAnalysisResult(
                     analysisRequest.getRequestId(),
                     objectMapper.valueToTree(reviewResponse.getData()),
                     "Practice review completed successfully"
                 );
+                
+                // Gắn result_id vào response để FE có thể dùng cho Layer 4
+                if (reviewResponse.getData() != null) {
+                    reviewResponse.getData().setResultId(savedResult.getResultId());
+                    log.info("✅ Layer 3.5 result_id set: {}", savedResult.getResultId());
+                }
             }
             
             return reviewResponse;
@@ -378,11 +390,24 @@ public class LearningLoopService {
         
         // Luôn ưu tiên lấy student từ SecurityContext (người dùng đang đăng nhập)
         var auth = SecurityContextHolder.getContext().getAuthentication();
+        log.info("🔍 [{}] SecurityContext authentication: {}", analysisType, auth != null ? auth.getName() : "NULL");
+        
         if (auth != null && auth.getPrincipal() instanceof org.example.estudebackendspring.entity.User user) {
             Long uid = user.getUserId();
+            log.info("✅ [{}] Found User from SecurityContext - userId: {}", analysisType, uid);
             if (uid != null) {
-                studentRepository.findById(uid).ifPresent(request::setStudent);
+                studentRepository.findById(uid).ifPresentOrElse(
+                    student -> {
+                        request.setStudent(student);
+                        log.info("✅ [{}] Student linked successfully - studentId: {}", analysisType, uid);
+                    },
+                    () -> log.warn("⚠️ [{}] Student with userId {} not found in database", analysisType, uid)
+                );
+            } else {
+                log.warn("⚠️ [{}] User.userId is NULL", analysisType);
             }
+        } else {
+            log.warn("⚠️ [{}] No User found in SecurityContext or Principal is not User type", analysisType);
         }
         
         // Nếu identifier được cung cấp và là số, có thể override (dành cho admin/teacher)
@@ -390,13 +415,25 @@ public class LearningLoopService {
         if (identifier != null && request.getStudent() == null) {
             try {
                 Long studentId = Long.parseLong(identifier);
-                studentRepository.findById(studentId).ifPresent(request::setStudent);
+                log.info("🔄 [{}] Trying to override with identifier: {}", analysisType, studentId);
+                studentRepository.findById(studentId).ifPresentOrElse(
+                    student -> {
+                        request.setStudent(student);
+                        log.info("✅ [{}] Student linked via identifier - studentId: {}", analysisType, studentId);
+                    },
+                    () -> log.warn("⚠️ [{}] Student with identifier {} not found", analysisType, studentId)
+                );
             } catch (NumberFormatException e) {
-                // Identifier không phải student ID, bỏ qua
+                log.debug("ℹ️ [{}] Identifier '{}' is not a number, skipping", analysisType, identifier);
             }
         }
         
-        return requestRepository.save(request);
+        AIAnalysisRequest savedRequest = requestRepository.save(request);
+        log.info("💾 [{}] AIAnalysisRequest saved - requestId: {}, studentId: {}", 
+                analysisType, savedRequest.getRequestId(), 
+                savedRequest.getStudent() != null ? savedRequest.getStudent().getUserId() : "NULL");
+        
+        return savedRequest;
     }
     
     /**

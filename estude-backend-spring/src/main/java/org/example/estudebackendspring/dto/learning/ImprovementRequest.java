@@ -16,9 +16,16 @@ public class ImprovementRequest {
     
     private String subject;
     
+    @JsonProperty("previous_results_id")
+    private String previousResultsId;  // ID của AIAnalysisResult từ Layer 1 (Feedback gốc)
+    
+    @JsonProperty("result_id")
+    private String resultId;  // ID của AIAnalysisResult từ Layer 3.5 (Practice Review)
+    
     @JsonProperty("previous_results")
     private List<TopicResultDTO> previousResults;
     
     @JsonProperty("new_results")
     private List<TopicResultDTO> newResults;
 }
+
