@@ -14,9 +14,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewPracticeDataDTO {
-    
     @JsonProperty("result_id")
-    private Long resultId;  // ID của AIAnalysisResult - dùng cho Layer 4
+    private Long resultId;  // ID của AIAnalysisResult - Backend set sau khi lưu DB, dùng cho Layer 4
+    
+    @JsonProperty("submission_id")
+    private String submissionId;
     
     @JsonProperty("assignment_id")
     private String assignmentId;

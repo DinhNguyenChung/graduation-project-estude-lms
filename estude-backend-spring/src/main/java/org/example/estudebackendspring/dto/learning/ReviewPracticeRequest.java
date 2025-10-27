@@ -14,8 +14,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewPracticeRequest {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     @JsonProperty("assignment_id")
     private String assignmentId;
+    
     @JsonProperty("student_name")
     private String studentName;
     

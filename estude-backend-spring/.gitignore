@@ -36,3 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 .env
+# Markdown files (except README.md)
+*.md
+!README.md

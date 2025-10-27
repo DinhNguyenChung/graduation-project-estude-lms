@@ -12,16 +12,19 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImprovementDataDTO {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
+    @JsonProperty("result_id")
+    private String resultId;
+    
+    @JsonProperty("previous_results_id")
+    private String previousResultsId;
+    
     @JsonProperty("student_id")
     private Long studentId;
     
     private String subject;
-    
-    @JsonProperty("previous_result_id")
-    private String previousResultId;  // ID của AIAnalysisResult từ Layer 1
-    
-    @JsonProperty("result_id")
-    private String resultId;  // ID của AIAnalysisResult từ Layer 3.5
     
     @JsonProperty("evaluation_time")
     private LocalDateTime evaluationTime;

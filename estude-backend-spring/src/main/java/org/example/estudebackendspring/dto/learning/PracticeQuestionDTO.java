@@ -11,6 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PracticeQuestionDTO {
+    @JsonProperty("question_id")
+    private Integer questionId;
+    
     private String topic;
     private String subtopic;
     private String question;

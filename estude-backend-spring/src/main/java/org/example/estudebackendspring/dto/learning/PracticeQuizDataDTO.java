@@ -12,6 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PracticeQuizDataDTO {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     private String subject;
     private List<String> topics;
     private String difficulty;

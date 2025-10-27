@@ -12,6 +12,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecommendationDataDTO {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     @JsonProperty("student_name")
     private String studentName;
     

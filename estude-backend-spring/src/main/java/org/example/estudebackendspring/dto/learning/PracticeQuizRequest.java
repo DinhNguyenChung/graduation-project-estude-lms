@@ -11,6 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PracticeQuizRequest {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     private String subject;
     private List<String> topics;
     
@@ -18,4 +21,7 @@ public class PracticeQuizRequest {
     private Integer numQuestions;
     
     private String difficulty; // "easy", "medium", "hard", "mixed"
+    
+    @JsonProperty("reference_questions")
+    private List<ReferenceQuestionDTO> referenceQuestions;
 }

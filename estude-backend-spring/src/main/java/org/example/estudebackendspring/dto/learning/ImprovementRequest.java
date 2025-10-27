@@ -11,16 +11,19 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImprovementRequest {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     @JsonProperty("student_id")
     private Long studentId;
     
     private String subject;
     
     @JsonProperty("previous_results_id")
-    private String previousResultsId;  // ID của AIAnalysisResult từ Layer 1 (Feedback gốc)
+    private String previousResultsId;
     
     @JsonProperty("result_id")
-    private String resultId;  // ID của AIAnalysisResult từ Layer 3.5 (Practice Review)
+    private String resultId;
     
     @JsonProperty("previous_results")
     private List<TopicResultDTO> previousResults;

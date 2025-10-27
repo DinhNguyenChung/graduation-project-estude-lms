@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecommendationRequest {
+    @JsonProperty("submission_id")
+    private String submissionId;
+    
     @JsonProperty("feedback_data")
     private FeedbackDataDTO feedbackData;
 }
