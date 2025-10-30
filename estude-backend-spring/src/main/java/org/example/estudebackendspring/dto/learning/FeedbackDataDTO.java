@@ -18,8 +18,8 @@ public class FeedbackDataDTO {
     @JsonProperty("submission_id")
     private String submissionId;
     
-    @JsonProperty("assignment_id")
-    private String assignmentId;
+    @JsonProperty("assessment_id")
+    private String assessmentId;
     
     @JsonProperty("student_name")
     private String studentName;

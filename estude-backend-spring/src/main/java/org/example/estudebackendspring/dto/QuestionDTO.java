@@ -14,5 +14,7 @@ public class QuestionDTO {
     private String questionText;
     private Float points;
     private String questionType; // Enum name
+    private Integer questionOrder;
+    private String attachmentUrl;
     private List<QuestionOptionDTO> options;
 }

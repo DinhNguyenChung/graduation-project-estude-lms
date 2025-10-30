@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class QuestionOptionDTO {
     private Long optionId;
     private String optionText;
+    private Integer optionOrder;
     private Boolean isCorrect; // useful for teacher/admin; for student API you may hide
 }

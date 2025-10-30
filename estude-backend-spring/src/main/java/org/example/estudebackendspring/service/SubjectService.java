@@ -2,9 +2,11 @@ package org.example.estudebackendspring.service;
 
 import jakarta.transaction.Transactional;
 import org.example.estudebackendspring.dto.CreateSubjectRequest;
+import org.example.estudebackendspring.dto.SubjectDTO;
 import org.example.estudebackendspring.dto.UpdateSubjectRequest;
 import org.example.estudebackendspring.entity.School;
 import org.example.estudebackendspring.entity.Subject;
+import org.example.estudebackendspring.enums.GradeLevel;
 import org.example.estudebackendspring.exception.DuplicateResourceException;
 import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.SchoolRepository;
@@ -12,6 +14,7 @@ import org.example.estudebackendspring.repository.SubjectRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SubjectService {
@@ -22,19 +25,19 @@ public class SubjectService {
         this.schoolRepository = schoolRepository;
     }
     public Subject createSubject(CreateSubjectRequest req) {
-        if(subjectRepository.existsByNameAndSchoolsSchoolId(req.getName(), req.getSchoolId())) {
-            throw new DuplicateResourceException("Subject name already exists in school: " + req.getName());
-        }
+//        if(subjectRepository.existsByNameAndSchoolsSchoolId(req.getName(), req.getSchoolId())) {
+//            throw new DuplicateResourceException("Subject name already exists in school: " + req.getName());
+//        }
         // Tìm trường
-        School school = schoolRepository.findBySchoolId(req.getSchoolId());
-        if(school == null) {
-            throw new ResourceNotFoundException("School not found: " + req.getSchoolId());
-        }
+//        School school = schoolRepository.findBySchoolId(req.getSchoolId());
+//        if(school == null) {
+//            throw new ResourceNotFoundException("School not found: " + req.getSchoolId());
+//        }
         // Tạo môn học mới
         Subject subject = new Subject();
         subject.setName(req.getName());
         subject.setDescription(req.getDescription());
-        subject.getSchools().add(school); // Thêm trường vào tập schools
+//        subject.getSchools().add(school); // Thêm trường vào tập schools
 
         return subjectRepository.save(subject);
     }
@@ -67,7 +70,11 @@ public class SubjectService {
     public List<Subject> getSubjectsByClassId(Long classId) {
         return subjectRepository.findSubjectsByClassId(classId);
     }
-    public List<Subject> getAllSubjectsBySchoolId(Long schoolId) {
-        return subjectRepository.findSubjectsBySchoolId(schoolId);
-    }
+    
+    // Note: Grade level and volume filtering is now done at TOPIC level
+    // Use TopicService.getTopicsBySubjectAndGrade() or getTopicsBySubjectGradeAndVolume()
+    // instead of filtering subjects by grade/volume
+    
+    // Subject now represents a general subject (e.g., "Toán", "Vật lý")
+    // Topics within a subject have grade_level and volume fields
 }

@@ -4,10 +4,12 @@ package org.example.estudebackendspring.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.CreateSubjectRequest;
+import org.example.estudebackendspring.dto.SubjectDTO;
 import org.example.estudebackendspring.dto.UpdateSubjectRequest;
 import org.example.estudebackendspring.entity.Subject;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.enums.GradeLevel;
 import org.example.estudebackendspring.repository.SubjectRepository;
 import org.example.estudebackendspring.service.SubjectService;
 import org.example.estudebackendspring.service.LogEntryService;
@@ -137,6 +139,10 @@ public class SubjectController {
         }
         return ResponseEntity.ok(subjects); // 200
     }
+    
+    // Note: This endpoint is commented out because Subject-School relationship has been removed
+    // Use the new grade-level based filtering instead: /api/subjects/by-grade?gradeLevel=GRADE_10
+    /*
     @GetMapping("/by-school/{schoolId}")
     public ResponseEntity<List<Subject>> getSubjectsBySchool(@PathVariable Long schoolId) {
         List<Subject> subjects = subjectService.getAllSubjectsBySchoolId(schoolId);
@@ -145,5 +151,12 @@ public class SubjectController {
         }
         return ResponseEntity.ok(subjects); // 200
     }
+    */
+    
+    // Grade level and volume filtering has been moved to Topic level.
+    // Use TopicController endpoints instead:
+    // - GET /api/topics?subjectId=X&gradeLevel=Y&volume=Z
+    // - GET /api/topics/grades?subjectId=X
+    // - GET /api/topics/volumes?subjectId=X&gradeLevel=Y
 
 }

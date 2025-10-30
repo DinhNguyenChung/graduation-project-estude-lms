@@ -13,6 +13,8 @@ import java.util.List;
 public class QuestionDTO {
     @JsonProperty("question_id")
     private Long questionId;
+    
+    private String topic;
     private String question;
     private List<String> options;
     

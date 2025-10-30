@@ -54,7 +54,7 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
         FROM ai_analysis_results r
         JOIN ai_analysis_requests req ON r.request_id = req.request_id
         WHERE req.student_id = :studentId
-          AND (req.data_payload::jsonb ->> 'assignment_id') = :assignmentId
+          AND (req.data_payload::jsonb ->> 'assessment_id') = :assignmentId
         ORDER BY req.request_date DESC
         LIMIT 1
         """, nativeQuery = true)
@@ -104,9 +104,9 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
     WHERE req.student_id = :studentId 
       AND req.analysis_type = :analysisType
       AND (
-        (req.data_payload::jsonb ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+        (req.data_payload::jsonb ->> 'assessment_id') = CAST(:assignmentId AS TEXT)
         OR 
-        (req.data_payload::jsonb -> 'feedback_data' ->> 'assignment_id') = CAST(:assignmentId AS TEXT)
+        (req.data_payload::jsonb -> 'feedback_data' ->> 'assessment_id') = CAST(:assignmentId AS TEXT)
       )
     ORDER BY r.generated_at DESC
     """, nativeQuery = true)

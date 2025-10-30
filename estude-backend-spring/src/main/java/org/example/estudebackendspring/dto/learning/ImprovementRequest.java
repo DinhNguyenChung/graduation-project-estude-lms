@@ -14,16 +14,10 @@ public class ImprovementRequest {
     @JsonProperty("submission_id")
     private String submissionId;
     
-    @JsonProperty("student_id")
-    private Long studentId;
-    
     private String subject;
     
-    @JsonProperty("previous_results_id")
-    private String previousResultsId;
-    
-    @JsonProperty("result_id")
-    private String resultId;
+    @JsonProperty("student_id")
+    private Long studentId;
     
     @JsonProperty("previous_results")
     private List<TopicResultDTO> previousResults;

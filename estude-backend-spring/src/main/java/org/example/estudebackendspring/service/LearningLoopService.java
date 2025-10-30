@@ -78,11 +78,11 @@ public class LearningLoopService {
     @Transactional
     public FeedbackResponse getLearningFeedback(FeedbackRequest request) {
         log.info("Getting learning feedback for assignment: {}, student: {}", 
-                request.getAssignmentId(), request.getStudentName());
+                request.getAssessmentId(), request.getStudentName());
         
         // Lưu request
         AIAnalysisRequest analysisRequest = saveAnalysisRequest(
-            request.getAssignmentId(),
+            request.getAssessmentId(),
             AnalysisType.LEARNING_FEEDBACK,
             objectMapper.valueToTree(request)
         );
@@ -285,7 +285,7 @@ public class LearningLoopService {
      */
     @Transactional
     public ImprovementResponse evaluateImprovement(ImprovementRequest request) {
-        log.info("Evaluating improvement for student: {}, subject: {}", 
+        log.info("Evaluating improvement for student: {}, subject: {}",
                 request.getStudentId(), request.getSubject());
         
         // Lưu request
@@ -335,11 +335,11 @@ public class LearningLoopService {
     @Transactional
     public FullLearningLoopResponse runFullLearningLoop(FeedbackRequest request) {
         log.info("Running full learning loop for assignment: {}, student: {}", 
-                request.getAssignmentId(), request.getStudentName());
+                request.getAssessmentId(), request.getStudentName());
         
         // Lưu request
         AIAnalysisRequest analysisRequest = saveAnalysisRequest(
-            request.getAssignmentId(),
+            request.getAssessmentId(),
             AnalysisType.FULL_LEARNING_LOOP,
             objectMapper.valueToTree(request)
         );

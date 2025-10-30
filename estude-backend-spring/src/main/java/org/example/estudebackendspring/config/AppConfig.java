@@ -71,6 +71,11 @@ public class AppConfig {
                         .requestMatchers("/api/schedules/**").permitAll()
                         .requestMatchers("/api/logentries/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/api/practice-tests/**").permitAll()
+                        .requestMatchers("/api/topics/**").permitAll()
+                        .requestMatchers("/api/topic-progress/**").permitAll()
+                        .requestMatchers("/api/assessment/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
 
                         .anyRequest().authenticated()

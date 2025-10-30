@@ -51,4 +51,19 @@ public class Submission {
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Answer> answers;
+    
+    /**
+     * Practice test liên quan (nếu submission này là từ practice test)
+     */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "practice_test_id")
+    @JsonIgnore
+    private PracticeTest practiceTest;
+    
+    /**
+     * Tracking tiến độ theo topics
+     */
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<TopicProgress> topicProgresses;
 }

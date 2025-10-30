@@ -3,6 +3,7 @@ package org.example.estudebackendspring.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.estudebackendspring.enums.DifficultyLevel;
 import org.example.estudebackendspring.enums.QuestionType;
 
 import java.util.List;
@@ -30,6 +31,29 @@ public class Question {
     private Integer questionOrder;
 
     private String attachmentUrl;
+    
+    /**
+     * Chủ đề mà câu hỏi này thuộc về
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "topic_id")
+    @JsonIgnore
+    private Topic topic;
+    
+    /**
+     * Mức độ khó của câu hỏi
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DifficultyLevel difficultyLevel;
+    
+    /**
+     * Đánh dấu câu hỏi có thuộc ngân hàng đề không
+     * true = trong question bank (có thể tái sử dụng)
+     * false = trong assignment cụ thể
+     */
+    @Column(nullable = false)
+    private Boolean isQuestionBank = false;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignment_id")

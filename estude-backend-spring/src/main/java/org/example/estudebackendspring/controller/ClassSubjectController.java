@@ -57,13 +57,7 @@ public class ClassSubjectController {
                                 cs.getSubject().getSubjectId(),
                                 cs.getSubject().getName(),
                                 cs.getSubject().getDescription(),
-                                cs.getSubject().getSchools() !=null ?
-                                        cs.getSubject().getSchools().stream().map(s -> new SchoolDTO(
-                                                s.getSchoolId(),
-                                                s.getSchoolCode(),
-                                                s.getSchoolName()
-                                        ))
-                                                .collect(Collectors.toList()):null
+                                null // schools relationship has been removed from Subject entity
                         ) : null,
                         cs.getTeacher() != null ? new TeacherDTO(
                                 cs.getTeacher().getUserId(),

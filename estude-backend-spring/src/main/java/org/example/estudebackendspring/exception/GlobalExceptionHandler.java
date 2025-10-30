@@ -32,6 +32,34 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(body, HttpStatus.CONFLICT);
   }
 
+  @ExceptionHandler(InvalidQuestionCountException.class)
+  public ResponseEntity<Map<String, Object>> handleInvalidQuestionCount(InvalidQuestionCountException ex) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("success", false);
+    body.put("message", ex.getMessage());
+    
+    Map<String, Object> error = new HashMap<>();
+    error.put("code", ex.getErrorCode());
+    error.put("details", ex.getDetails());
+    body.put("error", error);
+    
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+  
+  @ExceptionHandler(InsufficientQuestionsException.class)
+  public ResponseEntity<Map<String, Object>> handleInsufficientQuestions(InsufficientQuestionsException ex) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("success", false);
+    body.put("message", ex.getMessage());
+    
+    Map<String, Object> error = new HashMap<>();
+    error.put("code", ex.getErrorCode());
+    error.put("details", ex.getDetails());
+    body.put("error", error);
+    
+    return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+  }
+
   @ExceptionHandler(RuntimeException.class)
   public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
     Map<String, Object> body = new HashMap<>();
