@@ -56,6 +56,7 @@ public class LearningLoopService {
     private String PRACTICE_REVIEW_URL;  // Layer 3.5
     private String IMPROVEMENT_URL;
     private String FULL_LOOP_URL;
+    private String ROADMAP_URL;  // Layer 5
     
     @PostConstruct
     public void init() {
@@ -65,6 +66,7 @@ public class LearningLoopService {
         PRACTICE_REVIEW_URL = aiServiceUrl + "/api/ai/review-practice-results";  // Layer 3.5
         IMPROVEMENT_URL = aiServiceUrl + "/api/ai/improvement-evaluation";
         FULL_LOOP_URL = aiServiceUrl + "/api/ai/full-learning-loop";
+        ROADMAP_URL = aiServiceUrl + "/api/assessment/generate-learning-roadmap";  // Layer 5
     }
 //        RECOMMENDATION_URL = aiServiceUrl + "/api/ai/learning-recommendation";
 //        PRACTICE_QUIZ_URL = aiServiceUrl + "/api/ai/generate-practice-quiz";
@@ -375,6 +377,55 @@ public class LearningLoopService {
                 "Error: " + ex.getMessage()
             );
             throw new RuntimeException("Failed to run full learning loop: " + ex.getMessage(), ex);
+        }
+    }
+    
+    /**
+     * Layer 5: Learning Roadmap Generation - Tạo lộ trình học tập cá nhân hóa
+     */
+    @Transactional
+    public RoadmapResponse generateLearningRoadmap(RoadmapRequest request) {
+        log.info("Generating learning roadmap for student: {}, subject: {}", 
+                request.getStudentId(), request.getSubject());
+        
+        // Lưu request
+        AIAnalysisRequest analysisRequest = saveAnalysisRequest(
+            request.getStudentId().toString(),
+            AnalysisType.LEARNING_ROADMAP,
+            objectMapper.valueToTree(request)
+        );
+        
+        try {
+            // Gọi AI service
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<RoadmapRequest> entity = new HttpEntity<>(request, headers);
+            
+            ResponseEntity<RoadmapResponse> response = restTemplate.postForEntity(
+                ROADMAP_URL, entity, RoadmapResponse.class
+            );
+            
+            RoadmapResponse roadmapResponse = response.getBody();
+            
+            if (roadmapResponse != null && roadmapResponse.getSuccess()) {
+                // Lưu result
+                saveAnalysisResult(
+                    analysisRequest.getRequestId(),
+                    objectMapper.valueToTree(roadmapResponse.getData()),
+                    "Learning roadmap generated successfully"
+                );
+            }
+            
+            return roadmapResponse;
+            
+        } catch (Exception ex) {
+            log.error("Error generating learning roadmap", ex);
+            saveAnalysisResult(
+                analysisRequest.getRequestId(),
+                null,
+                "Error: " + ex.getMessage()
+            );
+            throw new RuntimeException("Failed to generate learning roadmap: " + ex.getMessage(), ex);
         }
     }
     

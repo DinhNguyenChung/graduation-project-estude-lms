@@ -183,6 +183,52 @@ public class AssessmentController {
     }
     
     /**
+     * GET /api/assessment/student/{studentId}/latest-submission
+     * 
+     * Get detailed view of the latest (most recent) assessment submission for a student
+     * 
+     * Optional Query Parameters:
+     * - subjectId: Filter by specific subject
+     * 
+     * Use cases:
+     * - Xem lại bài làm gần nhất của học sinh
+     * - Review submission sau khi nộp bài
+     * - Dashboard hiển thị kết quả mới nhất
+     * 
+     * Includes:
+     * - All questions and answers
+     * - Correct vs incorrect breakdown
+     * - Statistics by topic and difficulty
+     * - Performance metrics
+     * - Submission timestamp
+     * 
+     * @param studentId The student's ID
+     * @param subjectId Optional subject filter
+     * @return Detailed submission response with all answers, or 404 if no submissions found
+     */
+    @GetMapping("/student/{studentId}/latest-submission")
+    public ResponseEntity<ApiResponseWithData<AssessmentSubmissionResponseDTO>> getLatestSubmission(
+            @PathVariable Long studentId,
+            @RequestParam(required = false) Long subjectId) {
+        
+        log.info("GET /api/assessment/student/{}/latest-submission - Subject filter: {}", studentId, subjectId);
+        
+        // Authorization check: Verify studentId matches authenticated user or is admin/teacher
+        // TODO: Implement when authentication is integrated
+        // if (!authService.isCurrentUserOrHasRole(studentId, "TEACHER", "ADMIN")) {
+        //     throw new ForbiddenException("Cannot view other students' submissions");
+        // }
+        
+        AssessmentSubmissionResponseDTO response = assessmentSubmissionService.getLatestSubmission(studentId, subjectId);
+        
+        return ResponseEntity.ok(new ApiResponseWithData<>(
+            true,
+            "Đã tải chi tiết bài nộp mới nhất",
+            response
+        ));
+    }
+    
+    /**
      * GET /api/assessment/student/{studentId}/topic-statistics
      * 
      * Get topic-wise statistics for a student

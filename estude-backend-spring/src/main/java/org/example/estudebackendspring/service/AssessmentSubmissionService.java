@@ -205,6 +205,72 @@ public class AssessmentSubmissionService {
     }
     
     /**
+     * Get the most recent assessment submission for a student
+     * 
+     * @param studentId The student's ID
+     * @param subjectId Optional subject filter
+     * @return Latest submission with full details
+     * @throws ResourceNotFoundException if no submissions found
+     */
+    public AssessmentSubmissionResponseDTO getLatestSubmission(Long studentId, Long subjectId) {
+        log.info("Getting latest submission for student: {}, subject: {}", studentId, subjectId);
+        
+        // Verify student exists
+        if (!studentRepository.existsById(studentId)) {
+            throw new ResourceNotFoundException("Student not found: " + studentId);
+        }
+        
+        // Find latest submission
+        Optional<AssessmentSubmission> submissionOpt;
+        
+        if (subjectId != null) {
+            // Filter by subject
+            submissionOpt = submissionRepository
+                .findFirstByStudent_UserIdAndSubject_SubjectIdOrderBySubmittedAtDesc(studentId, subjectId);
+            
+            if (submissionOpt.isEmpty()) {
+                throw new ResourceNotFoundException(
+                    String.format("No submissions found for student %d in subject %d", studentId, subjectId));
+            }
+        } else {
+            // Get latest across all subjects
+            submissionOpt = submissionRepository
+                .findFirstByStudent_UserIdOrderBySubmittedAtDesc(studentId);
+            
+            if (submissionOpt.isEmpty()) {
+                throw new ResourceNotFoundException(
+                    String.format("No submissions found for student %d", studentId));
+            }
+        }
+        
+        AssessmentSubmission submission = submissionOpt.get();
+        log.info("Found latest submission: {} submitted at {}", 
+            submission.getSubmissionId(), submission.getSubmittedAt());
+        
+        // Rebuild statistics
+        Map<String, TopicStats> topicStatsMap = new HashMap<>();
+        Map<String, DifficultyStats> difficultyStatsMap = new HashMap<>();
+        
+        for (AssessmentAnswer answer : submission.getAnswers()) {
+            if (answer.getTopic() != null) {
+                String topicName = answer.getTopic().getName();
+                TopicStats stats = topicStatsMap.computeIfAbsent(topicName, 
+                    k -> new TopicStats(answer.getTopic()));
+                stats.totalQuestions++;
+                if (answer.getIsCorrect()) stats.correctAnswers++;
+            }
+            
+            String difficulty = answer.getDifficultyLevel();
+            DifficultyStats diffStats = difficultyStatsMap.computeIfAbsent(difficulty, 
+                k -> new DifficultyStats(difficulty));
+            diffStats.totalQuestions++;
+            if (answer.getIsCorrect()) diffStats.correctAnswers++;
+        }
+        
+        return buildSubmissionResponse(submission, topicStatsMap, difficultyStatsMap);
+    }
+    
+    /**
      * Build complete submission response with all details
      */
     private AssessmentSubmissionResponseDTO buildSubmissionResponse(

@@ -308,4 +308,157 @@ public class AIAnalysisService  {
     public Optional<AIAnalysisResult> getLatestResult(Long studentId, String assignmentId) {
         return resultRepository.findLatestByStudentAndAssignment(studentId, assignmentId);
     }
+    
+    /**
+     * Lấy roadmap tổng hợp (merged) từ TẤT CẢ các lần gọi Layer 5 của học sinh
+     * Merge tất cả topics từ các roadmap để có đầy đủ topics
+     */
+    public AIAnalysisResult getMergedRoadmapByStudentId(Long studentId) {
+        // Lấy tất cả roadmaps của học sinh
+        List<AIAnalysisResult> allRoadmaps = getAllResultsByStudentIdAndType(
+                studentId, AnalysisType.LEARNING_ROADMAP);
+        
+        if (allRoadmaps == null || allRoadmaps.isEmpty()) {
+            return null;
+        }
+        
+        // Nếu chỉ có 1 roadmap, trả về luôn
+        if (allRoadmaps.size() == 1) {
+            return allRoadmaps.get(0);
+        }
+        
+        // Lấy roadmap mới nhất làm base
+        AIAnalysisResult latestRoadmap = allRoadmaps.get(0);
+        JsonNode latestData = latestRoadmap.getDetailedAnalysis();
+        
+        try {
+            // Parse JSON thành Map để dễ xử lý
+            Map<String, Object> mergedData = objectMapper.convertValue(
+                    latestData, new TypeReference<Map<String, Object>>() {});
+            
+            // Lấy phases từ roadmap mới nhất
+            List<Map<String, Object>> mergedPhases = (List<Map<String, Object>>) mergedData.get("phases");
+            if (mergedPhases == null) {
+                mergedPhases = new ArrayList<>();
+            }
+            
+            // Tạo Set để track các topics đã có
+            Set<String> existingTopics = new HashSet<>();
+            for (Map<String, Object> phase : mergedPhases) {
+                List<Map<String, Object>> topics = (List<Map<String, Object>>) phase.get("topics");
+                if (topics != null) {
+                    for (Map<String, Object> topic : topics) {
+                        String topicName = (String) topic.get("topic");
+                        if (topicName != null) {
+                            existingTopics.add(topicName);
+                        }
+                    }
+                }
+            }
+            
+            // Merge topics từ các roadmap cũ hơn
+            for (int i = 1; i < allRoadmaps.size(); i++) {
+                AIAnalysisResult oldRoadmap = allRoadmaps.get(i);
+                JsonNode oldData = oldRoadmap.getDetailedAnalysis();
+                
+                if (oldData == null || !oldData.has("phases")) {
+                    continue;
+                }
+                
+                Map<String, Object> oldDataMap = objectMapper.convertValue(
+                        oldData, new TypeReference<Map<String, Object>>() {});
+                List<Map<String, Object>> oldPhases = (List<Map<String, Object>>) oldDataMap.get("phases");
+                
+                if (oldPhases == null) {
+                    continue;
+                }
+                
+                // Duyệt qua các phases cũ
+                for (Map<String, Object> oldPhase : oldPhases) {
+                    List<Map<String, Object>> oldTopics = (List<Map<String, Object>>) oldPhase.get("topics");
+                    
+                    if (oldTopics == null) {
+                        continue;
+                    }
+                    
+                    // Tìm topics chưa có trong merged roadmap
+                    List<Map<String, Object>> newTopicsToAdd = new ArrayList<>();
+                    for (Map<String, Object> oldTopic : oldTopics) {
+                        String topicName = (String) oldTopic.get("topic");
+                        
+                        if (topicName != null && !existingTopics.contains(topicName)) {
+                            newTopicsToAdd.add(oldTopic);
+                            existingTopics.add(topicName);
+                        }
+                    }
+                    
+                    // Nếu có topics mới, thêm phase mới hoặc merge vào phase tương ứng
+                    if (!newTopicsToAdd.isEmpty()) {
+                        // Tạo phase mới với topics từ roadmap cũ
+                        Map<String, Object> newPhase = new HashMap<>(oldPhase);
+                        newPhase.put("topics", newTopicsToAdd);
+                        
+                        // Update phase_number
+                        int newPhaseNumber = mergedPhases.size() + 1;
+                        newPhase.put("phase_number", newPhaseNumber);
+                        
+                        // Update daily_tasks day numbers
+                        List<Map<String, Object>> dailyTasks = (List<Map<String, Object>>) newPhase.get("daily_tasks");
+                        if (dailyTasks != null) {
+                            int dayOffset = calculateTotalDays(mergedPhases);
+                            for (Map<String, Object> dailyTask : dailyTasks) {
+                                Integer currentDay = (Integer) dailyTask.get("day");
+                                if (currentDay != null) {
+                                    dailyTask.put("day", dayOffset + currentDay);
+                                }
+                            }
+                        }
+                        
+                        mergedPhases.add(newPhase);
+                    }
+                }
+            }
+            
+            // Update progress_tracking
+            Map<String, Object> progressTracking = (Map<String, Object>) mergedData.get("progress_tracking");
+            if (progressTracking != null) {
+                progressTracking.put("total_phases", mergedPhases.size());
+            }
+            
+            // Update estimated_completion_days
+            int totalDays = calculateTotalDays(mergedPhases);
+            mergedData.put("estimated_completion_days", totalDays);
+            
+            // Update phases
+            mergedData.put("phases", mergedPhases);
+            
+            // Tạo AIAnalysisResult mới với merged data
+            AIAnalysisResult mergedResult = new AIAnalysisResult();
+            mergedResult.setResultId(latestRoadmap.getResultId());
+            mergedResult.setRequestId(latestRoadmap.getRequestId());
+            mergedResult.setGeneratedAt(latestRoadmap.getGeneratedAt());
+            mergedResult.setComment("Merged roadmap from " + allRoadmaps.size() + " previous roadmaps");
+            mergedResult.setDetailedAnalysis(objectMapper.valueToTree(mergedData));
+            
+            return mergedResult;
+            
+        } catch (Exception ex) {
+            // Nếu có lỗi khi merge, trả về roadmap mới nhất
+            return latestRoadmap;
+        }
+    }
+    
+    /**
+     * Tính tổng số ngày từ danh sách phases
+     */
+    private int calculateTotalDays(List<Map<String, Object>> phases) {
+        int totalDays = 0;
+        for (Map<String, Object> phase : phases) {
+            Integer durationDays = (Integer) phase.get("duration_days");
+            if (durationDays != null) {
+                totalDays += durationDays;
+            }
+        }
+        return totalDays;
+    }
 }

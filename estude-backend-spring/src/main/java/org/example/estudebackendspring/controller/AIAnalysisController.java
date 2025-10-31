@@ -261,6 +261,32 @@ public class AIAnalysisController {
     }
     
     /**
+     * Layer 5: Learning Roadmap Generation - Tạo lộ trình học tập cá nhân hóa
+     * POST /api/ai/generate-learning-roadmap
+     */
+    @Operation(
+            summary = "Layer 5: Learning Roadmap Generation - Tạo lộ trình học tập cá nhân hóa",
+            description = "API tạo lộ trình học tập dựa trên đánh giá tiến bộ, câu hỏi sai và phong cách học của học sinh.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Thành công",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Assignment.class))
+                    )
+            }
+    )
+    @PostMapping("/generate-learning-roadmap")
+    public ResponseEntity<RoadmapResponse> generateLearningRoadmap(@RequestBody RoadmapRequest request) {
+        try {
+            RoadmapResponse response = learningLoopService.generateLearningRoadmap(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    
+    /**
      * Full Learning Loop - Chạy toàn bộ Layer 1, 2, 3 cùng lúc
      * POST /api/ai/full-learning-loop
      */
@@ -485,6 +511,56 @@ public class AIAnalysisController {
         return ResponseEntity.ok(results);
     }
     
+    // ========= LAYER 5: LEARNING ROADMAP =========
+    @Operation(
+            summary = "Lấy TẤT CẢ Learning Roadmap layer 5 của user hiện tại (Bearer Token)",
+            description = "Trả về danh sách tất cả lộ trình học tập theo thứ tự mới nhất"
+    )
+    @GetMapping("/me/roadmap")
+    public ResponseEntity<?> getMyAllLearningRoadmap() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var results = aiAnalysisService.getAllResultsByStudentIdAndType(uid, AnalysisType.LEARNING_ROADMAP);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
+            summary = "Lấy Learning Roadmap mới nhất layer 5 của user hiện tại (Bearer Token)",
+            description = "Trả về lộ trình học tập mới nhất"
+    )
+    @GetMapping("/me/roadmap/latest")
+    public ResponseEntity<?> getMyLatestLearningRoadmap() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_ROADMAP);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    
+    @Operation(
+            summary = "Lấy Learning Roadmap TỔNG HỢP (merged) của user hiện tại (Bearer Token)",
+            description = "Trả về lộ trình học tập tổng hợp từ TẤT CẢ các lần gọi Layer 5, đảm bảo có đủ tất cả topics"
+    )
+    @GetMapping("/me/roadmap/merged")
+    public ResponseEntity<?> getMyMergedLearningRoadmap() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var res = aiAnalysisService.getMergedRoadmapByStudentId(uid);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    
+    @Operation(
+            summary = "Lấy TẤT CẢ Learning Roadmap layer 5 theo assignment_id của user hiện tại (Bearer Token)",
+            description = "Trả về tất cả lộ trình học tập của một assignment cụ thể"
+    )
+    @GetMapping("/me/roadmap/assignment/{assignmentId}")
+    public ResponseEntity<?> getMyLearningRoadmapByAssignment(@PathVariable String assignmentId) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body("Unauthorized");
+        var results = aiAnalysisService.getResultsByStudentAndAssignmentAndType(
+                uid, assignmentId, AnalysisType.LEARNING_ROADMAP);
+        return ResponseEntity.ok(results);
+    }
+    
     // ========= FULL LEARNING LOOP =========
     @Operation(
             summary = "Lấy TẤT CẢ Full Learning Loop của user hiện tại (Bearer Token)",
@@ -526,7 +602,7 @@ public class AIAnalysisController {
     // ========= DASHBOARD - COMBINED VIEW =========
     @Operation(
             summary = "Dashboard Learning Loop - Lấy kết quả mới nhất của tất cả layers (Bearer Token)",
-            description = "Nếu FE chạy từng layer 1,2,3,3.5,4 thì dùng API này để lấy dashboard tổng hợp"
+            description = "Nếu FE chạy từng layer 1,2,3,3.5,4,5 thì dùng API này để lấy dashboard tổng hợp"
     )
     @GetMapping("/me/dashboard")
     public ResponseEntity<?> getMyLearningLoopDashboard() {
@@ -539,6 +615,7 @@ public class AIAnalysisController {
         data.put("practice_quiz", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_QUIZ));
         data.put("practice_review", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.PRACTICE_REVIEW));  // Layer 3.5
         data.put("improvement", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.IMPROVEMENT_EVALUATION));
+        data.put("roadmap", aiAnalysisService.getLatestResultByStudentId(uid, AnalysisType.LEARNING_ROADMAP));  // Layer 5
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", data
@@ -657,6 +734,38 @@ public class AIAnalysisController {
     }
     
     @Operation(
+            summary = "[Admin/Teacher] Lấy TẤT CẢ Learning Roadmap layer 5 của một student",
+            description = "Dành cho admin/teacher xem tất cả lộ trình học tập của một học sinh"
+    )
+    @GetMapping("/student/{studentId}/roadmap")
+    public ResponseEntity<?> getStudentAllLearningRoadmap(@PathVariable Long studentId) {
+        var results = aiAnalysisService.getAllResultsByStudentIdAndType(studentId, AnalysisType.LEARNING_ROADMAP);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
+            summary = "[Admin/Teacher] Lấy Learning Roadmap layer 5 theo assignment của một student",
+            description = "Dành cho admin/teacher xem lộ trình học tập của một học sinh trong một assignment"
+    )
+    @GetMapping("/student/{studentId}/roadmap/assignment/{assignmentId}")
+    public ResponseEntity<?> getStudentLearningRoadmapByAssignment(
+            @PathVariable Long studentId, @PathVariable String assignmentId) {
+        var results = aiAnalysisService.getResultsByStudentAndAssignmentAndType(
+                studentId, assignmentId, AnalysisType.LEARNING_ROADMAP);
+        return ResponseEntity.ok(results);
+    }
+    
+    @Operation(
+            summary = "[Admin/Teacher] Lấy Learning Roadmap TỔNG HỢP (merged) của một student",
+            description = "Dành cho admin/teacher xem lộ trình học tập tổng hợp từ TẤT CẢ các lần gọi Layer 5"
+    )
+    @GetMapping("/student/{studentId}/roadmap/merged")
+    public ResponseEntity<?> getStudentMergedLearningRoadmap(@PathVariable Long studentId) {
+        var res = aiAnalysisService.getMergedRoadmapByStudentId(studentId);
+        return ResponseEntity.ok(res != null ? res : new AIAnalysisResult());
+    }
+    
+    @Operation(
             summary = "[Admin/Teacher] Lấy TẤT CẢ Full Learning Loop của một student",
             description = "Dành cho admin/teacher xem tất cả full learning loop của một học sinh"
     )
@@ -690,6 +799,7 @@ public class AIAnalysisController {
         data.put("practice_quiz", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.PRACTICE_QUIZ));
         data.put("practice_review", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.PRACTICE_REVIEW));  // Layer 3.5
         data.put("improvement", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.IMPROVEMENT_EVALUATION));
+        data.put("roadmap", aiAnalysisService.getLatestResultByStudentId(studentId, AnalysisType.LEARNING_ROADMAP));  // Layer 5
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", data

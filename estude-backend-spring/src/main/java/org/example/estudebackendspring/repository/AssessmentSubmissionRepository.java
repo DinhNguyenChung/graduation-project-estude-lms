@@ -43,6 +43,17 @@ public interface AssessmentSubmissionRepository extends JpaRepository<Assessment
         @Param("subjectId") Long subjectId);
     
     /**
+     * Find the most recent submission for a student (across all subjects)
+     */
+    Optional<AssessmentSubmission> findFirstByStudent_UserIdOrderBySubmittedAtDesc(Long studentId);
+    
+    /**
+     * Find the most recent submission for a student in a specific subject
+     */
+    Optional<AssessmentSubmission> findFirstByStudent_UserIdAndSubject_SubjectIdOrderBySubmittedAtDesc(
+        Long studentId, Long subjectId);
+    
+    /**
      * Count total submissions by student
      */
     long countByStudent_UserId(Long studentId);
