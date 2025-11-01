@@ -90,7 +90,7 @@ public class RoadmapDataDTO {
         private List<LearningResourceDTO> learningResources;
         
         @JsonProperty("incorrect_questions_review")
-        private List<Long> incorrectQuestionsReview;
+        private List<IncorrectQuestionReviewDTO> incorrectQuestionsReview;
         
         @JsonProperty("practice_exercises")
         private Integer practiceExercises;
@@ -107,6 +107,30 @@ public class RoadmapDataDTO {
         
         @JsonProperty("estimated_time_minutes")
         private Integer estimatedTimeMinutes;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IncorrectQuestionReviewDTO {
+        @JsonProperty("question_id")
+        private Long questionId;
+        
+        @JsonProperty("question_text")
+        private String questionText;
+        
+        @JsonProperty("your_answer")
+        private String yourAnswer;
+        
+        @JsonProperty("correct_answer")
+        private String correctAnswer;
+        
+        private String explanation;
+        
+        @JsonProperty("common_mistake")
+        private String commonMistake;
+        
+        private String tip;
     }
     
     @Data

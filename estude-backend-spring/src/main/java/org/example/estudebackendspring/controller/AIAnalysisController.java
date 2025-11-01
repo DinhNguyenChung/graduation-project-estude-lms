@@ -1,6 +1,9 @@
 package org.example.estudebackendspring.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -10,14 +13,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.estudebackendspring.dto.learning.*;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.enums.AnalysisType;
+import org.example.estudebackendspring.repository.AIAnalysisResultRepository;
 import org.example.estudebackendspring.service.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Tag(name = "Assignment API", description = "Quản lý Analysis tương tác Với AI Service ")
 @RestController
@@ -29,6 +31,7 @@ public class AIAnalysisController {
     private final SubmissionReportService submissionReportService;
     private final TestAnalysisService testAnalysisService;
     private final LearningLoopService learningLoopService;
+    private final AIAnalysisResultRepository resultRepository;
 
 
     @GetMapping("/health")
@@ -803,6 +806,319 @@ public class AIAnalysisController {
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", data
+        ));
+    }
+    
+    // ========= PROGRESS TRACKING APIs =========
+    
+    @Operation(
+            summary = "Lấy summary roadmap mới nhất cho HomeScreen",
+            description = "API cho HomeScreen hiển thị progress card với completion %, current phase, tasks count"
+    )
+    @GetMapping("/me/roadmap/latest/summary")
+    public ResponseEntity<?> getLatestRoadmapSummary() {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "Unauthorized"
+        ));
+        
+        AIAnalysisResult latest = aiAnalysisService.getLatestResultByStudentId(
+            uid, AnalysisType.LEARNING_ROADMAP);
+        
+        if (latest == null) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "No active roadmap found"
+            ));
+        }
+        
+        JsonNode roadmapData = latest.getDetailedAnalysis();
+        Map<String, Object> progressInfo = aiAnalysisService.calculateRoadmapProgress(roadmapData);
+        Map<String, Object> currentPhase = aiAnalysisService.getCurrentPhase(roadmapData);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "data", Map.of(
+                "roadmap_id", roadmapData.has("roadmap_id") ? roadmapData.get("roadmap_id").asText() : "N/A",
+                "subject", roadmapData.has("subject") ? roadmapData.get("subject").asText() : "N/A",
+                "overall_goal", roadmapData.has("overall_goal") ? roadmapData.get("overall_goal").asText() : "N/A",
+                "estimated_completion_days", roadmapData.has("estimated_completion_days") 
+                    ? roadmapData.get("estimated_completion_days").asInt() : 0,
+                "current_phase", currentPhase,
+                "progress", progressInfo
+            )
+        ));
+    }
+    
+    @Operation(
+            summary = "Lấy roadmap với calculated progress cho RoadmapScreen",
+            description = "Trả về full roadmap kèm theo calculated progress (completion %, tasks count, etc.)"
+    )
+    @GetMapping("/me/roadmap/progress/{resultId}")
+    public ResponseEntity<?> getRoadmapWithProgress(@PathVariable Long resultId) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "Unauthorized"
+        ));
+        
+        Optional<AIAnalysisResult> resultOpt = resultRepository.findById(resultId);
+        if (!resultOpt.isPresent()) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Roadmap not found"
+            ));
+        }
+        
+        AIAnalysisResult result = resultOpt.get();
+        
+        // Verify ownership
+        if (result.getRequest() == null || 
+            result.getRequest().getStudent() == null ||
+            !result.getRequest().getStudent().getUserId().equals(uid)) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "Forbidden"
+            ));
+        }
+        
+        JsonNode roadmapData = result.getDetailedAnalysis();
+        Map<String, Object> progressInfo = aiAnalysisService.calculateRoadmapProgress(roadmapData);
+        
+        // Merge progress info vào response
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode response = mapper.createObjectNode();
+        response.setAll((ObjectNode) roadmapData);
+        response.set("calculated_progress", mapper.valueToTree(progressInfo));
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @Operation(
+            summary = "Đánh dấu task hoàn thành",
+            description = "Mark một task là completed và recalculate progress"
+    )
+    @PutMapping("/me/roadmap/{resultId}/task/{taskId}/complete")
+    public ResponseEntity<?> markTaskComplete(
+        @PathVariable Long resultId,
+        @PathVariable String taskId,
+        @RequestBody TaskCompletionRequest request
+    ) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "Unauthorized"
+        ));
+        
+        Optional<AIAnalysisResult> resultOpt = resultRepository.findById(resultId);
+        if (!resultOpt.isPresent()) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Roadmap not found"
+            ));
+        }
+        
+        AIAnalysisResult result = resultOpt.get();
+        
+        // Verify ownership
+        if (result.getRequest() == null || 
+            result.getRequest().getStudent() == null ||
+            !result.getRequest().getStudent().getUserId().equals(uid)) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "Forbidden"
+            ));
+        }
+        
+        // Parse JSON
+        JsonNode roadmapData = result.getDetailedAnalysis();
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode mutableData = roadmapData.deepCopy();
+        
+        // Find task và update
+        boolean taskFound = false;
+        JsonNode phases = mutableData.get("phases");
+        if (phases != null && phases.isArray()) {
+            for (JsonNode phase : phases) {
+                JsonNode dailyTasks = phase.get("daily_tasks");
+                if (dailyTasks != null && dailyTasks.isArray()) {
+                    for (JsonNode day : dailyTasks) {
+                        JsonNode tasks = day.get("tasks");
+                        if (tasks != null && tasks.isArray()) {
+                            ArrayNode tasksArray = (ArrayNode) tasks;
+                            for (int i = 0; i < tasksArray.size(); i++) {
+                                ObjectNode task = (ObjectNode) tasksArray.get(i);
+                                if (task.has("task_id") && task.get("task_id").asText().equals(taskId)) {
+                                    task.put("completed", true);
+                                    task.put("actual_time_spent_minutes", 
+                                        request.getActualTimeSpent() != null ? request.getActualTimeSpent() : 0);
+                                    if (request.getScore() != null) {
+                                        task.put("score", request.getScore());
+                                    }
+                                    if (request.getAccuracy() != null) {
+                                        task.put("accuracy", request.getAccuracy());
+                                    }
+                                    taskFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (taskFound) break;
+                    }
+                }
+                if (taskFound) break;
+            }
+        }
+        
+        if (!taskFound) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Task not found"
+            ));
+        }
+        
+        // Recalculate progress
+        Map<String, Object> progressInfo = aiAnalysisService.calculateRoadmapProgress(mutableData);
+        
+        // Save updated JSON
+        result.setDetailedAnalysis(mutableData);
+        resultRepository.save(result);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "Task marked as completed",
+            "updated_progress", progressInfo
+        ));
+    }
+    
+    @Operation(
+            summary = "Lấy 3 tasks tiếp theo cần làm",
+            description = "Trả về 3 incomplete tasks đầu tiên trong roadmap"
+    )
+    @GetMapping("/me/roadmap/{resultId}/next-tasks")
+    public ResponseEntity<?> getNextTasks(@PathVariable Long resultId) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "Unauthorized"
+        ));
+        
+        Optional<AIAnalysisResult> resultOpt = resultRepository.findById(resultId);
+        if (!resultOpt.isPresent()) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Roadmap not found"
+            ));
+        }
+        
+        AIAnalysisResult result = resultOpt.get();
+        
+        // Verify ownership
+        if (result.getRequest() == null || 
+            result.getRequest().getStudent() == null ||
+            !result.getRequest().getStudent().getUserId().equals(uid)) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "Forbidden"
+            ));
+        }
+        
+        JsonNode roadmapData = result.getDetailedAnalysis();
+        List<Map<String, Object>> nextTasks = aiAnalysisService.getNextTasks(roadmapData, 3);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "next_tasks", nextTasks
+        ));
+    }
+    
+    @Operation(
+            summary = "Bỏ qua task (skip)",
+            description = "Mark task là skipped"
+    )
+    @PutMapping("/me/roadmap/{resultId}/task/{taskId}/skip")
+    public ResponseEntity<?> skipTask(
+        @PathVariable Long resultId,
+        @PathVariable String taskId
+    ) {
+        Long uid = currentUserId();
+        if (uid == null) return ResponseEntity.status(401).body(Map.of(
+            "success", false,
+            "message", "Unauthorized"
+        ));
+        
+        Optional<AIAnalysisResult> resultOpt = resultRepository.findById(resultId);
+        if (!resultOpt.isPresent()) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Roadmap not found"
+            ));
+        }
+        
+        AIAnalysisResult result = resultOpt.get();
+        
+        // Verify ownership
+        if (result.getRequest() == null || 
+            result.getRequest().getStudent() == null ||
+            !result.getRequest().getStudent().getUserId().equals(uid)) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "Forbidden"
+            ));
+        }
+        
+        // Parse JSON
+        JsonNode roadmapData = result.getDetailedAnalysis();
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode mutableData = roadmapData.deepCopy();
+        
+        // Find task và update status
+        boolean taskFound = false;
+        JsonNode phases = mutableData.get("phases");
+        if (phases != null && phases.isArray()) {
+            for (JsonNode phase : phases) {
+                JsonNode dailyTasks = phase.get("daily_tasks");
+                if (dailyTasks != null && dailyTasks.isArray()) {
+                    for (JsonNode day : dailyTasks) {
+                        JsonNode tasks = day.get("tasks");
+                        if (tasks != null && tasks.isArray()) {
+                            ArrayNode tasksArray = (ArrayNode) tasks;
+                            for (int i = 0; i < tasksArray.size(); i++) {
+                                ObjectNode task = (ObjectNode) tasksArray.get(i);
+                                if (task.has("task_id") && task.get("task_id").asText().equals(taskId)) {
+                                    task.put("status", "SKIPPED");
+                                    task.put("completed", true);  // Count as completed for progress
+                                    taskFound = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (taskFound) break;
+                    }
+                }
+                if (taskFound) break;
+            }
+        }
+        
+        if (!taskFound) {
+            return ResponseEntity.status(404).body(Map.of(
+                "success", false,
+                "message", "Task not found"
+            ));
+        }
+        
+        // Recalculate progress
+        Map<String, Object> progressInfo = aiAnalysisService.calculateRoadmapProgress(mutableData);
+        
+        // Save updated JSON
+        result.setDetailedAnalysis(mutableData);
+        resultRepository.save(result);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "message", "Task skipped",
+            "updated_progress", progressInfo
         ));
     }
 }

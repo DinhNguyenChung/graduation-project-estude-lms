@@ -461,4 +461,178 @@ public class AIAnalysisService  {
         }
         return totalDays;
     }
+    
+    /**
+     * Calculate progress từ roadmap JSON
+     * Trả về: total_tasks, completed_tasks, total_phases, completed_phases, completion_percent
+     */
+    public Map<String, Object> calculateRoadmapProgress(JsonNode roadmapData) {
+        int totalTasks = 0;
+        int completedTasks = 0;
+        int totalPhases = 0;
+        int completedPhases = 0;
+        
+        JsonNode phases = roadmapData.get("phases");
+        if (phases == null || !phases.isArray()) {
+            return Map.of(
+                "total_tasks", 0,
+                "completed_tasks", 0,
+                "total_phases", 0,
+                "completed_phases", 0,
+                "completion_percent", 0.0
+            );
+        }
+        
+        totalPhases = phases.size();
+        
+        for (JsonNode phase : phases) {
+            JsonNode dailyTasks = phase.get("daily_tasks");
+            if (dailyTasks == null || !dailyTasks.isArray()) {
+                continue;
+            }
+            
+            boolean allPhaseTasksComplete = true;
+            
+            for (JsonNode day : dailyTasks) {
+                JsonNode tasks = day.get("tasks");
+                if (tasks == null || !tasks.isArray()) {
+                    continue;
+                }
+                
+                for (JsonNode task : tasks) {
+                    totalTasks++;
+                    boolean completed = task.has("completed") && task.get("completed").asBoolean(false);
+                    if (completed) {
+                        completedTasks++;
+                    } else {
+                        allPhaseTasksComplete = false;
+                    }
+                }
+            }
+            
+            if (allPhaseTasksComplete && totalTasks > 0) {
+                completedPhases++;
+            }
+        }
+        
+        double completionPercent = totalTasks > 0 ? (completedTasks * 100.0 / totalTasks) : 0.0;
+        
+        return Map.of(
+            "total_tasks", totalTasks,
+            "completed_tasks", completedTasks,
+            "total_phases", totalPhases,
+            "completed_phases", completedPhases,
+            "completion_percent", Math.round(completionPercent * 100.0) / 100.0
+        );
+    }
+    
+    /**
+     * Get current phase (first phase with incomplete tasks)
+     */
+    public Map<String, Object> getCurrentPhase(JsonNode roadmapData) {
+        JsonNode phases = roadmapData.get("phases");
+        if (phases == null || !phases.isArray()) {
+            return Map.of(
+                "phase_number", 0,
+                "phase_name", "N/A"
+            );
+        }
+        
+        for (JsonNode phase : phases) {
+            boolean hasIncomplete = false;
+            JsonNode dailyTasks = phase.get("daily_tasks");
+            
+            if (dailyTasks != null && dailyTasks.isArray()) {
+                for (JsonNode day : dailyTasks) {
+                    JsonNode tasks = day.get("tasks");
+                    if (tasks != null && tasks.isArray()) {
+                        for (JsonNode task : tasks) {
+                            boolean completed = task.has("completed") && task.get("completed").asBoolean(false);
+                            if (!completed) {
+                                hasIncomplete = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (hasIncomplete) break;
+                }
+            }
+            
+            if (hasIncomplete) {
+                return Map.of(
+                    "phase_number", phase.has("phase_number") ? phase.get("phase_number").asInt() : 0,
+                    "phase_name", phase.has("phase_name") ? phase.get("phase_name").asText() : "N/A"
+                );
+            }
+        }
+        
+        // All phases completed hoặc không có tasks
+        if (phases.size() > 0) {
+            JsonNode lastPhase = phases.get(phases.size() - 1);
+            return Map.of(
+                "phase_number", lastPhase.has("phase_number") ? lastPhase.get("phase_number").asInt() : phases.size(),
+                "phase_name", lastPhase.has("phase_name") ? lastPhase.get("phase_name").asText() : "Hoàn thành"
+            );
+        }
+        
+        return Map.of(
+            "phase_number", 0,
+            "phase_name", "N/A"
+        );
+    }
+    
+    /**
+     * Get next incomplete tasks (limit số lượng)
+     */
+    public List<Map<String, Object>> getNextTasks(JsonNode roadmapData, int limit) {
+        List<Map<String, Object>> nextTasks = new ArrayList<>();
+        JsonNode phases = roadmapData.get("phases");
+        
+        if (phases == null || !phases.isArray()) {
+            return nextTasks;
+        }
+        
+        int count = 0;
+        for (JsonNode phase : phases) {
+            if (count >= limit) break;
+            
+            JsonNode dailyTasks = phase.get("daily_tasks");
+            if (dailyTasks == null || !dailyTasks.isArray()) {
+                continue;
+            }
+            
+            String phaseName = phase.has("phase_name") ? phase.get("phase_name").asText() : "N/A";
+            
+            for (JsonNode day : dailyTasks) {
+                if (count >= limit) break;
+                
+                JsonNode tasks = day.get("tasks");
+                if (tasks == null || !tasks.isArray()) {
+                    continue;
+                }
+                
+                int dayNumber = day.has("day") ? day.get("day").asInt() : 0;
+                
+                for (JsonNode task : tasks) {
+                    if (count >= limit) break;
+                    
+                    boolean completed = task.has("completed") && task.get("completed").asBoolean(false);
+                    if (!completed) {
+                        Map<String, Object> taskInfo = new HashMap<>();
+                        taskInfo.put("task_id", task.has("task_id") ? task.get("task_id").asText() : "N/A");
+                        taskInfo.put("title", task.has("title") ? task.get("title").asText() : "N/A");
+                        taskInfo.put("type", task.has("type") ? task.get("type").asText() : "N/A");
+                        taskInfo.put("duration_minutes", task.has("duration_minutes") ? task.get("duration_minutes").asInt() : 0);
+                        taskInfo.put("day_number", dayNumber);
+                        taskInfo.put("phase_name", phaseName);
+                        
+                        nextTasks.add(taskInfo);
+                        count++;
+                    }
+                }
+            }
+        }
+        
+        return nextTasks;
+    }
 }
