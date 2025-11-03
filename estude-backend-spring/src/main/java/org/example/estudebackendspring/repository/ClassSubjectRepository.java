@@ -11,6 +11,18 @@ import java.util.Optional;
 public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long> {
     // Lấy tất cả môn học mà teacher dạy
     List<ClassSubject> findByTeacher_UserId(Long teacherId);
+    
+    /**
+     * Lấy tất cả ClassSubject của teacher với EAGER FETCH term và clazz
+     * Dùng cho analytics để tránh LazyInitializationException
+     */
+    @Query("SELECT cs FROM ClassSubject cs " +
+           "JOIN FETCH cs.term t " +
+           "JOIN FETCH t.clazz c " +
+           "JOIN FETCH cs.subject s " +
+           "WHERE cs.teacher.userId = :teacherId")
+    List<ClassSubject> findByTeacherUserIdWithTermAndClass(@Param("teacherId") Long teacherId);
+    
     boolean existsByTerm_ClazzAndSubject(Clazz clazz, Subject subject);
     // Lấy classSubject theo classId
     List<ClassSubject> findByTerm_Clazz_ClassId(Long classId);

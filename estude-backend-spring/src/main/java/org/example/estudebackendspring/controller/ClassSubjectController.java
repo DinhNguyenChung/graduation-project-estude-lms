@@ -6,6 +6,7 @@ import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.exception.ResourceNotFoundException;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
 import org.example.estudebackendspring.service.LogEntryService;
@@ -15,7 +16,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -129,5 +133,86 @@ public class ClassSubjectController {
         }
 
         return ResponseEntity.noContent().build();
+    }
+    
+    /**
+     * PATCH /api/class-subjects/{classSubjectId}/teacher
+     * Update teacher for an existing ClassSubject
+     * This solves the 409 Conflict issue when editing teacher in Frontend
+     */
+    @PatchMapping("/{classSubjectId}/teacher")
+    public ResponseEntity<?> updateTeacher(
+            @PathVariable Long classSubjectId,
+            @RequestBody UpdateTeacherRequest request
+    ) {
+        try {
+            // Update teacher
+            ClassSubject updated = service.updateTeacher(classSubjectId, request.getTeacherId());
+            
+            // Log the update
+            try {
+                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                String oldTeacherName = updated.getTeacher() != null ? updated.getTeacher().getFullName() : "Không có";
+                String newTeacherInfo = request.getTeacherId() != null ? 
+                        " → " + updated.getTeacher().getFullName() : 
+                        " → Xóa giáo viên";
+                
+                logEntryService.createLog(
+                        "ClassSubject",
+                        classSubjectId,
+                        "Cập nhật giáo viên môn " + updated.getSubject().getName() +
+                                " lớp " + updated.getTerm().getClazz().getName() + newTeacherInfo,
+                        ActionType.UPDATE,
+                        updated.getTerm().getTermId(),
+                        "Term",
+                        currentUser
+                );
+            } catch (Exception e) {
+                System.err.println("⚠ Failed to log teacher update: " + e.getMessage());
+            }
+            
+            // Build response
+            Map<String, Object> response = new HashMap<>();
+            response.put("classSubjectId", updated.getClassSubjectId());
+            response.put("classId", updated.getTerm().getClazz().getClassId());
+            response.put("subjectId", updated.getSubject().getSubjectId());
+            response.put("teacherId", updated.getTeacher() != null ? updated.getTeacher().getUserId() : null);
+            response.put("teacherName", updated.getTeacher() != null ? updated.getTeacher().getFullName() : null);
+            response.put("termId", updated.getTerm().getTermId());
+            
+            // Add subject and teacher details
+            Map<String, Object> subjectDetail = new HashMap<>();
+            subjectDetail.put("subjectId", updated.getSubject().getSubjectId());
+            subjectDetail.put("name", updated.getSubject().getName());
+            response.put("subject", subjectDetail);
+            
+            if (updated.getTeacher() != null) {
+                Map<String, Object> teacherDetail = new HashMap<>();
+                teacherDetail.put("userId", updated.getTeacher().getUserId());
+                teacherDetail.put("fullName", updated.getTeacher().getFullName());
+                teacherDetail.put("teacherCode", updated.getTeacher().getTeacherCode());
+                response.put("teacher", teacherDetail);
+            } else {
+                response.put("teacher", null);
+            }
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (ResourceNotFoundException e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Not Found");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("timestamp", LocalDateTime.now());
+            errorResponse.put("status", 404);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Internal Server Error");
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("timestamp", LocalDateTime.now());
+            errorResponse.put("status", 500);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

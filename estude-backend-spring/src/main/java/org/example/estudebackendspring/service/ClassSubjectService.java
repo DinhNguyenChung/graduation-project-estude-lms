@@ -188,4 +188,35 @@ public class ClassSubjectService {
         return classSubjectRepository.findByClassSubjectId(classSubjectId)
                 .orElseThrow(() -> new ResourceNotFoundException("ClassSubject not found with id: " + classSubjectId));
     }
+    
+    /**
+     * Update teacher for an existing ClassSubject
+     * @param classSubjectId ID of the ClassSubject to update
+     * @param teacherId ID of the new teacher (null to remove teacher)
+     * @return Updated ClassSubject
+     * @throws ResourceNotFoundException if ClassSubject or Teacher not found
+     */
+    @Transactional
+    public ClassSubject updateTeacher(Long classSubjectId, Long teacherId) {
+        // 1. Find ClassSubject
+        ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ClassSubject with ID " + classSubjectId + " not found"
+                ));
+        
+        // 2. Update teacher
+        if (teacherId != null) {
+            Teacher teacher = teacherRepository.findById(teacherId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Teacher with ID " + teacherId + " not found"
+                    ));
+            classSubject.setTeacher(teacher);
+        } else {
+            // Remove teacher (set to null)
+            classSubject.setTeacher(null);
+        }
+        
+        // 3. Save and return
+        return classSubjectRepository.save(classSubject);
+    }
 }
