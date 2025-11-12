@@ -43,4 +43,50 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Long countQuestionsByTopicIdAndDifficulty(
         @Param("topicId") Long topicId, 
         @Param("difficultyLevel") DifficultyLevel difficultyLevel);
+    
+    // ========== ANALYTICS NATIVE QUERIES (Tối ưu N+1 Query Problem) ==========
+    
+    /**
+     * Đếm tổng số câu hỏi question bank
+     */
+    Long countByIsQuestionBankTrue();
+    
+    /**
+     * Đếm số câu hỏi theo difficulty level
+     * Returns: [difficulty_level, count]
+     */
+    @Query(value = """
+        SELECT difficulty_level, COUNT(*) as count
+        FROM questions
+        WHERE is_question_bank = true
+        GROUP BY difficulty_level
+        """, nativeQuery = true)
+    List<Object[]> countByDifficultyLevel();
+    
+    /**
+     * Đếm số câu hỏi theo subject
+     * Returns: [subject_name, count]
+     */
+    @Query(value = """
+        SELECT s.name, COUNT(q.question_id) as count
+        FROM questions q
+        JOIN topics t ON q.topic_id = t.topic_id
+        JOIN subjects s ON t.subject_id = s.subject_id
+        WHERE q.is_question_bank = true
+        GROUP BY s.name
+        """, nativeQuery = true)
+    List<Object[]> countBySubject();
+    
+    /**
+     * Đếm số câu hỏi theo topic
+     * Returns: [topic_name, count]
+     */
+    @Query(value = """
+        SELECT t.name, COUNT(q.question_id) as count
+        FROM questions q
+        JOIN topics t ON q.topic_id = t.topic_id
+        WHERE q.is_question_bank = true
+        GROUP BY t.name
+        """, nativeQuery = true)
+    List<Object[]> countByTopic();
 }
