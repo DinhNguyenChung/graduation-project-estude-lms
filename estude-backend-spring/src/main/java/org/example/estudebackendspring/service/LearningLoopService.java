@@ -150,11 +150,19 @@ public class LearningLoopService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<RecommendationRequest> entity = new HttpEntity<>(request, headers);
             
-            ResponseEntity<RecommendationResponse> response = restTemplate.postForEntity(
-                RECOMMENDATION_URL, entity, RecommendationResponse.class
+            log.debug("Calling AI recommendation service at: {}", RECOMMENDATION_URL);
+            
+            // Get raw response as String first for debugging
+            ResponseEntity<String> rawResponse = restTemplate.postForEntity(
+                RECOMMENDATION_URL, entity, String.class
             );
             
-            RecommendationResponse recommendationResponse = response.getBody();
+            log.debug("Raw AI response: {}", rawResponse.getBody());
+            
+            // Parse to DTO
+            RecommendationResponse recommendationResponse = objectMapper.readValue(
+                rawResponse.getBody(), RecommendationResponse.class
+            );
             
             if (recommendationResponse != null && recommendationResponse.getSuccess()) {
                 // Lưu result
@@ -401,19 +409,33 @@ public class LearningLoopService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<RoadmapRequest> entity = new HttpEntity<>(request, headers);
             
-            ResponseEntity<RoadmapResponse> response = restTemplate.postForEntity(
-                ROADMAP_URL, entity, RoadmapResponse.class
+            log.debug("Calling AI roadmap service at: {}", ROADMAP_URL);
+            
+            // Get raw response as String first for debugging
+            ResponseEntity<String> rawResponse = restTemplate.postForEntity(
+                ROADMAP_URL, entity, String.class
             );
             
-            RoadmapResponse roadmapResponse = response.getBody();
+            log.debug("Raw AI roadmap response: {}", rawResponse.getBody());
+            
+            // Parse to DTO
+            RoadmapResponse roadmapResponse = objectMapper.readValue(
+                rawResponse.getBody(), RoadmapResponse.class
+            );
             
             if (roadmapResponse != null && roadmapResponse.getSuccess()) {
-                // Lưu result
-                saveAnalysisResult(
+                // Lưu result và lấy result_id
+                AIAnalysisResult savedResult = saveAnalysisResult(
                     analysisRequest.getRequestId(),
                     objectMapper.valueToTree(roadmapResponse.getData()),
                     "Learning roadmap generated successfully"
                 );
+                
+                // Gắn result_id vào response để FE có thể dùng cho progress tracking
+                if (roadmapResponse.getData() != null) {
+                    roadmapResponse.getData().setResultId(savedResult.getResultId());
+                    log.info("✅ Layer 5 result_id set: {}", savedResult.getResultId());
+                }
             }
             
             return roadmapResponse;

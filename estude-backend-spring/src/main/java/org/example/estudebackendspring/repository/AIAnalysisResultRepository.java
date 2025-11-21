@@ -13,9 +13,7 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
      * Lấy kết quả mới nhất của student theo analysis type
      */
     @Query(value = """
-    SELECT r.result_id, r.predicted_average, r.predicted_performance,
-           r.actual_performance, r.comment, r.suggested_actions,
-           r.detailed_analysis, r.statistics, r.generated_at, r.request_id
+    SELECT r.*
     FROM ai_analysis_results r
     JOIN ai_analysis_requests req ON r.request_id = req.request_id
     WHERE req.student_id = :studentId 
@@ -32,9 +30,7 @@ public interface AIAnalysisResultRepository extends JpaRepository<AIAnalysisResu
      * Lấy TẤT CẢ kết quả của student theo analysis type (ORDER BY mới nhất)
      */
     @Query(value = """
-    SELECT r.result_id, r.predicted_average, r.predicted_performance,
-           r.actual_performance, r.comment, r.suggested_actions,
-           r.detailed_analysis, r.statistics, r.generated_at, r.request_id
+    SELECT r.*
     FROM ai_analysis_results r
     JOIN ai_analysis_requests req ON r.request_id = req.request_id
     WHERE req.student_id = :studentId 
