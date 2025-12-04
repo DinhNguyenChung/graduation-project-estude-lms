@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="EStudeTestSuite" parallel="false" thread-count="1" verbose="2">
+    <test name="EStudeSeleniumTests">
+        <classes>
+            <class name="com.estude.selenium.EStudeSeleniumTest">
+                <methods>
+                    <include name="TC01_loginStudent" />
+                    <include name="TC02_adminCreateTeacherAccount" />
+                    <include name="TC03_adminAddQuestion" />
+                    <include name="TC04_teacherCreateAndPublishTest" />
+                    <include name="TC05_teacherMarkAbsent" />
+                    <include name="TC06_studentTakeTestAndSubmit" />
+                    <include name="TC07_studentTakeAssessmentAndSubmit" />
+                    <include name="TC08_studentViewResultDetail" />
+                    <include name="TC09_aiAnalyzeWeakness" />
+                    <include name="TC10_aiProgressAssessment" />
+                    <include name="TC11_aiGenerateRoadmap" />
+                    <include name="TC12_aiErrorHandling" />
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

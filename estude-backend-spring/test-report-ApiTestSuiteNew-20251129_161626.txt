@@ -1,0 +1,28 @@
+====================================================================================================
+BÁO CÁO CHI TIẾT TEST SUITE: ApiTestSuiteNew
+Thời gian: 29/11/2025 16:16:26
+====================================================================================================
+
+TỔNG QUAN:
+- Tổng số tests: 30
+- Passed: 19 (63.33%)
+- Failed: 11 (36.67%)
+
+----------------------------------------------------------------------------------------------------
+CHI TIẾT TỪNG TEST CASE:
+----------------------------------------------------------------------------------------------------
+1. TC26 - Truy cập với token không hợp lệ - FAILED
+2. TC25 - Truy cập không có token - 401/403 - FAILED
+3. TC01 - Đăng nhập Admin thành công - FAILED
+4. TC19 - Tạo practice test mới - FAILED
+5. TC15 - Tạo câu hỏi mới trong question bank - FAILED
+6. TC23 - Lấy chi tiết practice test - FAILED
+7. TC16 - Lấy câu hỏi theo topic - FAILED
+8. TC17 - Lấy câu hỏi theo topic và difficulty - FAILED
+9. TC07 - Lấy thông tin student theo ID - FAILED
+10. TC27 - Student không thể truy cập admin endpoint - FAILED
+11. TC24 - Submit practice test - FAILED
+
+====================================================================================================
+TỶ LỆ THÀNH CÔNG: 63.33% (19/30)
+====================================================================================================

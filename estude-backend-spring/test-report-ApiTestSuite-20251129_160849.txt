@@ -1,0 +1,36 @@
+====================================================================================================
+BÁO CÁO CHI TIẾT TEST SUITE: ApiTestSuite
+Thời gian: 29/11/2025 16:08:49
+====================================================================================================
+
+TỔNG QUAN:
+- Tổng số tests: 30
+- Passed: 11 (36.67%)
+- Failed: 19 (63.33%)
+
+----------------------------------------------------------------------------------------------------
+CHI TIẾT TỪNG TEST CASE:
+----------------------------------------------------------------------------------------------------
+1. TC10 - AI đánh giá tiến bộ của học sinh - FAILED
+2. TC11 - AI sinh lộ trình học cho học sinh - FAILED
+3. TC09 - Kiểm tra AI trả về nhận xét chi tiết - FAILED
+4. TC07 - Kiểm tra bài đánh giá tự động chấm điểm - FAILED
+5. TC05 - Kiểm tra DB cập nhật trạng thái ABSENT - FAILED
+6. TC12 - Kiểm tra thông báo lỗi thân thiện khi AI không sẵn sàng - FAILED
+7. TC12 - Xử lý lỗi khi API Gemini trả về lỗi 500 - FAILED
+8. HELPER TEST - Kiểm tra invalid token - FAILED
+9. TC03 - Kiểm tra câu hỏi xuất hiện khi truy vấn Topic - FAILED
+10. TC08 - Kiểm tra hiển thị từng câu đúng/sai - FAILED
+11. TC04 - Kiểm tra học sinh lớp 10A1 thấy bài kiểm tra - FAILED
+12. TC07 - Học sinh làm bài đánh giá trắc nghiệm - FAILED
+13. TC06 - Học sinh làm bài trắc nghiệm và nộp bài thành công - FAILED
+14. TC08 - Học sinh xem chi tiết bài làm sau khi chấm điểm - FAILED
+15. TC09 - Hệ thống gửi yêu cầu phân tích bài làm tới AI - FAILED
+16. TC04 - Giáo viên tạo bài kiểm tra 15 phút thành công - FAILED
+17. TC05 - Giáo viên điểm danh học sinh vắng - FAILED
+18. TC06 - Kiểm tra bài thi tự động chấm điểm - FAILED
+19. HELPER TEST - Kiểm tra unauthorized request - FAILED
+
+====================================================================================================
+TỶ LỆ THÀNH CÔNG: 36.67% (11/30)
+====================================================================================================
