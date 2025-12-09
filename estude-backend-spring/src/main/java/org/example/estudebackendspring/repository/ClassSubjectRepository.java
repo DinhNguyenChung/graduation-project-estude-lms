@@ -9,6 +9,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long> {
+    
+    /**
+     * Lấy tất cả ClassSubject với EAGER FETCH để tránh LazyInitializationException
+     */
+    @Query("SELECT cs FROM ClassSubject cs " +
+           "LEFT JOIN FETCH cs.term t " +
+           "LEFT JOIN FETCH t.clazz c " +
+           "LEFT JOIN FETCH cs.subject s " +
+           "LEFT JOIN FETCH cs.teacher teacher")
+    List<ClassSubject> findAllWithDetails();
+    
     // Lấy tất cả môn học mà teacher dạy
     List<ClassSubject> findByTeacher_UserId(Long teacherId);
     
@@ -26,6 +37,18 @@ public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long
     boolean existsByTerm_ClazzAndSubject(Clazz clazz, Subject subject);
     // Lấy classSubject theo classId
     List<ClassSubject> findByTerm_Clazz_ClassId(Long classId);
+    
+    /**
+     * Lấy ClassSubject theo classId với EAGER FETCH để tránh lazy loading
+     */
+    @Query("SELECT DISTINCT cs FROM ClassSubject cs " +
+           "LEFT JOIN FETCH cs.subject s " +
+           "LEFT JOIN FETCH cs.teacher t " +
+           "LEFT JOIN FETCH cs.term term " +
+           "LEFT JOIN FETCH term.clazz c " +
+           "WHERE c.classId = :classId")
+    List<ClassSubject> findByClassIdWithDetails(@Param("classId") Long classId);
+    
     @Query("SELECT cs.subject FROM ClassSubject cs WHERE cs.teacher.userId = :teacherId")
     List<Subject> findSubjectsByTeacherId(@Param("teacherId") Long teacherId);
     @Query("SELECT e.student FROM ClassSubject cs " +
@@ -37,7 +60,17 @@ public interface ClassSubjectRepository extends JpaRepository<ClassSubject, Long
     // lấy môn lớp học theo mã và teacher
     Optional<ClassSubject> findByClassSubjectIdAndTeacher_UserId(Long classId, Long teacherId);
     Optional<ClassSubject> findByClassSubjectId(Long id);
-
+    
+    /**
+     * Lấy ClassSubject theo ID với EAGER FETCH để tránh lazy loading
+     */
+    @Query("SELECT cs FROM ClassSubject cs " +
+           "LEFT JOIN FETCH cs.subject s " +
+           "LEFT JOIN FETCH cs.teacher t " +
+           "LEFT JOIN FETCH cs.term term " +
+           "LEFT JOIN FETCH term.clazz c " +
+           "WHERE cs.classSubjectId = :classSubjectId")
+    Optional<ClassSubject> findByIdWithDetails(@Param("classSubjectId") Long classSubjectId);
 
     boolean existsByTermAndSubject(Term term, Subject subject);
 

@@ -64,5 +64,6 @@ public class Question {
     private List<QuestionOption> options;
     
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Prevent N+1 query when serializing questions
     private List<Answer> answers;
 }

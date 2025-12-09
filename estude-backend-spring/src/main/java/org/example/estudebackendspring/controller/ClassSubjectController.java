@@ -2,6 +2,7 @@ package org.example.estudebackendspring.controller;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.User;
@@ -17,12 +18,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @RestController
 @RequestMapping("/api/class-subjects")
 @Validated
@@ -46,8 +49,21 @@ public class ClassSubjectController {
         ClassSubjectResponse dto = service.getClassSubjectByClassSubjectId(id);
         return ResponseEntity.ok(dto);
     }
+    
     @GetMapping
-    public List<ClazzSubjectsDTO> getAllClassSubjectsDTO() {
+    public ResponseEntity<List<ClazzSubjectsDTO>> getAllClassSubjectsDTO() {
+        try {
+            List<ClazzSubjectsDTO> result = service.getAllClassSubjectsWithDetails();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error fetching class subjects: {}", e.getMessage(), e);
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+    
+    @GetMapping("/legacy")
+    @Deprecated
+    public List<ClazzSubjectsDTO> getAllClassSubjectsDTOLegacy() {
         return repository.findAll().stream()
                 .map(cs -> new ClazzSubjectsDTO(
                         cs.getClassSubjectId(),

@@ -39,3 +39,6 @@ out/
 # Markdown files (except README.md)
 *.md
 !README.md
+
+### SQL files ###
+*.sql

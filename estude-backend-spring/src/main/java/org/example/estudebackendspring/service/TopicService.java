@@ -29,6 +29,7 @@ public class TopicService {
     /**
      * Lấy tất cả topics theo môn học
      */
+    @Transactional(readOnly = true)
     public List<TopicDTO> getTopicsBySubject(Long subjectId) {
         log.info("Getting topics for subject: {}", subjectId);
         Subject subject = subjectRepository.findById(subjectId)
@@ -42,6 +43,7 @@ public class TopicService {
      * Lấy topics theo môn học và tập sách (volume)
      * Ví dụ: Lấy tất cả topics của Toán Tập 1
      */
+    @Transactional(readOnly = true)
     public List<TopicDTO> getTopicsBySubjectAndVolume(Long subjectId, Integer volume) {
         log.info("Getting topics for subject: {} and volume: {}", subjectId, volume);
         Subject subject = subjectRepository.findById(subjectId)
@@ -56,6 +58,7 @@ public class TopicService {
      * Lấy topics theo môn học, khối và tập
      * Ví dụ: Lấy topics của môn Toán, khối 10, tập 1
      */
+    @Transactional(readOnly = true)
     public List<TopicDTO> getTopicsBySubjectGradeAndVolume(
             Long subjectId, GradeLevel gradeLevel, Integer volume) {
         log.info("Getting topics for subject: {}, grade: {}, volume: {}", 
@@ -73,6 +76,7 @@ public class TopicService {
      * Lấy topics theo môn học và khối
      * Ví dụ: Lấy tất cả topics của môn Toán khối 10 (cả 2 tập)
      */
+    @Transactional(readOnly = true)
     public List<TopicDTO> getTopicsBySubjectAndGrade(Long subjectId, GradeLevel gradeLevel) {
         log.info("Getting topics for subject: {} and grade: {}", subjectId, gradeLevel);
         Subject subject = subjectRepository.findById(subjectId)
@@ -114,6 +118,7 @@ public class TopicService {
     /**
      * Lấy chi tiết một topic
      */
+    @Transactional(readOnly = true)
     public TopicDTO getTopicById(Long topicId) {
         log.info("Getting topic: {}", topicId);
         Topic topic = topicRepository.findById(topicId)

@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.service;
 
 import jakarta.transaction.Transactional;
+import org.example.estudebackendspring.dto.ClazzDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
 import org.example.estudebackendspring.entity.Clazz;
@@ -172,5 +173,33 @@ public class ClazzService {
     }
     public List<Clazz> getClassesBySchool(Long schoolId) {
         return clazzRepository.findBySchool_SchoolId(schoolId);
+    }
+    
+    /**
+     * Get all classes as DTOs to avoid lazy loading issues
+     */
+    public List<ClazzDTO> getAllClasses() {
+        List<Clazz> classes = clazzRepository.findAllWithRelationships();
+        return classes.stream().map(clazz -> {
+            ClazzDTO dto = new ClazzDTO();
+            dto.setClassId(clazz.getClassId());
+            dto.setName(clazz.getName());
+            dto.setGradeLevel(clazz.getGradeLevel());
+            dto.setClassSize(clazz.getClassSize());
+            
+            // Safely access eagerly-fetched relationships
+            // Teacher extends User, so we can access fullName directly
+            if (clazz.getHomeroomTeacher() != null) {
+                dto.setHomeroomTeacherId(clazz.getHomeroomTeacher().getUserId());
+                dto.setHomeroomTeacherName(clazz.getHomeroomTeacher().getFullName());
+            }
+            
+            if (clazz.getSchool() != null) {
+                dto.setSchoolId(clazz.getSchool().getSchoolId());
+                dto.setSchoolName(clazz.getSchool().getSchoolName());
+            }
+            
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

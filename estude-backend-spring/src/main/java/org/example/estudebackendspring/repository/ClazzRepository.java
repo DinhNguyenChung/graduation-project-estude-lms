@@ -25,6 +25,13 @@ public interface ClazzRepository extends JpaRepository<Clazz, Long> {
     List<Clazz> findByHomeroomTeacher_UserId(Long teacherId);
     @Query("SELECT e.student.userId FROM Enrollment e WHERE e.clazz.classId = :classId")
     List<Long> findStudentUserIdsByClassId(@Param("classId") Long classId);
-
+    
+    /**
+     * Fetch all classes with their relationships eagerly to avoid lazy loading issues
+     */
+    @Query("SELECT DISTINCT c FROM Clazz c " +
+           "LEFT JOIN FETCH c.homeroomTeacher " +
+           "LEFT JOIN FETCH c.school")
+    List<Clazz> findAllWithRelationships();
 
 }

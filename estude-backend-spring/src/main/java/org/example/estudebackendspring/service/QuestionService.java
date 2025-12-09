@@ -1,16 +1,29 @@
 package org.example.estudebackendspring.service;
 
 
+import org.example.estudebackendspring.dto.PageResponse;
+import org.example.estudebackendspring.dto.QuestionBankDTO;
 import org.example.estudebackendspring.dto.QuestionBankRequest;
+import org.example.estudebackendspring.dto.QuestionBankSummaryDTO;
+import org.example.estudebackendspring.dto.QuestionOptionDTO;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.enums.DifficultyLevel;
 import org.example.estudebackendspring.enums.QuestionType;
+import org.example.estudebackendspring.mapper.QuestionBankMapper;
 import org.example.estudebackendspring.repository.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class QuestionService {
@@ -18,13 +31,19 @@ public class QuestionService {
     private final QuestionRepository questionRepository;
     private final AssignmentRepository assignmentRepository;
     private final TopicRepository topicRepository;
+    private final QuestionBankMapper questionBankMapper;
+    private final QuestionOptionRepository questionOptionRepository;
 
     public QuestionService(QuestionRepository questionRepository, 
                           AssignmentRepository assignmentRepository,
-                          TopicRepository topicRepository) {
+                          TopicRepository topicRepository,
+                          QuestionBankMapper questionBankMapper,
+                          QuestionOptionRepository questionOptionRepository) {
         this.questionRepository = questionRepository;
         this.assignmentRepository = assignmentRepository;
         this.topicRepository = topicRepository;
+        this.questionBankMapper = questionBankMapper;
+        this.questionOptionRepository = questionOptionRepository;
     }
 
     @Transactional
@@ -45,8 +64,11 @@ public class QuestionService {
 
     /**
      * Tạo câu hỏi cho Question Bank (gắn với Topic)
+     * Clear cache khi create
      */
     @Transactional
+    @CacheEvict(value = {"questionBankSummary", "questionBankFull", "questionBankByTopic", 
+                          "questionBankBySubject", "questionBankBySubjectGrade", "questionBankByGrade"}, allEntries = true)
     public Question createQuestionBank(QuestionBankRequest request) {
         // Validate topic exists
         Topic topic = topicRepository.findById(request.getTopicId())
@@ -120,18 +142,105 @@ public class QuestionService {
         return questionRepository.findById(questionId).orElseThrow(() -> new RuntimeException("Question not found"));
     }
     
-    // ========== QUESTION BANK METHODS ==========
+    // ========== QUESTION BANK METHODS - OPTIMIZED ==========
     
     /**
-     * Lấy tất cả câu hỏi trong question bank
+     * Lấy tất cả câu hỏi trong question bank với pagination và summary
+     * Tối ưu cho performance với projection query
+     * 
+     * @param page số trang (0-indexed)
+     * @param size số lượng items per page
+     * @param sortBy trường để sort (mặc định: questionId)
+     * @param direction hướng sort (ASC/DESC, mặc định: DESC)
+     * @return PageResponse chứa QuestionBankSummaryDTO
      */
+    @Cacheable(value = "questionBankSummary", key = "#page + '-' + #size + '-' + #sortBy + '-' + #direction")
+    public PageResponse<QuestionBankSummaryDTO> getAllQuestionBankSummary(
+            int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        
+        Page<QuestionBankSummaryDTO> questionPage = questionRepository.findAllQuestionBankSummary(pageable);
+        return PageResponse.of(questionPage);
+    }
+    
+    /**
+     * Lấy tất cả câu hỏi trong question bank với full details
+     * Chỉ dùng khi cần đầy đủ thông tin (ví dụ: export)
+     */
+    @Cacheable(value = "questionBankFull", key = "#page + '-' + #size")
+    public PageResponse<QuestionBankDTO> getAllQuestionBankFull(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<Question> questionPage = questionRepository.findAllQuestionBankWithDetails(pageable);
+        
+        Page<QuestionBankDTO> dtoPage = questionPage.map(questionBankMapper::toDTO);
+        return PageResponse.of(dtoPage);
+    }
+    
+    /**
+     * Lấy câu hỏi trong question bank theo topic với pagination
+     */
+    @Cacheable(value = "questionBankByTopic", key = "#topicId + '-' + #page + '-' + #size")
+    public PageResponse<QuestionBankSummaryDTO> getQuestionBankByTopicSummary(
+            Long topicId, int page, int size) {
+        // Validate topic exists
+        if (!topicRepository.existsById(topicId)) {
+            throw new RuntimeException("Topic not found with id: " + topicId);
+        }
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<QuestionBankSummaryDTO> questionPage = questionRepository.findQuestionBankByTopicSummary(topicId, pageable);
+        return PageResponse.of(questionPage);
+    }
+    
+    /**
+     * Lấy câu hỏi trong question bank theo topic và độ khó với pagination
+     */
+    public PageResponse<QuestionBankDTO> getQuestionBankByTopicAndDifficulty(
+            Long topicId, DifficultyLevel difficultyLevel, int page, int size) {
+        // Validate topic exists
+        if (!topicRepository.existsById(topicId)) {
+            throw new RuntimeException("Topic not found with id: " + topicId);
+        }
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<Question> questionPage = questionRepository.findQuestionBankByTopicAndDifficultyWithDetails(
+                topicId, difficultyLevel, pageable);
+        
+        Page<QuestionBankDTO> dtoPage = questionPage.map(questionBankMapper::toDTO);
+        return PageResponse.of(dtoPage);
+    }
+    
+    /**
+     * Lấy một question với đầy đủ chi tiết
+     */
+    @Cacheable(value = "questionDetail", key = "#questionId")
+    public QuestionBankDTO getQuestionBankDetail(Long questionId) {
+        Question question = questionRepository.findByIdWithDetails(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found with id: " + questionId));
+        
+        // Validate là question bank
+        if (question.getIsQuestionBank() == null || !question.getIsQuestionBank()) {
+            throw new RuntimeException("This question is not a question bank question");
+        }
+        
+        return questionBankMapper.toDTO(question);
+    }
+    
+    // ========== LEGACY METHODS (backward compatibility) ==========
+    
+    /**
+     * @deprecated Use getAllQuestionBankSummary() instead
+     */
+    @Deprecated
     public List<Question> getAllQuestionBank() {
         return questionRepository.findByIsQuestionBankTrueOrderByQuestionIdDesc();
     }
     
     /**
-     * Lấy câu hỏi trong question bank theo topic
+     * @deprecated Use getQuestionBankByTopicSummary() instead
      */
+    @Deprecated
     public List<Question> getQuestionBankByTopic(Long topicId) {
         // Validate topic exists
         if (!topicRepository.existsById(topicId)) {
@@ -141,8 +250,9 @@ public class QuestionService {
     }
     
     /**
-     * Lấy câu hỏi trong question bank theo topic và độ khó
+     * @deprecated Use getQuestionBankByTopicAndDifficulty() with pagination instead
      */
+    @Deprecated
     public List<Question> getQuestionBankByTopicAndDifficulty(Long topicId, DifficultyLevel difficultyLevel) {
         // Validate topic exists
         if (!topicRepository.existsById(topicId)) {
@@ -154,8 +264,11 @@ public class QuestionService {
     
     /**
      * Cập nhật câu hỏi trong question bank
+     * Clear cache khi update
      */
     @Transactional
+    @CacheEvict(value = {"questionBankSummary", "questionBankFull", "questionBankByTopic", "questionDetail",
+                          "questionBankBySubject", "questionBankBySubjectGrade", "questionBankByGrade"}, allEntries = true)
     public Question updateQuestionBank(Long questionId, QuestionBankRequest request) {
         Question existing = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found with id: " + questionId));
@@ -207,11 +320,13 @@ public class QuestionService {
         
         return questionRepository.save(existing);
     }
-    
     /**
      * Xóa câu hỏi từ question bank
+     * Clear cache khi delete
      */
     @Transactional
+    @CacheEvict(value = {"questionBankSummary", "questionBankFull", "questionBankByTopic", "questionDetail",
+                          "questionBankBySubject", "questionBankBySubjectGrade", "questionBankByGrade"}, allEntries = true)
     public void deleteQuestionBank(Long questionId) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found with id: " + questionId));
@@ -229,5 +344,93 @@ public class QuestionService {
      */
     public Long countQuestionBankByTopic(Long topicId) {
         return questionRepository.countQuestionsByTopicId(topicId);
+    }
+    
+    // ========== FILTER BY SUBJECT AND GRADE ==========
+    
+    /**
+     * Lấy câu hỏi trong question bank theo subject với pagination
+     * Hỗ trợ filter theo topicId (optional)
+     */
+    @Cacheable(value = "questionBankBySubject", key = "#subjectId + '-' + #topicId + '-' + #page + '-' + #size")
+    public PageResponse<QuestionBankSummaryDTO> getQuestionBankBySubjectSummary(
+            Long subjectId, Long topicId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<QuestionBankSummaryDTO> questionPage = questionRepository.findQuestionBankBySubjectAndTopicSummary(
+                subjectId, topicId, pageable);
+        
+        // Populate question options
+        populateQuestionOptions(questionPage.getContent());
+        
+        return PageResponse.of(questionPage);
+    }
+    
+    /**
+     * Lấy câu hỏi trong question bank theo subject và grade level với pagination
+     * @param gradeLevel GradeLevel enum (GRADE_10, GRADE_11, etc.)
+     */
+    @Cacheable(value = "questionBankBySubjectGrade", key = "#subjectId + '-' + #gradeLevel + '-' + #page + '-' + #size")
+    public PageResponse<QuestionBankSummaryDTO> getQuestionBankBySubjectAndGradeLevelSummary(
+            Long subjectId, org.example.estudebackendspring.enums.GradeLevel gradeLevel, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<QuestionBankSummaryDTO> questionPage = questionRepository.findQuestionBankBySubjectAndGradeLevelSummary(
+                subjectId, gradeLevel, pageable);
+        return PageResponse.of(questionPage);
+    }
+    
+    /**
+     * Lấy câu hỏi trong question bank theo grade level với pagination
+     * @param gradeLevel GradeLevel enum (GRADE_10, GRADE_11, etc.)
+     */
+    @Cacheable(value = "questionBankByGrade", key = "#gradeLevel + '-' + #page + '-' + #size")
+    public PageResponse<QuestionBankSummaryDTO> getQuestionBankByGradeLevelSummary(
+            org.example.estudebackendspring.enums.GradeLevel gradeLevel, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "questionId"));
+        Page<QuestionBankSummaryDTO> questionPage = questionRepository.findQuestionBankByGradeLevelSummary(gradeLevel, pageable);
+        return PageResponse.of(questionPage);
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+    /**
+     * Populate question options cho danh sách QuestionBankSummaryDTO
+     * Sử dụng batch query để tránh N+1 problem
+     */
+    private void populateQuestionOptions(List<QuestionBankSummaryDTO> questions) {
+        if (questions == null || questions.isEmpty()) {
+            return;
+        }
+        
+        // Lấy danh sách questionId
+        List<Long> questionIds = questions.stream()
+                .map(QuestionBankSummaryDTO::getQuestionId)
+                .collect(Collectors.toList());
+        
+        // Batch query để lấy tất cả options
+        List<QuestionOption> allOptions = questionOptionRepository.findByQuestionIdIn(questionIds);
+        
+        // Group options theo questionId
+        Map<Long, List<QuestionOptionDTO>> optionsByQuestionId = allOptions.stream()
+                .collect(Collectors.groupingBy(
+                        option -> option.getQuestion().getQuestionId(),
+                        Collectors.mapping(
+                                option -> new QuestionOptionDTO(
+                                        option.getOptionId(),
+                                        option.getOptionText(),
+                                        option.getOptionOrder(),
+                                        option.getIsCorrect()
+                                ),
+                                Collectors.toList()
+                        )
+                ));
+        
+        // Gán options vào từng question
+        questions.forEach(question -> {
+            List<QuestionOptionDTO> options = optionsByQuestionId.getOrDefault(
+                    question.getQuestionId(), 
+                    new ArrayList<>()
+            );
+            question.setQuestionOptions(options);
+        });
     }
 }

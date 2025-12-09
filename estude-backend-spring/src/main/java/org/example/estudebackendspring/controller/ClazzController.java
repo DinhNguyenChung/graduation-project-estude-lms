@@ -2,6 +2,7 @@ package org.example.estudebackendspring.controller;
 
 
 import jakarta.validation.Valid;
+import org.example.estudebackendspring.dto.ClazzDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
 import org.example.estudebackendspring.entity.Clazz;
@@ -44,8 +45,8 @@ public class ClazzController {
     }
 
     @GetMapping
-    public List<Clazz> GettAllClazz(){
-        return repository.findAll();
+    public List<ClazzDTO> GettAllClazz(){
+        return clazzService.getAllClasses();
     }
 
     @PostMapping

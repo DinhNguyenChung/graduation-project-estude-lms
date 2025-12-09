@@ -46,11 +46,12 @@ public class StudentService {
                 .toList();
     }
 
-    // Lấy danh sách môn học của học sinh
+    // Lấy danh sách môn học của học sinh (với EAGER FETCH)
     public List<ClassSubject> getSubjectsByStudent(Long studentId) {
         List<Clazz> classes = getClassesByStudent(studentId);
         return classes.stream()
-                .flatMap(c -> classSubjectRepository.findByTerm_Clazz_ClassId(c.getClassId()).stream())
+                .flatMap(c -> classSubjectRepository.findByClassIdWithDetails(c.getClassId()).stream())
+                .distinct()
                 .toList();
     }
 }

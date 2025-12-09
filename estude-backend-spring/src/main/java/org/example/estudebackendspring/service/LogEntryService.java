@@ -35,7 +35,7 @@ public class LogEntryService {
         return logEntryRepository.save(log);
     }
     public List<LogEntryDTO> getAllLogs() {
-        List<LogEntry> logs = logEntryRepository.findAll();
+        List<LogEntry> logs = logEntryRepository.findAllWithUser();
 
         return logs.stream().map(log -> {
             User user = log.getUser();

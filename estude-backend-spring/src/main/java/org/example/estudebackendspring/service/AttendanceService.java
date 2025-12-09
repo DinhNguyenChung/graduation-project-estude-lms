@@ -137,17 +137,21 @@ public class AttendanceService {
 
     // Học sinh xem danh sách buổi điểm danh của lớp môn học
     public List<AttendanceSessionDTO> getAttendanceSessionsByClassSubject(Long classSubjectId, Long studentId) {
-        ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
+        // Fetch ClassSubject with details to avoid lazy loading
+        ClassSubject classSubject = classSubjectRepository.findByIdWithDetails(classSubjectId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy lớp môn học này"));
 
         // Kiểm tra học sinh có trong lớp của ClassSubject
-        boolean isEnrolled = enrollmentRepository.findByClazzClassId(classSubject.getTerm().getClazz().getClassId())
+        Long classId = classSubject.getTerm().getClazz().getClassId();
+        
+        boolean isEnrolled = enrollmentRepository.findByClazzClassId(classId)
                 .stream().anyMatch(e -> e.getStudent().getUserId().equals(studentId));
         if (!isEnrolled) {
             throw new IllegalArgumentException("Học sinh không nằm trong lớp học này");
         }
 
-        return sessionRepository.findByClassSubjectClassSubjectId(classSubjectId)
+        // Use method with FETCH JOIN to avoid lazy loading
+        return sessionRepository.findByClassSubjectIdWithDetails(classSubjectId)
                 .stream()
                 .map(session -> toAttendanceSessionDTO(session, studentId))
                 .collect(Collectors.toList());
@@ -242,7 +246,8 @@ public class AttendanceService {
     }
     // Giáo viên xem danh sách buổi điểm danh theo ClassSubject
     public List<AttendanceSessionDTO> getAttendanceSessionsByClassSubjectForTeacher(Long classSubjectId, Long teacherId) {
-        ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
+        // Fetch ClassSubject with details to avoid lazy loading
+        ClassSubject classSubject = classSubjectRepository.findByIdWithDetails(classSubjectId)
                 .orElseThrow(() -> new IllegalArgumentException("ClassSubject không tìm thấy"));
 
         // Kiểm tra quyền của giáo viên
@@ -250,7 +255,8 @@ public class AttendanceService {
             throw new IllegalArgumentException("Giáo viên không được phép cho Lớp học này");
         }
 
-        return sessionRepository.findByClassSubjectClassSubjectId(classSubjectId)
+        // Use method with FETCH JOIN to avoid lazy loading
+        return sessionRepository.findByClassSubjectIdWithDetails(classSubjectId)
                 .stream()
                 .map(session -> toAttendanceSessionDTO(session, null))
                 .collect(Collectors.toList());

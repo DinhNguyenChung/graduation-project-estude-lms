@@ -32,6 +32,45 @@ public class ClassSubjectService {
     public List<ClassSubject> getClassSubjectsByTeacher(Long teacherId) {
         return classSubjectRepository.findByTeacher_UserId(teacherId);
     }
+    
+    /**
+     * Lấy tất cả ClassSubjects với EAGER loading để tránh LazyInitializationException
+     */
+    @Transactional
+    public List<org.example.estudebackendspring.dto.ClazzSubjectsDTO> getAllClassSubjectsWithDetails() {
+        List<ClassSubject> classSubjects = classSubjectRepository.findAllWithDetails();
+        
+        return classSubjects.stream()
+                .map(cs -> new org.example.estudebackendspring.dto.ClazzSubjectsDTO(
+                        cs.getClassSubjectId(),
+                        cs.getTerm() != null ? new org.example.estudebackendspring.dto.TermDTO(
+                                cs.getTerm().getTermId(),
+                                cs.getTerm().getName(),
+                                cs.getTerm().getBeginDate(),
+                                cs.getTerm().getEndDate()
+                        ) : null,
+                        cs.getSubject() != null ? new org.example.estudebackendspring.dto.SubjectClazzDTO(
+                                cs.getSubject().getSubjectId(),
+                                cs.getSubject().getName(),
+                                cs.getSubject().getDescription(),
+                                null
+                        ) : null,
+                        cs.getTeacher() != null ? new org.example.estudebackendspring.dto.TeacherDTO(
+                                cs.getTeacher().getUserId(),
+                                cs.getTeacher().getTeacherCode(),
+                                cs.getTeacher().getFullName(),
+                                cs.getTeacher().getHireDate(),
+                                cs.getTeacher().getEndDate(),
+                                cs.getTeacher().isAdmin(),
+                                cs.getTeacher().isHomeroomTeacher()
+                        ) : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getClassId() : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getName() : null,
+                        cs.getTerm() != null && cs.getTerm().getClazz() != null ? cs.getTerm().getClazz().getGradeLevel() : null
+                ))
+                .toList();
+    }
+    
     public ClassSubjectResponse getClassSubjectByClassSubjectId(Long classSubjectId) {
         ClassSubject cs = classSubjectRepository.findById(classSubjectId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy ClassSubject với id: " + classSubjectId));

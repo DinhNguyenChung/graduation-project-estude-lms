@@ -24,13 +24,44 @@ public class UserController {
     private final UserService userService;
     
     @GetMapping()
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<User>> getAllUsers(
+            @RequestParam(required = false) String role) {
+        try {
+            log.info("Getting all users with role filter: {}", role);
+            List<User> users;
+            
+            if (role != null && !role.isEmpty()) {
+                users = userRepository.findByRole(org.example.estudebackendspring.enums.UserRole.valueOf(role));
+            } else {
+                users = userRepository.findAll();
+            }
+            
+            log.info("Found {} users", users.size());
+            return ResponseEntity.ok(users);
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid role parameter: {}", role);
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error fetching users: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable Long userId) {
-        return userRepository.findById(userId).orElse(null);
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<User> getUserById(@PathVariable Long userId) {
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            log.error("Error fetching user {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
     /**

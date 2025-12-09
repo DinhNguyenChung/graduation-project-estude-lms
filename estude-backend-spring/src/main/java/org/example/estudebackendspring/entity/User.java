@@ -29,6 +29,7 @@ public abstract class User {
     @Column(unique = true, nullable = true)
     private String numberPhone;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -43,10 +44,9 @@ public abstract class User {
     @Temporal(TemporalType.DATE)
     private Date dob;
     
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "school_id")
-//    @JsonIgnore
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private School school;
     
     @Enumerated(EnumType.STRING)

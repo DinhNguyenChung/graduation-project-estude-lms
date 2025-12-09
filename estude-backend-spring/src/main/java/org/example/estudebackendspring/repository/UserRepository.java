@@ -1,6 +1,7 @@
 package org.example.estudebackendspring.repository;
 
 import org.example.estudebackendspring.entity.*;
+import org.example.estudebackendspring.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,11 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findByNumberPhone(String numberPhone);
+    
+    /**
+     * Find all users by role (STUDENT, TEACHER, ADMIN)
+     */
+    List<User> findByRole(UserRole role);
     // All user ids (for SYSTEM) — adapt active filter if you have it
     @Query("SELECT u.userId FROM User u")
     List<Long> findAllUserIds();

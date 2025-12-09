@@ -13,29 +13,52 @@ import java.util.List;
 public interface TopicRepository extends JpaRepository<Topic, Long> {
     
     /**
-     * Lấy tất cả topics theo môn học, sắp xếp theo orderIndex
+     * Lấy tất cả topics theo môn học với EAGER FETCH subject, sắp xếp theo orderIndex
      */
-    List<Topic> findBySubject_SubjectIdOrderByOrderIndexAsc(Long subjectId);
+    @Query("SELECT t FROM Topic t " +
+           "LEFT JOIN FETCH t.subject s " +
+           "WHERE s.subjectId = :subjectId " +
+           "ORDER BY t.orderIndex ASC")
+    List<Topic> findBySubject_SubjectIdOrderByOrderIndexAsc(@Param("subjectId") Long subjectId);
     
     /**
-     * Lấy topics theo môn học và tập sách (volume)
+     * Lấy topics theo môn học và tập sách (volume) với EAGER FETCH
      * Ví dụ: Lấy tất cả topics của Toán Tập 1
      */
-    List<Topic> findBySubject_SubjectIdAndVolumeOrderByOrderIndexAsc(Long subjectId, Integer volume);
+    @Query("SELECT t FROM Topic t " +
+           "LEFT JOIN FETCH t.subject s " +
+           "WHERE s.subjectId = :subjectId AND t.volume = :volume " +
+           "ORDER BY t.orderIndex ASC")
+    List<Topic> findBySubject_SubjectIdAndVolumeOrderByOrderIndexAsc(
+        @Param("subjectId") Long subjectId, @Param("volume") Integer volume);
     
     /**
-     * Lấy topics theo môn học, khối và tập
+     * Lấy topics theo môn học, khối và tập với EAGER FETCH
      * Ví dụ: Lấy tất cả topics của môn Toán, khối 10, tập 1
      */
+    @Query("SELECT t FROM Topic t " +
+           "LEFT JOIN FETCH t.subject s " +
+           "WHERE s.subjectId = :subjectId " +
+           "AND t.gradeLevel = :gradeLevel " +
+           "AND t.volume = :volume " +
+           "ORDER BY t.orderIndex ASC")
     List<Topic> findBySubject_SubjectIdAndGradeLevelAndVolumeOrderByOrderIndexAsc(
-        Long subjectId, GradeLevel gradeLevel, Integer volume);
+        @Param("subjectId") Long subjectId, 
+        @Param("gradeLevel") GradeLevel gradeLevel, 
+        @Param("volume") Integer volume);
     
     /**
-     * Lấy topics theo môn học và khối
+     * Lấy topics theo môn học và khối với EAGER FETCH
      * Ví dụ: Lấy tất cả topics của môn Toán khối 10
      */
+    @Query("SELECT t FROM Topic t " +
+           "LEFT JOIN FETCH t.subject s " +
+           "WHERE s.subjectId = :subjectId " +
+           "AND t.gradeLevel = :gradeLevel " +
+           "ORDER BY t.volume ASC, t.orderIndex ASC")
     List<Topic> findBySubject_SubjectIdAndGradeLevelOrderByVolumeAscOrderIndexAsc(
-        Long subjectId, GradeLevel gradeLevel);
+        @Param("subjectId") Long subjectId, 
+        @Param("gradeLevel") GradeLevel gradeLevel);
     
     /**
      * Lấy tất cả grade levels có trong một môn học
