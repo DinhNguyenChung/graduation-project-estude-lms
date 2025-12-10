@@ -5,6 +5,7 @@ import org.example.estudebackendspring.dto.UserDTO;
 import org.example.estudebackendspring.entity.LogEntry;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.ActionType;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.LogEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,12 @@ import java.util.List;
 @Service
 public class LogEntryService {
     private final LogEntryRepository logEntryRepository;
+    private final UserMapper userMapper;
 
     @Autowired
-    public LogEntryService(LogEntryRepository logEntryRepository) {
+    public LogEntryService(LogEntryRepository logEntryRepository, UserMapper userMapper) {
         this.logEntryRepository = logEntryRepository;
+        this.userMapper = userMapper;
     }
 
     public LogEntry createLog(String entity, Long entityId, String content, ActionType actionType, Long relatedEntityId,String relatedEntity, User user) {
@@ -41,7 +44,7 @@ public class LogEntryService {
             User user = log.getUser();
             UserDTO userDTO = null;
             if (user != null) {
-                userDTO = new UserDTO(user.getUserId(), user.getFullName(), user.getEmail(),user.getRole());
+                userDTO = userMapper.toDTO(user);
             }
 
             return new LogEntryDTO(

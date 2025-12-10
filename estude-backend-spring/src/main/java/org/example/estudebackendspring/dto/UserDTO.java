@@ -1,25 +1,22 @@
 package org.example.estudebackendspring.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 import org.example.estudebackendspring.enums.UserRole;
 
-@Setter
-@Getter
+import java.util.Date;
+
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDTO {
     private Long userId;
-    private String fullName;
+    private String numberPhone;
     private String email;
+    private String fullName;
+    private String avatarPath;
+    private Date dob;
+    private SchoolDTO school;
     private UserRole role;
-
-    public UserDTO(Long userId, String fullName, String email, UserRole role) {
-        this.userId = userId;
-        this.fullName = fullName;
-        this.email = email;
-        this.role = role;
-    }
-
-    // Getters & Setters
 }

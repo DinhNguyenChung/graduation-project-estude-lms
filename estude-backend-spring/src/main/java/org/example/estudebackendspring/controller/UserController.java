@@ -2,7 +2,9 @@ package org.example.estudebackendspring.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.estudebackendspring.dto.UserDTO;
 import org.example.estudebackendspring.entity.User;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -22,10 +25,10 @@ import java.util.Map;
 public class UserController {
     private final UserRepository userRepository;
     private final UserService userService;
-    
+    private final UserMapper userMapper;
     @GetMapping()
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public ResponseEntity<List<User>> getAllUsers(
+    public ResponseEntity<List<UserDTO>> getAllUsers(
             @RequestParam(required = false) String role) {
         try {
             log.info("Getting all users with role filter: {}", role);
@@ -37,8 +40,13 @@ public class UserController {
                 users = userRepository.findAll();
             }
             
-            log.info("Found {} users", users.size());
-            return ResponseEntity.ok(users);
+            // Convert to DTOs
+            List<UserDTO> userDTOs = users.stream()
+                    .map(userMapper::toDTO)
+                    .collect(Collectors.toList());
+            
+            log.info("Found {} users", userDTOs.size());
+            return ResponseEntity.ok(userDTOs);
             
         } catch (IllegalArgumentException e) {
             log.error("Invalid role parameter: {}", role);
@@ -51,13 +59,16 @@ public class UserController {
     
     @GetMapping("/{userId}")
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    public ResponseEntity<User> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long userId) {
         try {
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(user);
+            
+            // Convert to DTO
+            UserDTO userDTO = userMapper.toDTO(user);
+            return ResponseEntity.ok(userDTO);
         } catch (Exception e) {
             log.error("Error fetching user {}: {}", userId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

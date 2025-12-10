@@ -11,4 +11,7 @@ public class SchoolDTO {
     private Long schoolId;
     private String schoolCode;
     private String schoolName;
+    private String address;
+    private String contactEmail;
+    private String contactPhone;
 }

@@ -8,6 +8,7 @@ import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.NotificationTargetType;
 import org.example.estudebackendspring.enums.UserRole;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class NotificationService {
     private final ClazzRepository classRepository;
     private final ClassSubjectRepository classSubjectRepository;
     private final PlatformTransactionManager txManager;
+    private final UserMapper userMapper;
 
     @Autowired
     public NotificationService(
@@ -38,7 +40,8 @@ public class NotificationService {
             UserRepository userRepository,
             ClazzRepository classRepository,
             ClassSubjectRepository classSubjectRepository,
-            PlatformTransactionManager txManager
+            PlatformTransactionManager txManager,
+            UserMapper userMapper
     ) {
         this.notificationRepository = notificationRepository;
         this.recipientRepository = recipientRepository;
@@ -46,6 +49,7 @@ public class NotificationService {
         this.classRepository = classRepository;
         this.classSubjectRepository = classSubjectRepository;
         this.txManager = txManager;
+        this.userMapper = userMapper;
     }
 
     @Transactional
@@ -125,7 +129,7 @@ public class NotificationService {
         resp.setTargetType(n.getTargetType());
         resp.setTargetId(n.getTargetId());
         resp.setSchoolId(n.getSchoolId());
-        resp.setSender(new UserDTO(sender.getUserId(), sender.getFullName(),sender.getEmail(), sender.getRole()));
+        resp.setSender(userMapper.toDTO(sender));
         resp.setRecipientCount((long) recipients.size());
         return resp;
     }
@@ -188,12 +192,7 @@ public class NotificationService {
         List<NotificationRecipient> list = recipientRepository.findByUserIdWithNotification(userId);
         return list.stream().map(nr -> {
             Notification notif = nr.getNotification();
-            UserDTO s = new UserDTO(
-                    notif.getSender().getUserId(),
-                    notif.getSender().getFullName(),
-                    notif.getSender().getEmail(),
-                    notif.getSender().getRole()
-            );
+            UserDTO s = userMapper.toDTO(notif.getSender());
             NotificationRecipientDto dto = new NotificationRecipientDto();
             dto.setNotificationRecipientId(nr.getNotificationRecipientId());
             dto.setNotificationId(notif.getNotificationId());
@@ -221,12 +220,7 @@ public class NotificationService {
             resp.setPriority(n.getPriority());
             resp.setTargetType(n.getTargetType());
             resp.setTargetId(n.getTargetId());
-            resp.setSender(new UserDTO(
-                    n.getSender().getUserId(),
-                    n.getSender().getFullName(),
-                    n.getSender().getEmail(),
-                    n.getSender().getRole()
-            ));
+            resp.setSender(userMapper.toDTO(n.getSender()));
             resp.setRecipientCount(
                     (long) recipientRepository.findByNotification_NotificationId(n.getNotificationId()).size()
             );
@@ -280,7 +274,7 @@ public class NotificationService {
                 notif.getTargetType(),
                 notif.getTargetId(),
                 notif.getSchoolId(),
-                new UserDTO(sender.getUserId(), sender.getFullName(), sender.getEmail(), sender.getRole()),
+                userMapper.toDTO(sender),
                 recipientCount
         );
     }
