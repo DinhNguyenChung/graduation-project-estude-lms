@@ -131,6 +131,33 @@ public class AIAnalysisController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Lấy AIAnalysisRequest theo requestId
+     */
+    @Operation(
+            summary = "Lấy AIAnalysisRequest theo requestId",
+            description = "API này trả về thông tin chi tiết của một AI Analysis Request dựa trên requestId"
+    )
+    @GetMapping("/request/{requestId}")
+    public ResponseEntity<?> getRequestById(@PathVariable Long requestId) {
+        return aiAnalysisService.getRequestById(requestId)
+                .map(request -> {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("data", Map.of(
+                            "requestId", request.getRequestId(),
+                            "requestDate", request.getRequestDate(),
+                            "analysisType", request.getAnalysisType(),
+                            "dataPayload", request.getDataPayload()
+                    ));
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> ResponseEntity.status(404).body(Map.of(
+                        "success", false,
+                        "message", "Request không tìm thấy với ID: " + requestId
+                )));
+    }
+
     // ========== LEARNING LOOP AI ENDPOINTS ==========
     
     /**

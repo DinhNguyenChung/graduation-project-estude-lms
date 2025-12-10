@@ -290,6 +290,13 @@ public class AIAnalysisService  {
     }
     
     /**
+     * Lấy AIAnalysisRequest theo requestId
+     */
+    public Optional<AIAnalysisRequest> getRequestById(Long requestId) {
+        return requestRepository.findById(requestId);
+    }
+    
+    /**
      * Lấy TẤT CẢ kết quả của student theo analysis type (ORDER BY mới nhất)
      */
     public List<AIAnalysisResult> getAllResultsByStudentIdAndType(Long studentId, AnalysisType analysisType) {
