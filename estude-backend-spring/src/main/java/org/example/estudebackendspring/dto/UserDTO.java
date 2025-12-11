@@ -19,4 +19,9 @@ public class UserDTO {
     private Date dob;
     private SchoolDTO school;
     private UserRole role;
+    
+    // Role-specific codes
+    private String adminCode;
+    private String teacherCode;
+    private String studentCode;
 }

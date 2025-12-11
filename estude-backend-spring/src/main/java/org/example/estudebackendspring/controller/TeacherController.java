@@ -46,6 +46,7 @@ public class TeacherController {
     }
 
     @GetMapping("/{teacherId}/homeroom-students")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<ClazzWithStudentsDTO>> getHomeroomStudents(@PathVariable Long teacherId) {
         return ResponseEntity.ok(teacherService.getHomeroomStudents(teacherId));
     }
@@ -57,6 +58,7 @@ public class TeacherController {
 //        return ResponseEntity.ok(teacherService.getStudentsBySubject(teacherId, subjectId));
 //    }
     @GetMapping("/{teacherId}/class-subjects")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getClassSubjectsByTeacher(@PathVariable Long teacherId) {
         List<ClassSubject> classSubjects = classSubjectService.getClassSubjectsByTeacher(teacherId);
         List<ClassSubjectDTO> dtoList = classSubjects.stream()

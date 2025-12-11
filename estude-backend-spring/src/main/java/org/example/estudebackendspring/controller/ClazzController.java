@@ -137,9 +137,25 @@ public class ClazzController {
         return ResponseEntity.noContent().build();
     }
     @GetMapping("/school/{schoolId}")
-    public ResponseEntity<List<Clazz>> getClassesBySchool(@PathVariable Long schoolId) {
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<ClazzDTO>> getClassesBySchool(@PathVariable Long schoolId) {
         List<Clazz> classes = clazzService.getClassesBySchool(schoolId);
-        return ResponseEntity.ok(classes);
+        
+        // Convert to DTOs to avoid lazy loading issues
+        List<ClazzDTO> dtos = classes.stream()
+            .map(clazz -> new ClazzDTO(
+                clazz.getClassId(),
+                clazz.getName(),
+                clazz.getGradeLevel(),
+                clazz.getClassSize(),
+                clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getUserId() : null,
+                clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null,
+                clazz.getSchool() != null ? clazz.getSchool().getSchoolId() : null,
+                clazz.getSchool() != null ? clazz.getSchool().getSchoolName() : null
+            ))
+            .toList();
+        
+        return ResponseEntity.ok(dtos);
     }
     /**
      * Thêm GVCN cho lớp

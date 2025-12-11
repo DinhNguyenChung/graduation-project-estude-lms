@@ -18,6 +18,7 @@ public class LogEntryController {
     private LogEntryService logEntryService;
 
     @GetMapping
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<LogEntryDTO> getLogEntries() {
             return logEntryService.getAllLogs();
     }

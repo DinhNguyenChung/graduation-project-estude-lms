@@ -2,7 +2,10 @@ package org.example.estudebackendspring.mapper;
 
 import org.example.estudebackendspring.dto.SchoolDTO;
 import org.example.estudebackendspring.dto.UserDTO;
+import org.example.estudebackendspring.entity.Admin;
 import org.example.estudebackendspring.entity.School;
+import org.example.estudebackendspring.entity.Student;
+import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +29,15 @@ public class UserMapper {
         // Map school information
         if (user.getSchool() != null) {
             dto.setSchool(toSchoolDTO(user.getSchool()));
+        }
+        
+        // Map role-specific code based on user type
+        if (user instanceof Admin) {
+            dto.setAdminCode(((Admin) user).getAdminCode());
+        } else if (user instanceof Teacher) {
+            dto.setTeacherCode(((Teacher) user).getTeacherCode());
+        } else if (user instanceof Student) {
+            dto.setStudentCode(((Student) user).getStudentCode());
         }
         
         return dto;

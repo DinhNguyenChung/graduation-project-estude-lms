@@ -12,6 +12,7 @@ import org.example.estudebackendspring.entity.Teacher;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.exception.InvalidPasswordException;
 import org.example.estudebackendspring.exception.InvalidStudentCodeException;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.UserRepository;
 import org.example.estudebackendspring.service.AuthService;
 import org.example.estudebackendspring.service.JwtBlacklistService;
@@ -34,6 +35,7 @@ public class AuthController {
     private final JwtTokenUtil jwtTokenUtil;
     private final JwtBlacklistService jwtBlacklistService;
     private final LogEntryService logEntryService;
+    private final UserMapper userMapper;
 
 
     @PostMapping("/login-student")
@@ -66,6 +68,7 @@ public class AuthController {
         }
     }
     @PostMapping("/login-teacher")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> loginTeacher(@RequestBody LoginRequest loginRequest) {
         try {
             Teacher teacher = authService.loginByCodeByTeacher(loginRequest.getUsername(), loginRequest.getPassword());
@@ -83,7 +86,9 @@ public class AuthController {
 //                    teacher
 //            );
 
-            return ResponseEntity.ok(new LoginResponse(true, "Login successful", teacher, token));
+            // Convert to DTO with school information
+            UserDTO userDTO = userMapper.toDTO(teacher);
+            return ResponseEntity.ok(new LoginResponse(true, "Login successful", userDTO, token));
         } catch (InvalidStudentCodeException e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)

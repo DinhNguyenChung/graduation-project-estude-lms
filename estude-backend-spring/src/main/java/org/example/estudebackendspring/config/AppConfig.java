@@ -53,7 +53,7 @@ public class AppConfig {
                         .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/ai/predict-semeter").permitAll()
                         .requestMatchers("/api/ai/analyze/").permitAll()
-                        .requestMatchers("api/teachers/**").permitAll()
+                        .requestMatchers("/api/teachers/**").permitAll()
                         .requestMatchers("/api/students/**").permitAll()
                         .requestMatchers("/api/assignments/**").permitAll()
                         .requestMatchers("/api/questions/**").permitAll()

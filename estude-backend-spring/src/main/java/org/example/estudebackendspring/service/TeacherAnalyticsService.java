@@ -30,7 +30,7 @@ public class TeacherAnalyticsService {
      * @param teacherId ID of the teacher
      * @return Overview with all classes and overall performance
      */
-    @Cacheable(value = "teacherOverview", key = "#teacherId", unless = "#result == null")
+    // @Cacheable(value = "teacherOverview", key = "#teacherId", unless = "#result == null")
     public TeacherClassOverviewDTO getTeacherOverview(Long teacherId) {
         log.info("Fetching overview for teacher ID: {}", teacherId);
         

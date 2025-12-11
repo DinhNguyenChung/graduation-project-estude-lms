@@ -3,6 +3,7 @@ package org.example.estudebackendspring.service;
 import org.example.estudebackendspring.dto.ClazzWithStudentsDTO;
 import org.example.estudebackendspring.dto.StudentDTO;
 import org.example.estudebackendspring.dto.SubjectDTO;
+import org.example.estudebackendspring.dto.TermDTO;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.repository.ClassSubjectRepository;
 import org.example.estudebackendspring.repository.TeacherRepository;
@@ -49,12 +50,22 @@ public class TeacherService {
                     })
                     .collect(Collectors.toList());
 
+            // Convert terms to DTOs
+            List<TermDTO> termDTOs = clazz.getTerms().stream()
+                    .map(term -> new TermDTO(
+                            term.getTermId(),
+                            term.getName(),
+                            term.getBeginDate(),
+                            term.getEndDate()
+                    ))
+                    .collect(Collectors.toList());
+
             return new ClazzWithStudentsDTO(
                     clazz.getClassId(),
                     clazz.getName(),
                     clazz.getGradeLevel().name(),
                     clazz.getClassSize(),
-                    clazz.getTerms(),
+                    termDTOs,
                     students
             );
         }).collect(Collectors.toList());

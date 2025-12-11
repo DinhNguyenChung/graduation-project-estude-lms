@@ -60,6 +60,7 @@ public class TeacherAnalyticsController {
      * }
      */
     @GetMapping("/overview")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<TeacherClassOverviewDTO> getTeacherOverview(
             @RequestParam Long teacherId) {
         try {
