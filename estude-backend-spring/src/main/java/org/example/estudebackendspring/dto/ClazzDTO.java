@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.estudebackendspring.enums.GradeLevel;
 
+import java.util.List;
+
 /**
  * DTO for Clazz entity to avoid lazy loading issues
  */
@@ -20,4 +22,5 @@ public class ClazzDTO {
     private String homeroomTeacherName;
     private Long schoolId;
     private String schoolName;
+    private List<TermDTO> terms;
 }

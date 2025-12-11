@@ -35,7 +35,10 @@ public class UserMapper {
         if (user instanceof Admin) {
             dto.setAdminCode(((Admin) user).getAdminCode());
         } else if (user instanceof Teacher) {
-            dto.setTeacherCode(((Teacher) user).getTeacherCode());
+            Teacher teacher = (Teacher) user;
+            dto.setTeacherCode(teacher.getTeacherCode());
+            dto.setIsAdmin(teacher.isAdmin());
+            dto.setIsHomeroomTeacher(teacher.isHomeroomTeacher());
         } else if (user instanceof Student) {
             dto.setStudentCode(((Student) user).getStudentCode());
         }

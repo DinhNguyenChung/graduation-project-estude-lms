@@ -4,6 +4,7 @@ package org.example.estudebackendspring.controller;
 import jakarta.validation.Valid;
 import org.example.estudebackendspring.dto.ClazzDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
+import org.example.estudebackendspring.dto.TermDTO;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.User;
@@ -16,6 +17,7 @@ import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,7 +47,8 @@ public class ClazzController {
     }
 
     @GetMapping
-    public List<ClazzDTO> GettAllClazz(){
+    @Transactional(readOnly = true)
+    public List<ClazzDTO> GettAllClazz() {
         return clazzService.getAllClasses();
     }
 
@@ -143,16 +146,31 @@ public class ClazzController {
         
         // Convert to DTOs to avoid lazy loading issues
         List<ClazzDTO> dtos = classes.stream()
-            .map(clazz -> new ClazzDTO(
-                clazz.getClassId(),
-                clazz.getName(),
-                clazz.getGradeLevel(),
-                clazz.getClassSize(),
-                clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getUserId() : null,
-                clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null,
-                clazz.getSchool() != null ? clazz.getSchool().getSchoolId() : null,
-                clazz.getSchool() != null ? clazz.getSchool().getSchoolName() : null
-            ))
+            .map(clazz -> {
+                List<TermDTO> termDTOs = null;
+                if (clazz.getTerms() != null) {
+                    termDTOs = clazz.getTerms().stream()
+                        .map(term -> new TermDTO(
+                            term.getTermId(),
+                            term.getName(),
+                            term.getBeginDate(),
+                            term.getEndDate()
+                        ))
+                        .toList();
+                }
+                
+                return new ClazzDTO(
+                    clazz.getClassId(),
+                    clazz.getName(),
+                    clazz.getGradeLevel(),
+                    clazz.getClassSize(),
+                    clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getUserId() : null,
+                    clazz.getHomeroomTeacher() != null ? clazz.getHomeroomTeacher().getFullName() : null,
+                    clazz.getSchool() != null ? clazz.getSchool().getSchoolId() : null,
+                    clazz.getSchool() != null ? clazz.getSchool().getSchoolName() : null,
+                    termDTOs
+                );
+            })
             .toList();
         
         return ResponseEntity.ok(dtos);

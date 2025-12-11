@@ -3,6 +3,7 @@ package org.example.estudebackendspring.service;
 import jakarta.transaction.Transactional;
 import org.example.estudebackendspring.dto.ClazzDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
+import org.example.estudebackendspring.dto.TermDTO;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.School;
@@ -197,6 +198,19 @@ public class ClazzService {
             if (clazz.getSchool() != null) {
                 dto.setSchoolId(clazz.getSchool().getSchoolId());
                 dto.setSchoolName(clazz.getSchool().getSchoolName());
+            }
+            
+            // Map terms to DTOs
+            if (clazz.getTerms() != null) {
+                List<TermDTO> termDTOs = clazz.getTerms().stream()
+                    .map(term -> new TermDTO(
+                        term.getTermId(),
+                        term.getName(),
+                        term.getBeginDate(),
+                        term.getEndDate()
+                    ))
+                    .collect(Collectors.toList());
+                dto.setTerms(termDTOs);
             }
             
             return dto;

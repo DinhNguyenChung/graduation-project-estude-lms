@@ -24,4 +24,8 @@ public class UserDTO {
     private String adminCode;
     private String teacherCode;
     private String studentCode;
+    
+    // Teacher-specific fields
+    private Boolean isAdmin;
+    private Boolean isHomeroomTeacher;
 }
