@@ -35,22 +35,22 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     // Alternative method that might be more efficient through class subject
     List<Schedule> findByClassSubject_ClassSubjectId(Long classSubjectId);
 
-    @Query("SELECT s FROM Schedule s " +
-            "JOIN s.term t " +
-            "JOIN s.classSubject cs " +
-            "JOIN cs.subject subj " +
-            "JOIN cs.teacher teacher " +
-            "JOIN t.clazz c " +
+    @Query("SELECT DISTINCT s FROM Schedule s " +
+            "JOIN FETCH s.term t " +
+            "JOIN FETCH s.classSubject cs " +
+            "JOIN FETCH cs.subject subj " +
+            "JOIN FETCH cs.teacher teacher " +
+            "JOIN FETCH t.clazz c " +
             "WHERE c.classId = :classId " +
             "AND t.beginDate <= CURRENT_DATE " +
             "AND t.endDate >= CURRENT_DATE")
     List<Schedule> findSchedulesByClassIdAndCurrentTerm(@Param("classId") Long classId);
-    @Query("SELECT s FROM Schedule s " +
-            "JOIN s.term t " +
-            "JOIN s.classSubject cs " +
-            "JOIN cs.subject subj " +
-            "JOIN cs.teacher teacher " +
-            "JOIN t.clazz c " +
+    @Query("SELECT DISTINCT s FROM Schedule s " +
+            "JOIN FETCH s.term t " +
+            "JOIN FETCH s.classSubject cs " +
+            "JOIN FETCH cs.subject subj " +
+            "JOIN FETCH cs.teacher teacher " +
+            "JOIN FETCH t.clazz c " +
             "WHERE c.classId = :classId ")
     List<Schedule> findSchedulesByClassId(@Param("classId") Long classId);
     @Query("SELECT s FROM Schedule s " +

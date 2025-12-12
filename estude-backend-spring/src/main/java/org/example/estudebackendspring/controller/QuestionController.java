@@ -3,6 +3,7 @@ package org.example.estudebackendspring.controller;
 import org.example.estudebackendspring.dto.ApiResponse;
 import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.dto.QuestionBankRequest;
+import org.example.estudebackendspring.dto.QuestionResponseDTO;
 import org.example.estudebackendspring.entity.Question;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.ActionType;
@@ -288,9 +289,14 @@ public class QuestionController {
     
     // POST /api/assignments/{assignmentId}/questions
     @PostMapping("/questions/assignments/{assignmentId}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> addQuestion(@PathVariable Long assignmentId, @RequestBody Question question) {
         try {
             Question saved = questionService.addQuestion(assignmentId, question);
+            
+            // Convert to DTO to avoid lazy loading issues
+            QuestionResponseDTO dto = questionService.convertToDTO(saved);
+            
             User user = userRepository.findById(saved.getAssignment().getTeacher().getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid actingUserId"));
             // Log question creation
@@ -309,7 +315,7 @@ public class QuestionController {
                 System.err.println("Failed to log question creation: " + e.getMessage());
             }
             
-            return ResponseEntity.ok(new AuthResponse(true, "Question added successfully", saved));
+            return ResponseEntity.ok(new AuthResponse(true, "Question added successfully", dto));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }
@@ -317,9 +323,14 @@ public class QuestionController {
 
     // PUT /api/questions/{questionId}
     @PutMapping("/questions/{questionId}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> updateQuestion(@PathVariable Long questionId, @RequestBody Question updated) {
         try {
             Question saved = questionService.updateQuestion(questionId, updated);
+            
+            // Convert to DTO to avoid lazy loading issues
+            QuestionResponseDTO dto = questionService.convertToDTO(saved);
+            
             User user = userRepository.findById(saved.getAssignment().getTeacher().getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid actingUserId"));
             // Log question update
@@ -338,7 +349,7 @@ public class QuestionController {
                 System.err.println("Failed to log question update: " + e.getMessage());
             }
             
-            return ResponseEntity.ok(new AuthResponse(true, "Question updated successfully", saved));
+            return ResponseEntity.ok(new AuthResponse(true, "Question updated successfully", dto));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }

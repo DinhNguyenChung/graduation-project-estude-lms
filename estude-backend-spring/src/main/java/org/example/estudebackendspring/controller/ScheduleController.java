@@ -170,6 +170,7 @@ public class ScheduleController {
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
     @GetMapping("/class/{classId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByClassId(@PathVariable Long classId) {
         List<ScheduleDTO> schedules = scheduleService.getSchedulesByClassId(classId);
         return ResponseEntity.ok(schedules);

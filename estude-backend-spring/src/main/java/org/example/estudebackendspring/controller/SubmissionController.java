@@ -92,12 +92,14 @@ public class SubmissionController {
 //        return ResponseEntity.ok(new AuthResponse(true, "Submissions retrieved", submissions));
 //    }
     @GetMapping("/class-subjects/{classSubjectId}/submissions")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getSubmissionsByClassSubject(@PathVariable Long classSubjectId) {
         List<SubmissionResponseDTO> submissions = submissionService.getSubmissionsByClassSubject(classSubjectId);
         return ResponseEntity.ok(new AuthResponse(true, "Submissions retrieved", submissions));
     }
 
     @GetMapping("/submissions/{submissionId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<AuthResponse> getSubmission(@PathVariable Long submissionId) {
         try {
             Optional<SubmissionDTO> submission = submissionService.getSubmission(submissionId);
@@ -117,12 +119,14 @@ public class SubmissionController {
 //        return ResponseEntity.ok(submissionService.getAssignmentBySubmission(submissionId));
 //    }
     @GetMapping("/submissions/student/{studentId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<SubmissionDTO>> getSubmissionsByStudent(@PathVariable Long studentId) {
         List<SubmissionDTO> submissions = submissionService.getSubmissionsByStudent(studentId);
         return ResponseEntity.ok(submissions);
     }
     // Lấy tất cả submission theo student + assignment
     @GetMapping("/submissions/student/{studentId}/assignment/{assignmentId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<SubmissionDTO>> getSubmissionsByStudentAndAssignment(
             @PathVariable Long studentId,
             @PathVariable Long assignmentId) {

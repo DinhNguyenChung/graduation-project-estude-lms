@@ -70,6 +70,7 @@ public class SubjectGradeController {
      * Get grade by id
      */
     @GetMapping("/{gradeId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<SubjectGradeDTO> getGrade(@PathVariable Long gradeId) {
         SubjectGradeDTO dto = subjectGradeService.getSubjectGrade(gradeId);
         return ResponseEntity.ok(dto);
@@ -79,6 +80,7 @@ public class SubjectGradeController {
      * Get grade by studentId + classSubjectId (optional)
      */
     @GetMapping("/student/{studentId}/class-subject/{classSubjectId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getByStudentAndClassSubject(@PathVariable Long studentId,
                                                          @PathVariable Long classSubjectId) {
         Optional<SubjectGradeDTO> opt = subjectGradeService.findByStudentAndClassSubject(studentId, classSubjectId);
@@ -94,6 +96,7 @@ public class SubjectGradeController {
      * Trả về tất cả bảng điểm của học sinh, nhóm theo kỳ.
      */
     @GetMapping("/student/{studentId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<TermGradesDTO>> getAllGradesByStudentGroupedByTerm(@PathVariable Long studentId) {
         List<TermGradesDTO> data = subjectGradeService.getAllGradesGroupedByTerm(studentId);
         return ResponseEntity.ok(data);

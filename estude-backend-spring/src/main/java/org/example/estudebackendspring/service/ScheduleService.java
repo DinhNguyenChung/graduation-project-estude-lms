@@ -115,6 +115,7 @@ public class ScheduleService {
         return schedules.stream().map(schedule -> mapToDTO(schedule)).collect(Collectors.toList());
 
     }
+    @Transactional
     public List<ScheduleDTO> getSchedulesByClassId(Long classId) {
         List<Schedule> schedules = scheduleRepository.findSchedulesByClassId(classId);
         return schedules.stream().map(this::mapToDTO).toList();

@@ -51,6 +51,10 @@ dependencies {
 	// https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.0")
 	
+	// Hibernate5 module for Jackson to handle lazy loading
+	// https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-hibernate5-jakarta
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5-jakarta:2.20.0")
+	
 	// AWS S3 for file upload
 	implementation platform('software.amazon.awssdk:bom:2.20.56')
 	implementation 'software.amazon.awssdk:s3'

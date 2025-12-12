@@ -6,6 +6,7 @@ import org.example.estudebackendspring.dto.QuestionBankDTO;
 import org.example.estudebackendspring.dto.QuestionBankRequest;
 import org.example.estudebackendspring.dto.QuestionBankSummaryDTO;
 import org.example.estudebackendspring.dto.QuestionOptionDTO;
+import org.example.estudebackendspring.dto.QuestionResponseDTO;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.enums.DifficultyLevel;
 import org.example.estudebackendspring.enums.QuestionType;
@@ -432,5 +433,48 @@ public class QuestionService {
             );
             question.setQuestionOptions(options);
         });
+    }
+    
+    /**
+     * Convert Question entity to DTO to avoid lazy loading issues
+     */
+    @Transactional(readOnly = true)
+    public QuestionResponseDTO convertToDTO(Question question) {
+        QuestionResponseDTO dto = new QuestionResponseDTO();
+        dto.setQuestionId(question.getQuestionId());
+        dto.setQuestionText(question.getQuestionText());
+        dto.setPoints(question.getPoints());
+        dto.setQuestionType(question.getQuestionType());
+        dto.setQuestionOrder(question.getQuestionOrder());
+        dto.setAttachmentUrl(question.getAttachmentUrl());
+        dto.setDifficultyLevel(question.getDifficultyLevel());
+        dto.setIsQuestionBank(question.getIsQuestionBank());
+        
+        // Assignment info
+        if (question.getAssignment() != null) {
+            dto.setAssignmentId(question.getAssignment().getAssignmentId());
+            dto.setAssignmentTitle(question.getAssignment().getTitle());
+        }
+        
+        // Topic info
+        if (question.getTopic() != null) {
+            dto.setTopicId(question.getTopic().getTopicId());
+            dto.setTopicName(question.getTopic().getName());
+        }
+        
+        // Options
+        if (question.getOptions() != null) {
+            List<QuestionOptionDTO> optionDTOs = question.getOptions().stream()
+                .map(option -> new QuestionOptionDTO(
+                    option.getOptionId(),
+                    option.getOptionText(),
+                    option.getOptionOrder(),
+                    option.getIsCorrect()
+                ))
+                .collect(Collectors.toList());
+            dto.setOptions(optionDTOs);
+        }
+        
+        return dto;
     }
 }

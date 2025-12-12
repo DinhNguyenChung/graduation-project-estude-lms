@@ -3,6 +3,7 @@ package org.example.estudebackendspring.controller;
 
 import jakarta.validation.Valid;
 import org.example.estudebackendspring.dto.ClazzDTO;
+import org.example.estudebackendspring.dto.ClazzDetailDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
 import org.example.estudebackendspring.dto.TermDTO;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
@@ -77,9 +78,10 @@ public class ClazzController {
     }
 
     @GetMapping("/{classId}")
-    public ResponseEntity<Clazz> getClazz(@PathVariable Long classId) {
-        Clazz c = service.getClazz(classId);
-        return ResponseEntity.ok(c);
+    @Transactional(readOnly = true)
+    public ResponseEntity<ClazzDetailDTO> getClazz(@PathVariable Long classId) {
+        ClazzDetailDTO dto = service.getClazzDetail(classId);
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{classId}")

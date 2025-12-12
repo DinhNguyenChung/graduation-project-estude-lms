@@ -2,6 +2,7 @@ package org.example.estudebackendspring.service;
 
 import jakarta.transaction.Transactional;
 import org.example.estudebackendspring.dto.ClazzDTO;
+import org.example.estudebackendspring.dto.ClazzDetailDTO;
 import org.example.estudebackendspring.dto.CreateClazzRequest;
 import org.example.estudebackendspring.dto.TermDTO;
 import org.example.estudebackendspring.dto.UpdateClazzRequest;
@@ -80,6 +81,49 @@ public class ClazzService {
     public Clazz getClazz(Long classId) {
         return clazzRepository.findById(classId)
                 .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
+    }
+    
+    /**
+     * Get class by ID with full details as DTO to avoid lazy loading issues
+     */
+    @Transactional
+    public ClazzDetailDTO getClazzDetail(Long classId) {
+        Clazz clazz = clazzRepository.findById(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
+        
+        ClazzDetailDTO dto = new ClazzDetailDTO();
+        dto.setClassId(clazz.getClassId());
+        dto.setName(clazz.getName());
+        dto.setGradeLevel(clazz.getGradeLevel());
+        dto.setClassSize(clazz.getClassSize());
+        
+        // Homeroom Teacher Info
+        if (clazz.getHomeroomTeacher() != null) {
+            dto.setHomeroomTeacherId(clazz.getHomeroomTeacher().getUserId());
+            dto.setHomeroomTeacherName(clazz.getHomeroomTeacher().getFullName());
+            dto.setHomeroomTeacherCode(clazz.getHomeroomTeacher().getTeacherCode());
+        }
+        
+        // School Info
+        if (clazz.getSchool() != null) {
+            dto.setSchoolId(clazz.getSchool().getSchoolId());
+            dto.setSchoolName(clazz.getSchool().getSchoolName());
+        }
+        
+        // Terms
+        if (clazz.getTerms() != null) {
+            List<TermDTO> termDTOs = clazz.getTerms().stream()
+                .map(term -> new TermDTO(
+                    term.getTermId(),
+                    term.getName(),
+                    term.getBeginDate(),
+                    term.getEndDate()
+                ))
+                .collect(Collectors.toList());
+            dto.setTerms(termDTOs);
+        }
+        
+        return dto;
     }
 
     public Clazz updateClazz(Long classId, UpdateClazzRequest req) {

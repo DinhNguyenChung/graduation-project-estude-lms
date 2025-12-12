@@ -3,6 +3,7 @@ package org.example.estudebackendspring.controller;
 
 import org.example.estudebackendspring.dto.ApiResponse;
 import org.example.estudebackendspring.dto.AssignmentDetailDTO;
+import org.example.estudebackendspring.dto.AssignmentResponseDTO;
 import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.dto.CreateNotificationRequest;
 import org.example.estudebackendspring.entity.Assignment;
@@ -62,10 +63,15 @@ public class AssignmentController {
                 .toLocalDate();
     }
     @GetMapping
-    public List<Assignment> getAllAssignments() {
-        return assignmentRepository.findAll();
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<AssignmentResponseDTO> getAllAssignments() {
+        List<Assignment> assignments = assignmentRepository.findAll();
+        return assignments.stream()
+                .map(assignmentService::convertToDTO)
+                .toList();
     }
     @PostMapping
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> createAssignment(@RequestBody Assignment assignment) {
         try {
             // Lấy teacher từ DB
@@ -99,39 +105,43 @@ public class AssignmentController {
 
             // Lưu assignment
             Assignment created = assignmentService.createAssignment(assignment);
-            // Tạo logEntry
+            
+            // Convert to DTO to avoid lazy loading issues
+            AssignmentResponseDTO responseDTO = assignmentService.convertToDTO(created);
+            
+            // Tạo logEntry - sử dụng thông tin từ DTO
             logEntryService.createLog(
                     "Assignment",
-                    created.getAssignmentId(),
-                    "Tạo mới bài: " + assignment.getTitle() + " của lớp "+created.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ created.getClassSubject().getSubject().getName(),
+                    responseDTO.getAssignmentId(),
+                    "Tạo mới bài: " + responseDTO.getTitle() + " của lớp " + responseDTO.getClassName() + " và môn học " + responseDTO.getSubjectName(),
                     ActionType.CREATE,
-                    created.getClassSubject().getClassSubjectId(),
+                    responseDTO.getClassSubjectId(),
                     "ClassSubject",
                     created.getTeacher()
             );
-            // Tạo Notification cho bài tập
+            // Tạo Notification cho bài tập - sử dụng thông tin từ DTO
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
-            String formattedDueDate = created.getDueDate().format(formatter);
+            String formattedDueDate = responseDTO.getDueDate().format(formatter);
 
-            String message = assignment.getTitle()  + " môn "+created.getClassSubject().getSubject().getName()+" với thời gian hoàn thành " +formattedDueDate;
+            String message = responseDTO.getTitle() + " môn " + responseDTO.getSubjectName() + " với thời gian hoàn thành " + formattedDueDate;
             // Tạo request
             CreateNotificationRequest createNotificationRequest = new CreateNotificationRequest();
             createNotificationRequest.setMessage(message);
             createNotificationRequest.setPriority(NotificationPriority.MEDIUM);
             createNotificationRequest.setTargetType(NotificationTargetType.CLASS_SUBJECT);
-            createNotificationRequest.setTargetId(created.getClassSubject().getClassSubjectId());
+            createNotificationRequest.setTargetId(responseDTO.getClassSubjectId());
             createNotificationRequest.setType(NotificationType.ASSIGNMENT_REMINDER);
 
             // Gọi notificationService
-            notificationService.createNotification(createNotificationRequest,created.getTeacher());
+            notificationService.createNotification(createNotificationRequest, created.getTeacher());
 
-            // Gửi thông báo WebSocket cho FE (các client subscribe)
+            // Gửi thông báo WebSocket cho FE (các client subscribe) với DTO
             messagingTemplate.convertAndSend(
                     "/topic/class/" + classSubject.getClassSubjectId() + "/assignments",
-                    created
+                    responseDTO
             );
             return ResponseEntity.ok(
-                    new AuthResponse(true, "Assignment created successfully", created)
+                    new AuthResponse(true, "Assignment created successfully", responseDTO)
             );
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -146,11 +156,13 @@ public class AssignmentController {
 
     // GET /api/assignments/{assignmentId}
     @GetMapping("/{assignmentId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getAssignment(@PathVariable Long assignmentId) {
         try {
             Assignment assignment = assignmentService.getAssignment(assignmentId);
+            AssignmentResponseDTO dto = assignmentService.convertToDTO(assignment);
             return ResponseEntity.ok(
-                    new AuthResponse(true, "Assignment found", assignment)
+                    new AuthResponse(true, "Assignment found", dto)
             );
         } catch (RuntimeException e) {
             return ResponseEntity.ok(
@@ -161,18 +173,23 @@ public class AssignmentController {
 
     // PUT /api/assignments/{assignmentId}
     @PutMapping("/{assignmentId}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> updateAssignment(
             @PathVariable Long assignmentId,
             @RequestBody Assignment updated) {
         try {
             Assignment assignment = assignmentService.updateAssignment(assignmentId, updated);
-            // tạo log
+            
+            // Convert to DTO
+            AssignmentResponseDTO dto = assignmentService.convertToDTO(assignment);
+            
+            // tạo log - sử dụng thông tin từ DTO
             logEntryService.createLog(
                     "Assignment",
-                    assignment.getAssignmentId(),
-                    "Cập nhật bài: " + assignment.getTitle() + " của lớp "+assignment.getClassSubject().getTerm().getClazz().getName()+" và môn học "+ assignment.getClassSubject().getSubject().getName(),
+                    dto.getAssignmentId(),
+                    "Cập nhật bài: " + dto.getTitle() + " của lớp " + dto.getClassName() + " và môn học " + dto.getSubjectName(),
                     ActionType.UPDATE,
-                    assignment.getClassSubject().getClassSubjectId(),
+                    dto.getClassSubjectId(),
                     "ClassSubject",
                     assignment.getTeacher()
             );
@@ -191,13 +208,13 @@ public class AssignmentController {
 
             // Gọi notificationService
 //            notificationService.createNotification(createNotificationRequest,assignment.getTeacher());
-            //  Gửi thông báo cập nhật
+            //  Gửi thông báo cập nhật với DTO
             messagingTemplate.convertAndSend(
-                    "/topic/class/" + assignment.getClassSubject().getClassSubjectId() + "/assignments",
-                    assignment
+                    "/topic/class/" + dto.getClassSubjectId() + "/assignments",
+                    dto
             );
             return ResponseEntity.ok(
-                    new AuthResponse(true, "Assignment updated successfully", assignment)
+                    new AuthResponse(true, "Assignment updated successfully", dto)
             );
         } catch (RuntimeException e) {
             return ResponseEntity.ok(
@@ -249,6 +266,7 @@ public class AssignmentController {
         }
     }
     @GetMapping("/class/{classId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getAssignmentsByClass(@PathVariable Long classId) {
         List<Assignment> assignments = assignmentService.getAssignmentsByClass(classId);
         if (assignments.isEmpty()) {
@@ -256,15 +274,24 @@ public class AssignmentController {
 //                    .body("No assignments found for classId: " + classId);
             return ResponseEntity.ok(Collections.emptyList());
         }
-        return ResponseEntity.ok(assignments);
+        // Convert to DTOs to avoid lazy loading issues
+        List<AssignmentResponseDTO> dtos = assignments.stream()
+                .map(assignmentService::convertToDTO)
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
     @GetMapping("/class-subject/{classSubjectId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getAssignmentsByClassSubject(@PathVariable Long classSubjectId) {
         List<Assignment> assignments = assignmentService.getAssignmentsByClassSubject(classSubjectId);
         if (assignments.isEmpty()) {
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No assignments found for classId: " + classSubjectId);
             return ResponseEntity.ok(Collections.emptyList());
         }
-        return ResponseEntity.ok(assignments);
+        // Convert to DTOs to avoid lazy loading issues
+        List<AssignmentResponseDTO> dtos = assignments.stream()
+                .map(assignmentService::convertToDTO)
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.estudebackendspring.dto.AuthResponse;
 import org.example.estudebackendspring.dto.GradeUpdateRequest;
+import org.example.estudebackendspring.dto.SubjectGradeDTO;
 import org.example.estudebackendspring.entity.Grade;
 import org.example.estudebackendspring.entity.SubjectGrade;
 import org.example.estudebackendspring.entity.Teacher;
@@ -102,13 +103,29 @@ public class GradeController {
 
     // GET /api/class-subjects/{classSubjectId}/subject-grades
     @GetMapping("/class-subjects/{classSubjectId}/subject-grades")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> getSubjectGrades(@PathVariable Long classSubjectId) {
         List<SubjectGrade> list = subjectGradeService.getByClassSubject(classSubjectId);
-        return ResponseEntity.ok(new AuthResponse(true, "Subject grades retrieved", list));
+        // Convert to DTOs to avoid lazy loading issues
+        List<SubjectGradeDTO> dtos = list.stream()
+                .map(sg -> {
+                    SubjectGradeDTO dto = new SubjectGradeDTO();
+                    dto.setSubjectGradeId(sg.getSubjectGradeId());
+                    dto.setStudentId(sg.getStudent() != null ? sg.getStudent().getUserId() : null);
+                    dto.setClassSubjectId(sg.getClassSubject() != null ? sg.getClassSubject().getClassSubjectId() : null);
+                    dto.setRegularScores(sg.getRegularScores());
+                    dto.setMidtermScore(sg.getMidtermScore());
+                    dto.setFinalScore(sg.getFinalScore());
+                    dto.setActualAverage(sg.getActualAverage());
+                    return dto;
+                })
+                .toList();
+        return ResponseEntity.ok(new AuthResponse(true, "Subject grades retrieved", dtos));
     }
 
     // PUT /api/subject-grades/{subjectGradeId}
     @PutMapping("/subject-grades/{subjectGradeId}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> updateSubjectGrade(@PathVariable Long subjectGradeId,
                                                 @RequestBody SubjectGrade updated) {
         try {
@@ -119,6 +136,16 @@ public class GradeController {
                     updated.getFinalScore(),
                     updated.getComment()
             );
+            
+            // Convert to DTO to avoid lazy loading issues
+            SubjectGradeDTO dto = new SubjectGradeDTO();
+            dto.setSubjectGradeId(sg.getSubjectGradeId());
+            dto.setStudentId(sg.getStudent() != null ? sg.getStudent().getUserId() : null);
+            dto.setClassSubjectId(sg.getClassSubject() != null ? sg.getClassSubject().getClassSubjectId() : null);
+            dto.setRegularScores(sg.getRegularScores());
+            dto.setMidtermScore(sg.getMidtermScore());
+            dto.setFinalScore(sg.getFinalScore());
+            dto.setActualAverage(sg.getActualAverage());
             
             // Tạo log entry
             try {
@@ -135,7 +162,7 @@ public class GradeController {
                 log.warn("Failed to log subject grade update", e);
             }
             
-            return ResponseEntity.ok(new AuthResponse(true, "Subject grade updated", sg));
+            return ResponseEntity.ok(new AuthResponse(true, "Subject grade updated", dto));
         } catch (RuntimeException e) {
             return ResponseEntity.ok(new AuthResponse(false, e.getMessage(), null));
         }

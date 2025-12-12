@@ -118,12 +118,14 @@ public class SubjectGradeService {
 
 
 
+    @Transactional
     public SubjectGradeDTO getSubjectGrade(Long gradeId) {
         SubjectGrade g = subjectGradeRepository.findById(gradeId)
                 .orElseThrow(() -> new ResourceNotFoundException("SubjectGrade not found: " + gradeId));
         return toDto(g);
     }
 
+    @Transactional
     public Optional<SubjectGradeDTO> findByStudentAndClassSubject(Long studentId, Long classSubjectId) {
         return subjectGradeRepository
                 .findByStudent_UserIdAndClassSubject_ClassSubjectId(studentId, classSubjectId)

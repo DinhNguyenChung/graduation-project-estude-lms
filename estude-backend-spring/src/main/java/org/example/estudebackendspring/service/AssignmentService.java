@@ -1,9 +1,11 @@
 package org.example.estudebackendspring.service;
 
+import org.example.estudebackendspring.dto.AssignmentResponseDTO;
 import org.example.estudebackendspring.entity.Assignment;
 import org.example.estudebackendspring.repository.AssignmentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -62,5 +64,51 @@ public class AssignmentService {
     }
     public List<Assignment> getAssignmentsByClassSubject(Long subjectId) {
         return assignmentRepository.findAssignmentsByClassSubject_ClassSubjectId(subjectId);
+    }
+    
+    /**
+     * Convert Assignment entity to DTO to avoid lazy loading issues
+     */
+    @Transactional(readOnly = true)
+    public AssignmentResponseDTO convertToDTO(Assignment assignment) {
+        AssignmentResponseDTO dto = new AssignmentResponseDTO();
+        dto.setAssignmentId(assignment.getAssignmentId());
+        dto.setTitle(assignment.getTitle());
+        dto.setDescription(assignment.getDescription());
+        dto.setDueDate(assignment.getDueDate());
+        dto.setTimeLimit(assignment.getTimeLimit());
+        dto.setType(assignment.getType());
+        dto.setAttachmentUrl(assignment.getAttachmentUrl());
+        dto.setMaxScore(assignment.getMaxScore());
+        dto.setIsPublished(assignment.getIsPublished());
+        dto.setAllowLateSubmission(assignment.getAllowLateSubmission());
+        dto.setLatePenalty(assignment.getLatePenalty());
+        dto.setSubmissionLimit(assignment.getSubmissionLimit());
+        dto.setCreatedAt(assignment.getCreatedAt());
+        dto.setUpdatedAt(assignment.getUpdatedAt());
+        dto.setAnswerKeyFileUrl(assignment.getAnswerKeyFileUrl());
+        dto.setIsAutoGraded(assignment.getIsAutoGraded());
+        dto.setIsExam(assignment.getIsExam());
+        dto.setStartDate(assignment.getStartDate());
+        
+        // Teacher info
+        if (assignment.getTeacher() != null) {
+            dto.setTeacherId(assignment.getTeacher().getUserId());
+            dto.setTeacherName(assignment.getTeacher().getFullName());
+        }
+        
+        // ClassSubject info
+        if (assignment.getClassSubject() != null) {
+            dto.setClassSubjectId(assignment.getClassSubject().getClassSubjectId());
+            if (assignment.getClassSubject().getSubject() != null) {
+                dto.setSubjectName(assignment.getClassSubject().getSubject().getName());
+            }
+            if (assignment.getClassSubject().getTerm() != null && 
+                assignment.getClassSubject().getTerm().getClazz() != null) {
+                dto.setClassName(assignment.getClassSubject().getTerm().getClazz().getName());
+            }
+        }
+        
+        return dto;
     }
 }
