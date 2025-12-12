@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AssignmentSummaryDTO {
+public class AssignmentDetailNestedDTO {
     private Long assignmentId;
     private String title;
     private String description;
@@ -26,9 +26,6 @@ public class AssignmentSummaryDTO {
     private Float latePenalty;
     private Integer submissionLimit;
     private String attachmentUrl;
-    private Boolean isAutoGraded;
-    private Boolean isExam;
     private ClassSubjectNestedDTO classSubject;
     private List<TopicSimpleDTO> topics;
-    private String status;
 }

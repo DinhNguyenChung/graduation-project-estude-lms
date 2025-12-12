@@ -16,6 +16,7 @@ public class TeacherGradeService {
 
     private final SubjectGradeRepository subjectGradeRepository;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<StudentGradeResponse> getGradesByClassSubject(Long classSubjectId) {
         List<SubjectGrade> grades = subjectGradeRepository.findByClassSubject_ClassSubjectId(classSubjectId);
 

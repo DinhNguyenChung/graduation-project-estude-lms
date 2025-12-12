@@ -1,0 +1,15 @@
+package org.example.estudebackendspring.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ClassSubjectNestedDTO {
+    private Long classSubjectId;
+    private SubjectSimpleDTO subject;
+    private ClazzSimpleDTO clazz;
+    private TeacherSimpleDTO teacher;
+}

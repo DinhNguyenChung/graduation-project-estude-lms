@@ -63,6 +63,7 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getStudentsBySchool(schoolId));
     }
     @GetMapping("/{studentId}/assignments")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<AssignmentSummaryDTO>> listAssignmentsForStudent(@PathVariable Long studentId) {
         List<AssignmentSummaryDTO> list = service.listAssignmentsForStudent(studentId);
         if (list.isEmpty())

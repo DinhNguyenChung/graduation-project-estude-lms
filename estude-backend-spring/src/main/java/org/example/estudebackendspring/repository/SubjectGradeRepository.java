@@ -30,19 +30,29 @@ public interface SubjectGradeRepository extends JpaRepository<SubjectGrade, Long
 
 
     //    List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
-@Query("SELECT sg FROM SubjectGrade sg " +
+@Query("SELECT DISTINCT sg FROM SubjectGrade sg " +
+        "LEFT JOIN FETCH sg.regularScores " +
         "JOIN FETCH sg.student s " +
         "JOIN FETCH sg.classSubject cs " +
         "JOIN FETCH cs.subject subj " +
         "WHERE cs.classSubjectId = :classSubjectId")
 List<SubjectGrade> findByClassSubjectIdWithStudent(@Param("classSubjectId") Long classSubjectId);
-    Optional<SubjectGrade> findByStudent_UserIdAndClassSubject_ClassSubjectId(Long studentUserId, Long classSubjectId);
+    
+    @Query("SELECT sg FROM SubjectGrade sg " +
+           "LEFT JOIN FETCH sg.regularScores " +
+           "WHERE sg.student.userId = :studentUserId " +
+           "AND sg.classSubject.classSubjectId = :classSubjectId")
+    Optional<SubjectGrade> findByStudent_UserIdAndClassSubject_ClassSubjectId(
+            @Param("studentUserId") Long studentUserId, 
+            @Param("classSubjectId") Long classSubjectId);
+    
     List<SubjectGrade> findByClassSubject_ClassSubjectId(Long classSubjectId);
     /**
      * Lấy tất cả SubjectGrade của 1 học sinh, fetch các relation cần thiết:
-     * classSubject -> subject, term -> clazz, teacher
+     * classSubject -> subject, term -> clazz, teacher, và regularScores
      */
     @Query("SELECT sg FROM SubjectGrade sg " +
+            "LEFT JOIN FETCH sg.regularScores " +
             "JOIN FETCH sg.classSubject cs " +
             "JOIN FETCH cs.subject subj " +
             "JOIN FETCH cs.term t " +

@@ -12,12 +12,36 @@ import java.util.List;
 public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
     boolean existsByAssignmentIdAndSubmissionsNotEmpty(Long assignmentId);
 //    List<Assignment> findAssignmentsByCl(Long studentId);
-        @Query("SELECT a FROM Assignment a WHERE a.classSubject.term.clazz.classId IN :classIds AND (a.isPublished IS NULL OR a.isPublished = true)")
-        List<Assignment> findPublishedByClassIds(@Param("classIds") List<Long> classIds);
+    @Query("SELECT DISTINCT a FROM Assignment a " +
+           "JOIN FETCH a.classSubject cs " +
+           "JOIN FETCH cs.subject " +
+           "JOIN FETCH cs.teacher " +
+           "JOIN FETCH cs.term t " +
+           "JOIN FETCH t.clazz c " +
+           "WHERE c.classId IN :classIds " +
+           "AND (a.isPublished IS NULL OR a.isPublished = true)")
+    List<Assignment> findPublishedByClassIds(@Param("classIds") List<Long> classIds);
         // Lấy assignment theo classId
         @Query("SELECT a FROM Assignment a WHERE a.classSubject.term.clazz.classId = :classId")
         List<Assignment> findByClassId(@Param("classId") Long classId);
-        List<Assignment> findAssignmentsByClassSubject_ClassSubjectId(Long classId);
+        
+        @Query("SELECT DISTINCT a FROM Assignment a " +
+               "JOIN FETCH a.classSubject cs " +
+               "JOIN FETCH cs.subject " +
+               "JOIN FETCH cs.teacher " +
+               "JOIN FETCH cs.term t " +
+               "JOIN FETCH t.clazz " +
+               "WHERE cs.classSubjectId = :classSubjectId")
+        List<Assignment> findAssignmentsByClassSubject_ClassSubjectId(@Param("classSubjectId") Long classSubjectId);
+        
+        @Query("SELECT a FROM Assignment a " +
+               "JOIN FETCH a.classSubject cs " +
+               "JOIN FETCH cs.subject " +
+               "JOIN FETCH cs.teacher " +
+               "JOIN FETCH cs.term t " +
+               "JOIN FETCH t.clazz " +
+               "WHERE a.assignmentId = :assignmentId")
+        java.util.Optional<Assignment> findByIdWithDetails(@Param("assignmentId") Long assignmentId);
 
 //        @Query("SELECT COUNT(a) FROM Assignment a WHERE a.classSubject.term.termId = :termId AND a.classSubject IN " +
 //                "(SELECT cs FROM ClassSubject cs WHERE cs.term.termId = :termId AND cs.classSubjectId IN " +

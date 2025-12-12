@@ -29,6 +29,8 @@ public class SubjectGradeService {
     private static final double REGULAR_WEIGHT = 0.10;
     private static final double MIDTERM_WEIGHT = 0.20;
     private static final double FINAL_WEIGHT = 0.30;
+    
+    @Transactional
     public List<SubjectGrade> getByClassSubject(Long classSubjectId) {
         return subjectGradeRepository.findByClassSubjectIdWithStudent(classSubjectId);
     }

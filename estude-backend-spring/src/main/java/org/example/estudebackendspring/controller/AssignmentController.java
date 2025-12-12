@@ -160,10 +160,8 @@ public class AssignmentController {
     public ResponseEntity<?> getAssignment(@PathVariable Long assignmentId) {
         try {
             Assignment assignment = assignmentService.getAssignment(assignmentId);
-            AssignmentResponseDTO dto = assignmentService.convertToDTO(assignment);
-            return ResponseEntity.ok(
-                    new AuthResponse(true, "Assignment found", dto)
-            );
+            org.example.estudebackendspring.dto.AssignmentDetailNestedDTO dto = assignmentService.convertToDetailNestedDTO(assignment);
+            return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
             return ResponseEntity.ok(
                     new AuthResponse(false, "Assignment not found", null)
@@ -288,9 +286,9 @@ public class AssignmentController {
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No assignments found for classId: " + classSubjectId);
             return ResponseEntity.ok(Collections.emptyList());
         }
-        // Convert to DTOs to avoid lazy loading issues
-        List<AssignmentResponseDTO> dtos = assignments.stream()
-                .map(assignmentService::convertToDTO)
+        // Convert to AssignmentSummaryDTO with nested structure
+        List<org.example.estudebackendspring.dto.AssignmentSummaryDTO> dtos = assignments.stream()
+                .map(assignmentService::convertToSummaryDTO)
                 .toList();
         return ResponseEntity.ok(dtos);
     }

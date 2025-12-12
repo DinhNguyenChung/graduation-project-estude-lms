@@ -48,6 +48,7 @@ public class AssignmentSubmissionService {
     }
 
     /* 1) List assignments for student (classes student enrolled in) */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<AssignmentSummaryDTO> listAssignmentsForStudent(Long studentId) {
         List<Long> classIds = enrollmentRepository.findClassIdsByStudentId(studentId);
         if (classIds == null || classIds.isEmpty()) return Collections.emptyList();
@@ -56,27 +57,83 @@ public class AssignmentSubmissionService {
         return assignments.stream().map(a -> {
             AssignmentSummaryDTO dto = new AssignmentSummaryDTO();
             dto.setAssignmentId(a.getAssignmentId());
-            dto.setClassSubjectId(a.getClassSubject().getClassSubjectId());
             dto.setTitle(a.getTitle());
+            dto.setDescription(a.getDescription());
             dto.setDueDate(a.getDueDate());
-            dto.setIsExam(a.getIsExam());
-            if (a.getClassSubject() != null && a.getClassSubject().getTerm().getClazz() != null) {
-                dto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
-                dto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
-            }
+            dto.setStartDate(a.getStartDate());
+            dto.setCreatedAt(a.getCreatedAt());
             dto.setType(a.getType());
-            dto.setSubmissionLimit(a.getSubmissionLimit());
+            dto.setMaxScore(a.getMaxScore());
+            dto.setTimeLimit(a.getTimeLimit());
+            dto.setIsPublished(a.getIsPublished());
             dto.setAllowLateSubmission(a.getAllowLateSubmission());
-            dto.setStatus(
-                    a.getSubmissions().isEmpty()
-                            ? SubmissionStatus.NOT_SUBMITTED
-                            : a.getSubmissions().stream()
-                            .sorted(Comparator.comparing(Submission::getSubmittedAt).reversed())
-                            .map(Submission::getStatus)
-                            .findFirst()
-                            .orElse(SubmissionStatus.NOT_SUBMITTED)
-            );
-
+            dto.setLatePenalty(a.getLatePenalty());
+            dto.setSubmissionLimit(a.getSubmissionLimit());
+            dto.setAttachmentUrl(a.getAttachmentUrl());
+            dto.setIsAutoGraded(a.getIsAutoGraded());
+            dto.setIsExam(a.getIsExam());
+            
+            // Map ClassSubject with nested DTOs
+            if (a.getClassSubject() != null) {
+                ClassSubjectNestedDTO csDto = new ClassSubjectNestedDTO();
+                csDto.setClassSubjectId(a.getClassSubject().getClassSubjectId());
+                
+                // Map Subject
+                if (a.getClassSubject().getSubject() != null) {
+                    SubjectSimpleDTO subjectDto = new SubjectSimpleDTO();
+                    subjectDto.setSubjectId(a.getClassSubject().getSubject().getSubjectId());
+                    subjectDto.setSubjectName(a.getClassSubject().getSubject().getName());
+                    subjectDto.setSubjectCode(a.getClassSubject().getSubject().getSubjectId().toString());
+                    csDto.setSubject(subjectDto);
+                }
+                
+                // Map Clazz
+                if (a.getClassSubject().getTerm() != null && a.getClassSubject().getTerm().getClazz() != null) {
+                    ClazzSimpleDTO clazzDto = new ClazzSimpleDTO();
+                    clazzDto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
+                    clazzDto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
+                    csDto.setClazz(clazzDto);
+                }
+                
+                // Map Teacher
+                if (a.getClassSubject().getTeacher() != null) {
+                    TeacherSimpleDTO teacherDto = new TeacherSimpleDTO();
+                    teacherDto.setTeacherId(a.getClassSubject().getTeacher().getUserId());
+                    teacherDto.setFullName(a.getClassSubject().getTeacher().getFullName());
+                    teacherDto.setAvatarPath(a.getClassSubject().getTeacher().getAvatarPath());
+                    csDto.setTeacher(teacherDto);
+                }
+                
+                dto.setClassSubject(csDto);
+            }
+            
+            // Map Topics from Questions
+            if (a.getQuestions() != null && !a.getQuestions().isEmpty()) {
+                List<TopicSimpleDTO> topicDtos = a.getQuestions().stream()
+                    .filter(q -> q.getTopic() != null)
+                    .map(q -> {
+                        TopicSimpleDTO topicDto = new TopicSimpleDTO();
+                        topicDto.setTopicId(q.getTopic().getTopicId());
+                        topicDto.setTopicName(q.getTopic().getName());
+                        return topicDto;
+                    })
+                    .distinct()
+                    .collect(Collectors.toList());
+                dto.setTopics(topicDtos);
+            } else {
+                dto.setTopics(Collections.emptyList());
+            }
+            
+            // Set status based on submissions
+            if (a.getSubmissions() != null && !a.getSubmissions().isEmpty()) {
+                dto.setStatus(a.getSubmissions().stream()
+                    .sorted(Comparator.comparing(Submission::getSubmittedAt).reversed())
+                    .map(s -> s.getStatus() != null ? s.getStatus().toString() : "NOT_SUBMITTED")
+                    .findFirst()
+                    .orElse("NOT_SUBMITTED"));
+            } else {
+                dto.setStatus("NOT_SUBMITTED");
+            }
 
             return dto;
         }).collect(Collectors.toList());

@@ -29,8 +29,9 @@ public class AssignmentService {
     }
 
     // Read
+    @Transactional(readOnly = true)
     public Assignment getAssignment(Long assignmentId) {
-        return assignmentRepository.findById(assignmentId)
+        return assignmentRepository.findByIdWithDetails(assignmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
     }
 
@@ -107,6 +108,161 @@ public class AssignmentService {
                 assignment.getClassSubject().getTerm().getClazz() != null) {
                 dto.setClassName(assignment.getClassSubject().getTerm().getClazz().getName());
             }
+        }
+        
+        return dto;
+    }
+    
+    /**
+     * Convert Assignment entity to AssignmentSummaryDTO with nested structure
+     */
+    @Transactional(readOnly = true)
+    public org.example.estudebackendspring.dto.AssignmentSummaryDTO convertToSummaryDTO(Assignment a) {
+        org.example.estudebackendspring.dto.AssignmentSummaryDTO dto = new org.example.estudebackendspring.dto.AssignmentSummaryDTO();
+        dto.setAssignmentId(a.getAssignmentId());
+        dto.setTitle(a.getTitle());
+        dto.setDescription(a.getDescription());
+        dto.setDueDate(a.getDueDate());
+        dto.setStartDate(a.getStartDate());
+        dto.setCreatedAt(a.getCreatedAt());
+        dto.setType(a.getType());
+        dto.setMaxScore(a.getMaxScore());
+        dto.setTimeLimit(a.getTimeLimit());
+        dto.setIsPublished(a.getIsPublished());
+        dto.setAllowLateSubmission(a.getAllowLateSubmission());
+        dto.setLatePenalty(a.getLatePenalty());
+        dto.setSubmissionLimit(a.getSubmissionLimit());
+        dto.setAttachmentUrl(a.getAttachmentUrl());
+        dto.setIsAutoGraded(a.getIsAutoGraded());
+        dto.setIsExam(a.getIsExam());
+        
+        // Map ClassSubject with nested DTOs
+        if (a.getClassSubject() != null) {
+            org.example.estudebackendspring.dto.ClassSubjectNestedDTO csDto = new org.example.estudebackendspring.dto.ClassSubjectNestedDTO();
+            csDto.setClassSubjectId(a.getClassSubject().getClassSubjectId());
+            
+            // Map Subject
+            if (a.getClassSubject().getSubject() != null) {
+                org.example.estudebackendspring.dto.SubjectSimpleDTO subjectDto = new org.example.estudebackendspring.dto.SubjectSimpleDTO();
+                subjectDto.setSubjectId(a.getClassSubject().getSubject().getSubjectId());
+                subjectDto.setSubjectName(a.getClassSubject().getSubject().getName());
+                subjectDto.setSubjectCode(a.getClassSubject().getSubject().getSubjectId().toString());
+                csDto.setSubject(subjectDto);
+            }
+            
+            // Map Clazz
+            if (a.getClassSubject().getTerm() != null && a.getClassSubject().getTerm().getClazz() != null) {
+                org.example.estudebackendspring.dto.ClazzSimpleDTO clazzDto = new org.example.estudebackendspring.dto.ClazzSimpleDTO();
+                clazzDto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
+                clazzDto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
+                csDto.setClazz(clazzDto);
+            }
+            
+            // Map Teacher
+            if (a.getClassSubject().getTeacher() != null) {
+                org.example.estudebackendspring.dto.TeacherSimpleDTO teacherDto = new org.example.estudebackendspring.dto.TeacherSimpleDTO();
+                teacherDto.setTeacherId(a.getClassSubject().getTeacher().getUserId());
+                teacherDto.setFullName(a.getClassSubject().getTeacher().getFullName());
+                teacherDto.setAvatarPath(a.getClassSubject().getTeacher().getAvatarPath());
+                csDto.setTeacher(teacherDto);
+            }
+            
+            dto.setClassSubject(csDto);
+        }
+        
+        // Map Topics from Questions
+        if (a.getQuestions() != null && !a.getQuestions().isEmpty()) {
+            List<org.example.estudebackendspring.dto.TopicSimpleDTO> topicDtos = a.getQuestions().stream()
+                .filter(q -> q.getTopic() != null)
+                .map(q -> {
+                    org.example.estudebackendspring.dto.TopicSimpleDTO topicDto = new org.example.estudebackendspring.dto.TopicSimpleDTO();
+                    topicDto.setTopicId(q.getTopic().getTopicId());
+                    topicDto.setTopicName(q.getTopic().getName());
+                    return topicDto;
+                })
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+            dto.setTopics(topicDtos);
+        } else {
+            dto.setTopics(java.util.Collections.emptyList());
+        }
+        
+        // No status for class-subject endpoint (teacher view)
+        dto.setStatus(null);
+        
+        return dto;
+    }
+    
+    /**
+     * Convert Assignment entity to AssignmentDetailNestedDTO with full details
+     */
+    @Transactional(readOnly = true)
+    public org.example.estudebackendspring.dto.AssignmentDetailNestedDTO convertToDetailNestedDTO(Assignment a) {
+        org.example.estudebackendspring.dto.AssignmentDetailNestedDTO dto = new org.example.estudebackendspring.dto.AssignmentDetailNestedDTO();
+        dto.setAssignmentId(a.getAssignmentId());
+        dto.setTitle(a.getTitle());
+        dto.setDescription(a.getDescription());
+        dto.setDueDate(a.getDueDate());
+        dto.setStartDate(a.getStartDate());
+        dto.setCreatedAt(a.getCreatedAt());
+        dto.setType(a.getType());
+        dto.setMaxScore(a.getMaxScore());
+        dto.setTimeLimit(a.getTimeLimit());
+        dto.setIsPublished(a.getIsPublished());
+        dto.setAllowLateSubmission(a.getAllowLateSubmission());
+        dto.setLatePenalty(a.getLatePenalty());
+        dto.setSubmissionLimit(a.getSubmissionLimit());
+        dto.setAttachmentUrl(a.getAttachmentUrl());
+        
+        // Map ClassSubject with nested DTOs
+        if (a.getClassSubject() != null) {
+            org.example.estudebackendspring.dto.ClassSubjectNestedDTO csDto = new org.example.estudebackendspring.dto.ClassSubjectNestedDTO();
+            csDto.setClassSubjectId(a.getClassSubject().getClassSubjectId());
+            
+            // Map Subject
+            if (a.getClassSubject().getSubject() != null) {
+                org.example.estudebackendspring.dto.SubjectSimpleDTO subjectDto = new org.example.estudebackendspring.dto.SubjectSimpleDTO();
+                subjectDto.setSubjectId(a.getClassSubject().getSubject().getSubjectId());
+                subjectDto.setSubjectName(a.getClassSubject().getSubject().getName());
+                subjectDto.setSubjectCode(a.getClassSubject().getSubject().getSubjectId().toString());
+                csDto.setSubject(subjectDto);
+            }
+            
+            // Map Clazz
+            if (a.getClassSubject().getTerm() != null && a.getClassSubject().getTerm().getClazz() != null) {
+                org.example.estudebackendspring.dto.ClazzSimpleDTO clazzDto = new org.example.estudebackendspring.dto.ClazzSimpleDTO();
+                clazzDto.setClassId(a.getClassSubject().getTerm().getClazz().getClassId());
+                clazzDto.setClassName(a.getClassSubject().getTerm().getClazz().getName());
+                csDto.setClazz(clazzDto);
+            }
+            
+            // Map Teacher
+            if (a.getClassSubject().getTeacher() != null) {
+                org.example.estudebackendspring.dto.TeacherSimpleDTO teacherDto = new org.example.estudebackendspring.dto.TeacherSimpleDTO();
+                teacherDto.setTeacherId(a.getClassSubject().getTeacher().getUserId());
+                teacherDto.setFullName(a.getClassSubject().getTeacher().getFullName());
+                teacherDto.setAvatarPath(a.getClassSubject().getTeacher().getAvatarPath());
+                csDto.setTeacher(teacherDto);
+            }
+            
+            dto.setClassSubject(csDto);
+        }
+        
+        // Map Topics from Questions
+        if (a.getQuestions() != null && !a.getQuestions().isEmpty()) {
+            List<org.example.estudebackendspring.dto.TopicSimpleDTO> topicDtos = a.getQuestions().stream()
+                .filter(q -> q.getTopic() != null)
+                .map(q -> {
+                    org.example.estudebackendspring.dto.TopicSimpleDTO topicDto = new org.example.estudebackendspring.dto.TopicSimpleDTO();
+                    topicDto.setTopicId(q.getTopic().getTopicId());
+                    topicDto.setTopicName(q.getTopic().getName());
+                    return topicDto;
+                })
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+            dto.setTopics(topicDtos);
+        } else {
+            dto.setTopics(java.util.Collections.emptyList());
         }
         
         return dto;

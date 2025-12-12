@@ -95,6 +95,7 @@ public class TeacherController {
     }
     // GET /api/teacher/grades/{classSubjectId}
     @GetMapping("/grades/class-subject/{classSubjectId}")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<StudentGradeResponse>> getGrades(
             @PathVariable Long classSubjectId
     ) {
