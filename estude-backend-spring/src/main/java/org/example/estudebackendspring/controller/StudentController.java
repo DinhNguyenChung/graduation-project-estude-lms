@@ -3,21 +3,25 @@ package org.example.estudebackendspring.controller;
 import org.example.estudebackendspring.dto.AssignmentSummaryDTO;
 import org.example.estudebackendspring.dto.ClassDTO;
 import org.example.estudebackendspring.dto.ClassSubjectDTO;
+import org.example.estudebackendspring.dto.UserDTO;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Clazz;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.Student;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.StudentRepository;
 import org.example.estudebackendspring.service.AssignmentSubmissionService;
 import org.example.estudebackendspring.service.EnrollmentService;
 import org.example.estudebackendspring.service.StudentService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/students")
@@ -27,17 +31,25 @@ public class StudentController {
     private final EnrollmentService enrollmentService;
     private final StudentRepository repository;
     private final AssignmentSubmissionService service;
+    private final UserMapper userMapper;
 
     public StudentController(StudentService studentService, EnrollmentService enrollmentService,
-                             StudentRepository repository, AssignmentSubmissionService service) {
+                             StudentRepository repository, AssignmentSubmissionService service,
+                             UserMapper userMapper) {
         this.studentService = studentService;
         this.enrollmentService = enrollmentService;
         this.repository = repository;
         this.service = service;
+        this.userMapper = userMapper;
     }
+    
     @GetMapping
-    public List<Student> getAllStudents() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<UserDTO> getAllStudents() {
+        return repository.findAllWithSchool()
+                .stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
     }
     @GetMapping("/{studentId}")
     public ResponseEntity<?> getStudentById(@PathVariable Long studentId) {

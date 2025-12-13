@@ -42,7 +42,12 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 //    Optional<Enrollment> findByStudent(Student student);
         List<Enrollment> findByStudent(Student student);
     List<Enrollment> findByClazz(Clazz clazz);
-
+    
+    @Query("SELECT e FROM Enrollment e " +
+           "LEFT JOIN FETCH e.student s " +
+           "LEFT JOIN FETCH e.clazz c " +
+           "ORDER BY e.dateJoined DESC")
+    List<Enrollment> findAllWithDetails();
 
 
 }

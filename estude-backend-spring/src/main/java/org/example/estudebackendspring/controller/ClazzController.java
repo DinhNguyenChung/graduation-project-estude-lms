@@ -54,27 +54,33 @@ public class ClazzController {
     }
 
     @PostMapping
-    public ResponseEntity<Clazz> createClazz(@Valid @RequestBody CreateClazzRequest req) {
+    @Transactional
+    public ResponseEntity<ClazzDTO> createClazz(@Valid @RequestBody CreateClazzRequest req) {
         Clazz created = service.createClazz(req);
         
         // Log class creation
         try {
-            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            logEntryService.createLog(
-                "Clazz",
-                created.getClassId(),
-                "Tạo lớp học mới: " + created.getName() + " (Khối " + created.getGradeLevel() + ")",
-                ActionType.CREATE,
-                created.getSchool() != null ? created.getSchool().getSchoolId() : null,
-                "School",
-                currentUser
-            );
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                User currentUser = (User) principal;
+                logEntryService.createLog(
+                    "Clazz",
+                    created.getClassId(),
+                    "Tạo lớp học mới: " + created.getName() + " (Khối " + created.getGradeLevel() + ")",
+                    ActionType.CREATE,
+                    created.getSchool() != null ? created.getSchool().getSchoolId() : null,
+                    "School",
+                    currentUser
+                );
+            }
         } catch (Exception e) {
             // Log warning but don't fail the main operation
             System.err.println("Failed to log class creation: " + e.getMessage());
         }
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        // Convert to DTO to avoid lazy loading issues
+        ClazzDTO dto = service.convertToDTO(created);
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @GetMapping("/{classId}")
@@ -85,28 +91,34 @@ public class ClazzController {
     }
 
     @PutMapping("/{classId}")
-    public ResponseEntity<Clazz> updateClazz(@PathVariable Long classId,
+    @Transactional
+    public ResponseEntity<ClazzDTO> updateClazz(@PathVariable Long classId,
                                              @Valid @RequestBody UpdateClazzRequest req) {
         Clazz updated = service.updateClazz(classId, req);
         
         // Log class update
         try {
-            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            logEntryService.createLog(
-                "Clazz",
-                classId,
-                "Cập nhật thông tin lớp: " + updated.getName(),
-                ActionType.UPDATE,
-                updated.getSchool() != null ? updated.getSchool().getSchoolId() : null,
-                "School",
-                currentUser
-            );
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                User currentUser = (User) principal;
+                logEntryService.createLog(
+                    "Clazz",
+                    classId,
+                    "Cập nhật thông tin lớp: " + updated.getName(),
+                    ActionType.UPDATE,
+                    updated.getSchool() != null ? updated.getSchool().getSchoolId() : null,
+                    "School",
+                    currentUser
+                );
+            }
         } catch (Exception e) {
             // Log warning but don't fail the main operation
             System.err.println("Failed to log class update: " + e.getMessage());
         }
         
-        return ResponseEntity.ok(updated);
+        // Convert to DTO to avoid lazy loading issues
+        ClazzDTO dto = service.convertToDTO(updated);
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{classId}")
@@ -123,17 +135,20 @@ public class ClazzController {
         
         // Log class deletion
         try {
-            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String className = clazz != null ? clazz.getName() : "Unknown";
-            logEntryService.createLog(
-                "Clazz",
-                classId,
-                "Xóa lớp học: " + className,
-                ActionType.DELETE,
-                clazz != null && clazz.getSchool() != null ? clazz.getSchool().getSchoolId() : null,
-                "School",
-                currentUser
-            );
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                User currentUser = (User) principal;
+                String className = clazz != null ? clazz.getName() : "Unknown";
+                logEntryService.createLog(
+                    "Clazz",
+                    classId,
+                    "Xóa lớp học: " + className,
+                    ActionType.DELETE,
+                    clazz != null && clazz.getSchool() != null ? clazz.getSchool().getSchoolId() : null,
+                    "School",
+                    currentUser
+                );
+            }
         } catch (Exception e) {
             // Log warning but don't fail the main operation
             System.err.println("Failed to log class deletion: " + e.getMessage());

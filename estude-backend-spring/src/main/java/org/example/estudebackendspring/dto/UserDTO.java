@@ -27,5 +27,5 @@ public class UserDTO {
     
     // Teacher-specific fields
     private Boolean isAdmin;
-    private Boolean isHomeroomTeacher;
+    private Boolean homeroomTeacher;
 }

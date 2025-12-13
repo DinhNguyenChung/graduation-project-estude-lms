@@ -260,4 +260,40 @@ public class ClazzService {
             return dto;
         }).collect(Collectors.toList());
     }
+    
+    /**
+     * Convert Clazz entity to DTO
+     */
+    @Transactional
+    public ClazzDTO convertToDTO(Clazz clazz) {
+        ClazzDTO dto = new ClazzDTO();
+        dto.setClassId(clazz.getClassId());
+        dto.setName(clazz.getName());
+        dto.setGradeLevel(clazz.getGradeLevel());
+        dto.setClassSize(clazz.getClassSize());
+        
+        if (clazz.getHomeroomTeacher() != null) {
+            dto.setHomeroomTeacherId(clazz.getHomeroomTeacher().getUserId());
+            dto.setHomeroomTeacherName(clazz.getHomeroomTeacher().getFullName());
+        }
+        
+        if (clazz.getSchool() != null) {
+            dto.setSchoolId(clazz.getSchool().getSchoolId());
+            dto.setSchoolName(clazz.getSchool().getSchoolName());
+        }
+        
+        if (clazz.getTerms() != null) {
+            List<TermDTO> termDTOs = clazz.getTerms().stream()
+                .map(term -> new TermDTO(
+                    term.getTermId(),
+                    term.getName(),
+                    term.getBeginDate(),
+                    term.getEndDate()
+                ))
+                .collect(Collectors.toList());
+            dto.setTerms(termDTOs);
+        }
+        
+        return dto;
+    }
 }

@@ -59,5 +59,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     // Lấy danh sách sinh viên theo schoolId
     @Query("SELECT s FROM Student s WHERE s.school.schoolId = :schoolId")
     List<Student> findStudentsBySchoolId(@Param("schoolId") Long schoolId);
+    
+    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.school ORDER BY s.fullName")
+    List<Student> findAllWithSchool();
 
 }

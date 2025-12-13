@@ -14,6 +14,7 @@ import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -157,6 +158,7 @@ public class ClassSubjectController {
      * This solves the 409 Conflict issue when editing teacher in Frontend
      */
     @PatchMapping("/{classSubjectId}/teacher")
+    @Transactional
     public ResponseEntity<?> updateTeacher(
             @PathVariable Long classSubjectId,
             @RequestBody UpdateTeacherRequest request
@@ -167,41 +169,47 @@ public class ClassSubjectController {
             
             // Log the update
             try {
-                User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-                String oldTeacherName = updated.getTeacher() != null ? updated.getTeacher().getFullName() : "Không có";
-                String newTeacherInfo = request.getTeacherId() != null ? 
-                        " → " + updated.getTeacher().getFullName() : 
-                        " → Xóa giáo viên";
-                
-                logEntryService.createLog(
-                        "ClassSubject",
-                        classSubjectId,
-                        "Cập nhật giáo viên môn " + updated.getSubject().getName() +
-                                " lớp " + updated.getTerm().getClazz().getName() + newTeacherInfo,
-                        ActionType.UPDATE,
-                        updated.getTerm().getTermId(),
-                        "Term",
-                        currentUser
-                );
+                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                if (principal instanceof User) {
+                    User currentUser = (User) principal;
+                    String teacherInfo = updated.getTeacher() != null ? 
+                            " → " + updated.getTeacher().getFullName() : 
+                            " → Xóa giáo viên";
+                    
+                    logEntryService.createLog(
+                            "ClassSubject",
+                            classSubjectId,
+                            "Cập nhật giáo viên môn " + updated.getSubject().getName() +
+                                    " lớp " + updated.getTerm().getClazz().getName() + teacherInfo,
+                            ActionType.UPDATE,
+                            updated.getTerm().getTermId(),
+                            "Term",
+                            currentUser
+                    );
+                }
             } catch (Exception e) {
                 System.err.println("⚠ Failed to log teacher update: " + e.getMessage());
             }
             
-            // Build response
+            // Build response DTO to avoid lazy loading issues
             Map<String, Object> response = new HashMap<>();
             response.put("classSubjectId", updated.getClassSubjectId());
-            response.put("classId", updated.getTerm().getClazz().getClassId());
-            response.put("subjectId", updated.getSubject().getSubjectId());
+            response.put("classId", updated.getTerm() != null && updated.getTerm().getClazz() != null ? 
+                    updated.getTerm().getClazz().getClassId() : null);
+            response.put("subjectId", updated.getSubject() != null ? updated.getSubject().getSubjectId() : null);
             response.put("teacherId", updated.getTeacher() != null ? updated.getTeacher().getUserId() : null);
             response.put("teacherName", updated.getTeacher() != null ? updated.getTeacher().getFullName() : null);
-            response.put("termId", updated.getTerm().getTermId());
+            response.put("termId", updated.getTerm() != null ? updated.getTerm().getTermId() : null);
             
-            // Add subject and teacher details
-            Map<String, Object> subjectDetail = new HashMap<>();
-            subjectDetail.put("subjectId", updated.getSubject().getSubjectId());
-            subjectDetail.put("name", updated.getSubject().getName());
-            response.put("subject", subjectDetail);
+            // Add subject details
+            if (updated.getSubject() != null) {
+                Map<String, Object> subjectDetail = new HashMap<>();
+                subjectDetail.put("subjectId", updated.getSubject().getSubjectId());
+                subjectDetail.put("name", updated.getSubject().getName());
+                response.put("subject", subjectDetail);
+            }
             
+            // Add teacher details
             if (updated.getTeacher() != null) {
                 Map<String, Object> teacherDetail = new HashMap<>();
                 teacherDetail.put("userId", updated.getTeacher().getUserId());

@@ -238,8 +238,8 @@ public class ClassSubjectService {
      */
     @Transactional
     public ClassSubject updateTeacher(Long classSubjectId, Long teacherId) {
-        // 1. Find ClassSubject
-        ClassSubject classSubject = classSubjectRepository.findById(classSubjectId)
+        // 1. Find ClassSubject with all relationships eagerly loaded
+        ClassSubject classSubject = classSubjectRepository.findByIdWithDetails(classSubjectId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "ClassSubject with ID " + classSubjectId + " not found"
                 ));

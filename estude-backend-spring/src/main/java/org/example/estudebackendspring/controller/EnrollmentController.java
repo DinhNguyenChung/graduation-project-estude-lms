@@ -3,6 +3,7 @@ package org.example.estudebackendspring.controller;
 
 import jakarta.validation.Valid;
 import org.example.estudebackendspring.dto.CreateEnrollmentRequest;
+import org.example.estudebackendspring.dto.EnrollmentDTO;
 import org.example.estudebackendspring.entity.Enrollment;
 import org.example.estudebackendspring.entity.User;
 import org.example.estudebackendspring.enums.ActionType;
@@ -12,10 +13,12 @@ import org.example.estudebackendspring.service.LogEntryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -32,9 +35,38 @@ public class  EnrollmentController {
         this.enrollmentRepository = enrollmentRepository;
         this.logEntryService = logEntryService;
     }
+    
     @GetMapping
-    public List<Enrollment> getAllEnrollments() {
-        return enrollmentRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<EnrollmentDTO> getAllEnrollments() {
+        return enrollmentRepository.findAllWithDetails()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    private EnrollmentDTO convertToDTO(Enrollment enrollment) {
+        EnrollmentDTO dto = new EnrollmentDTO();
+        dto.setEnrollmentId(enrollment.getEnrollmentId());
+        dto.setDateJoined(enrollment.getDateJoined());
+        
+        // Student info
+        if (enrollment.getStudent() != null) {
+            dto.setStudentId(enrollment.getStudent().getUserId());
+            dto.setStudentCode(enrollment.getStudent().getStudentCode());
+            dto.setStudentName(enrollment.getStudent().getFullName());
+            dto.setStudentEmail(enrollment.getStudent().getEmail());
+        }
+        
+        // Class info
+        if (enrollment.getClazz() != null) {
+            dto.setClassId(enrollment.getClazz().getClassId());
+            dto.setClassName(enrollment.getClazz().getName());
+            dto.setGradeLevel(enrollment.getClazz().getGradeLevel() != null ? 
+                    enrollment.getClazz().getGradeLevel().name() : null);
+        }
+        
+        return dto;
     }
 
 //    @PostMapping
@@ -44,7 +76,8 @@ public class  EnrollmentController {
 //    }
 
     @PostMapping
-    public ResponseEntity<List<Enrollment>> enrollStudentsBatch(
+    @Transactional
+    public ResponseEntity<List<EnrollmentDTO>> enrollStudentsBatch(
             @RequestParam Long classId,
             @RequestBody List<Long> studentIds) {
 
@@ -52,35 +85,33 @@ public class  EnrollmentController {
         
         // Log batch enrollment
         try {
-            User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//            logEntryService.createLog(
-//                "Enrollment",
-//                null, // No single enrollment ID for batch
-//                "Đăng ký hàng loạt " + studentIds.size() + " học sinh vào lớp",
-//                ActionType.CREATE,
-//                classId,
-//                "Clazz",
-//                currentUser
-//            );
-            
-            // Log individual enrollments
-            for (Enrollment enrollment : created) {
-                logEntryService.createLog(
-                    "Enrollment",
-                    enrollment.getEnrollmentId(),
-                    "Học sinh được đăng ký vào lớp",
-                    ActionType.CREATE,
-                    classId,
-                    "Clazz",
-                    currentUser
-                );
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof User) {
+                User currentUser = (User) principal;
+                // Log individual enrollments
+                for (Enrollment enrollment : created) {
+                    logEntryService.createLog(
+                        "Enrollment",
+                        enrollment.getEnrollmentId(),
+                        "Học sinh được đăng ký vào lớp",
+                        ActionType.CREATE,
+                        classId,
+                        "Clazz",
+                        currentUser
+                    );
+                }
             }
         } catch (Exception e) {
             // Log warning but don't fail the main operation
             System.err.println("Failed to log enrollment: " + e.getMessage());
         }
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        // Convert to DTOs before returning
+        List<EnrollmentDTO> dtos = created.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
     }
 
     @DeleteMapping("/{enrollmentId}")
