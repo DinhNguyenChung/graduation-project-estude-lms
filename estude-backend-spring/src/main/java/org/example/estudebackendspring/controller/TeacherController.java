@@ -4,6 +4,7 @@ import org.example.estudebackendspring.dto.*;
 import org.example.estudebackendspring.entity.ClassSubject;
 import org.example.estudebackendspring.entity.Student;
 import org.example.estudebackendspring.entity.Teacher;
+import org.example.estudebackendspring.mapper.UserMapper;
 import org.example.estudebackendspring.repository.TeacherRepository;
 import org.example.estudebackendspring.service.ClassSubjectService;
 import org.example.estudebackendspring.service.TeacherGradeService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/teachers")
@@ -24,19 +26,27 @@ public class TeacherController {
     private final ClassSubjectService classSubjectService;
     private final TeacherRepository teacherRepository;
     private final TeacherGradeService teacherGradeService;
+    private final UserMapper userMapper;
 
     public TeacherController(TeacherService teacherService,
                              ClassSubjectService classSubjectService,
-                             TeacherRepository teacherRepository
-    , TeacherGradeService teacherGradeService) {
+                             TeacherRepository teacherRepository,
+                             TeacherGradeService teacherGradeService,
+                             UserMapper userMapper) {
         this.teacherService = teacherService;
         this.classSubjectService = classSubjectService;
         this.teacherRepository = teacherRepository;
         this.teacherGradeService = teacherGradeService;
+        this.userMapper = userMapper;
     }
+    
     @GetMapping
-    public List<Teacher> getAllTeachers() {
-        return teacherRepository.findAll();
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<UserDTO> getAllTeachers() {
+        return teacherRepository.findAllWithSchool()
+                .stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
     }
     @GetMapping("/{teacherId}")
     public ResponseEntity<?> getTeacherById(@PathVariable Long teacherId) {

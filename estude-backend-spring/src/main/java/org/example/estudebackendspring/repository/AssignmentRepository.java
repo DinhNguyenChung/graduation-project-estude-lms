@@ -42,6 +42,18 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
                "JOIN FETCH t.clazz " +
                "WHERE a.assignmentId = :assignmentId")
         java.util.Optional<Assignment> findByIdWithDetails(@Param("assignmentId") Long assignmentId);
+        
+        @Query("SELECT DISTINCT a FROM Assignment a " +
+               "LEFT JOIN FETCH a.questions q " +
+               "LEFT JOIN FETCH q.topic " +
+               "WHERE a.assignmentId = :assignmentId")
+        java.util.Optional<Assignment> findByIdWithQuestions(@Param("assignmentId") Long assignmentId);
+        
+        @Query("SELECT DISTINCT q FROM Question q " +
+               "LEFT JOIN FETCH q.options " +
+               "WHERE q.assignment.assignmentId = :assignmentId " +
+               "ORDER BY q.questionOrder")
+        List<org.example.estudebackendspring.entity.Question> findQuestionsByAssignmentId(@Param("assignmentId") Long assignmentId);
 
 //        @Query("SELECT COUNT(a) FROM Assignment a WHERE a.classSubject.term.termId = :termId AND a.classSubject IN " +
 //                "(SELECT cs FROM ClassSubject cs WHERE cs.term.termId = :termId AND cs.classSubjectId IN " +

@@ -71,12 +71,13 @@ public class ClassSubjectService {
                 .toList();
     }
     
+    @Transactional
     public ClassSubjectResponse getClassSubjectByClassSubjectId(Long classSubjectId) {
-        ClassSubject cs = classSubjectRepository.findById(classSubjectId)
+        ClassSubject cs = classSubjectRepository.findByIdWithDetails(classSubjectId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy ClassSubject với id: " + classSubjectId));
 
         // Lấy lớp từ term
-        Clazz clazz = cs.getTerm().getClazz();
+        Clazz clazz = cs.getTerm() != null ? cs.getTerm().getClazz() : null;
 
         return ClassSubjectResponse.builder()
                 .classSubjectId(cs.getClassSubjectId())

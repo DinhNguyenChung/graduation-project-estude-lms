@@ -16,6 +16,7 @@ public interface NotificationRecipientRepository extends JpaRepository<Notificat
     @Query("SELECT nr FROM NotificationRecipient nr " +
             "JOIN FETCH nr.notification n " +
             "JOIN FETCH n.sender s " +
+            "LEFT JOIN FETCH s.school " +
             "WHERE nr.user.userId = :userId " +
             "ORDER BY n.sentAt DESC")
     List<NotificationRecipient> findByUserIdWithNotification(@Param("userId") Long userId);

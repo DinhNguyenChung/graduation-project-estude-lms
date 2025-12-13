@@ -28,4 +28,5 @@ public class AssignmentDetailNestedDTO {
     private String attachmentUrl;
     private ClassSubjectNestedDTO classSubject;
     private List<TopicSimpleDTO> topics;
+    private List<QuestionDTO> questions;
 }

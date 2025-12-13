@@ -31,8 +31,15 @@ public class AssignmentService {
     // Read
     @Transactional(readOnly = true)
     public Assignment getAssignment(Long assignmentId) {
-        return assignmentRepository.findByIdWithDetails(assignmentId)
+        Assignment assignment = assignmentRepository.findByIdWithDetails(assignmentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found"));
+        
+        // Fetch questions with options separately to avoid CartesianProduct
+        List<org.example.estudebackendspring.entity.Question> questions = 
+            assignmentRepository.findQuestionsByAssignmentId(assignmentId);
+        assignment.setQuestions(questions);
+        
+        return assignment;
     }
 
     // Update
@@ -263,6 +270,43 @@ public class AssignmentService {
             dto.setTopics(topicDtos);
         } else {
             dto.setTopics(java.util.Collections.emptyList());
+        }
+        
+        // Map Questions with Options
+        if (a.getQuestions() != null && !a.getQuestions().isEmpty()) {
+            List<org.example.estudebackendspring.dto.QuestionDTO> questionDtos = a.getQuestions().stream()
+                .map(q -> {
+                    org.example.estudebackendspring.dto.QuestionDTO qDto = new org.example.estudebackendspring.dto.QuestionDTO();
+                    qDto.setQuestionId(q.getQuestionId());
+                    qDto.setQuestionText(q.getQuestionText());
+                    qDto.setPoints(q.getPoints());
+                    qDto.setQuestionType(q.getQuestionType() != null ? q.getQuestionType().name() : null);
+                    qDto.setQuestionOrder(q.getQuestionOrder());
+                    qDto.setAttachmentUrl(q.getAttachmentUrl());
+                    
+                    // Map options
+                    if (q.getOptions() != null && !q.getOptions().isEmpty()) {
+                        List<org.example.estudebackendspring.dto.QuestionOptionDTO> optionDtos = q.getOptions().stream()
+                            .map(opt -> {
+                                org.example.estudebackendspring.dto.QuestionOptionDTO optDto = new org.example.estudebackendspring.dto.QuestionOptionDTO();
+                                optDto.setOptionId(opt.getOptionId());
+                                optDto.setOptionText(opt.getOptionText());
+                                optDto.setOptionOrder(opt.getOptionOrder());
+                                optDto.setIsCorrect(opt.getIsCorrect());
+                                return optDto;
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+                        qDto.setOptions(optionDtos);
+                    } else {
+                        qDto.setOptions(java.util.Collections.emptyList());
+                    }
+                    
+                    return qDto;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            dto.setQuestions(questionDtos);
+        } else {
+            dto.setQuestions(java.util.Collections.emptyList());
         }
         
         return dto;
