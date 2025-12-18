@@ -6,6 +6,7 @@ import org.example.estudebackendspring.dto.analytics.*;
 import org.example.estudebackendspring.entity.*;
 import org.example.estudebackendspring.repository.*;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -34,7 +35,8 @@ public class HomeroomTeacherAnalyticsService {
      * @param teacherId ID of the homeroom teacher (for authorization)
      * @return Complete class overview with all subjects and students
      */
-    @Cacheable(value = "homeroomClassOverview", key = "#classId", unless = "#result == null")
+        @Transactional(readOnly = true)
+        @Cacheable(value = "homeroomClassOverview", key = "#classId", unless = "#result == null")
     public HomeroomClassDTO getHomeroomClassOverview(Long classId, Long teacherId) {
         log.info("Fetching homeroom class overview for class ID: {} by teacher ID: {}", classId, teacherId);
         

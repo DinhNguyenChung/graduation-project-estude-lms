@@ -53,7 +53,12 @@ public class CacheConfig {
             new ConcurrentMapCache("questionUsageRanking"),
             
             // Cache cho questions needing improvement
-            new ConcurrentMapCache("questionsNeedingImprovement")
+            new ConcurrentMapCache("questionsNeedingImprovement"),
+            
+            // ===== Homeroom Teacher Analytics Caches =====
+            
+            // Cache cho homeroom class overview
+            new ConcurrentMapCache("homeroomClassOverview")
         ));
         return cacheManager;
     }
