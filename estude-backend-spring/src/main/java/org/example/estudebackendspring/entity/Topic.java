@@ -39,7 +39,7 @@ public class Topic {
     /**
      * Chương mục: "CHƯƠNG I: MỆNH ĐỀ VÀ TẬP HỢP"
      */
-    @Column(length = 100)
+    @Column(length = 200)
     private String chapter;
     
     /**
